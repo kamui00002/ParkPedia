@@ -1,20 +1,118 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ParkPedia - 公園レビューアプリ
 
-# Run and deploy your AI Studio app
+公園の情報とレビューを共有するモバイルアプリです。React + TypeScript + Capacitorで構築されており、iOSとAndroidの両方で動作します。
 
-This contains everything you need to run your app locally.
+## 機能
 
-View your app in AI Studio: https://ai.studio/apps/drive/1WnMDhYRBOszIZhGbm02KnesMNy0WEG8E
+- 🏞️ 公園の検索とフィルタリング
+- 📍 位置情報に基づく距離計算
+- ⭐ レビューと評価システム
+- 📸 写真付きレビューの投稿
+- 🏷️ 年齢別・遊具別・設備別のタグ付け
+- 📱 PWA対応（プログレッシブウェブアプリ）
+- 🍎 iOS App Store配信対応
 
-## Run Locally
+## 技術スタック
 
-**Prerequisites:**  Node.js
+- **フロントエンド**: React 19, TypeScript, Tailwind CSS
+- **モバイル**: Capacitor 6
+- **ビルドツール**: Vite
+- **PWA**: Workbox, Service Worker
+- **アイコン**: Heroicons
 
+## 開発環境のセットアップ
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 前提条件
+
+- Node.js 18以上
+- npm または yarn
+- iOS開発の場合: Xcode 15以上
+- Android開発の場合: Android Studio
+
+### インストール
+
+1. 依存関係をインストール:
+   ```bash
+   npm install
+   ```
+
+2. 環境変数を設定（オプション）:
+   ```bash
+   # .env.local ファイルを作成
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+3. 開発サーバーを起動:
+   ```bash
+   npm run dev
+   ```
+
+## iOS配信の準備
+
+### 1. Capacitorの初期化
+
+```bash
+# iOSプラットフォームを追加
+npx cap add ios
+
+# 依存関係を同期
+npm run sync:ios
+```
+
+### 2. Xcodeでプロジェクトを開く
+
+```bash
+npm run open:ios
+```
+
+### 3. Xcodeでの設定
+
+1. **Bundle Identifier**: `com.parkpedia.app` に設定
+2. **Team**: あなたのApple Developer Teamを選択
+3. **Signing & Capabilities**: 自動署名を有効化
+4. **Info.plist**: 位置情報とカメラの使用許可を確認
+
+### 4. ビルドと配信
+
+```bash
+# プロダクションビルド
+npm run build:ios
+
+# シミュレーターで実行
+npm run run:ios
+```
+
+### 5. App Store Connectへの配信
+
+1. Xcodeで **Product > Archive** を実行
+2. **Organizer** でアーカイブを選択
+3. **Distribute App** をクリック
+4. **App Store Connect** を選択
+5. 配信設定を完了
+
+## 利用可能なスクリプト
+
+- `npm run dev` - 開発サーバーを起動
+- `npm run build` - プロダクションビルド
+- `npm run preview` - ビルド結果をプレビュー
+- `npm run build:ios` - iOS用ビルドとCapacitor同期
+- `npm run open:ios` - Xcodeでプロジェクトを開く
+- `npm run sync:ios` - iOSプロジェクトを同期
+- `npm run run:ios` - iOSシミュレーターで実行
+
+## プロジェクト構造
+
+```
+ParkPedia/
+├── components/          # Reactコンポーネント
+├── services/           # ビジネスロジック（位置情報、カメラ等）
+├── public/             # 静的ファイル
+├── ios/                # iOSプロジェクト
+├── capacitor.config.ts # Capacitor設定
+├── vite.config.ts      # Vite設定
+└── package.json        # 依存関係
+```
+
+## ライセンス
+
+MIT License

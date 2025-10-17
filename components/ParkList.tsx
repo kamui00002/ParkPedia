@@ -1,20 +1,38 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Park, FilterOptions } from '../types';
 import { FILTER_CATEGORIES } from '../constants';
 import ParkCard from './ParkCard';
 import RecommendedParks from './RecommendedParks';
+import { SearchService } from '../services/searchService';
+import { LocationService } from '../services/locationService';
 
 interface ParkListProps {
   parks: Park[];
   onSelectPark: (park: Park) => void;
+  searchQuery?: string;
 }
 
-const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark }) => {
+const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark, searchQuery = '' }) => {
   const [filters, setFilters] = useState<FilterOptions>({
     age: [],
     equipment: [],
     facilities: [],
   });
+  const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews' | 'none'>('none');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+
+  useEffect(() => {
+    // 位置情報の許可をリクエスト
+    LocationService.requestPermissions().then(permitted => {
+      setLocationPermission(permitted);
+      if (permitted) {
+        LocationService.getCurrentPosition()
+          .then(location => setUserLocation(location))
+          .catch(error => console.error('位置情報の取得に失敗:', error));
+      }
+    });
+  }, []);
 
   const handleFilterChange = (category: keyof FilterOptions, option: string) => {
     setFilters(prevFilters => {
@@ -25,21 +43,53 @@ const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark }) => {
       return { ...prevFilters, [category]: newCategoryFilters };
     });
   };
-  
+
+  const handleSortChange = (newSortBy: 'distance' | 'rating' | 'reviews' | 'none') => {
+    setSortBy(newSortBy);
+  };
+
   const filteredParks = useMemo(() => {
-    return parks.filter(park => {
+    let result = parks;
+
+    // 検索クエリでフィルタリング
+    if (searchQuery.trim()) {
+      result = SearchService.searchParks(result, searchQuery);
+    }
+
+    // フィルターでフィルタリング
+    result = result.filter(park => {
       return (Object.keys(filters) as Array<keyof FilterOptions>).every(category => {
         if (filters[category].length === 0) return true;
         return filters[category].some(filterOption => park.tags[category].includes(filterOption));
       });
     });
-  }, [parks, filters]);
+
+    // ソート
+    switch (sortBy) {
+      case 'distance':
+        if (userLocation) {
+          result = SearchService.sortParksByDistance(result, userLocation.latitude, userLocation.longitude);
+        }
+        break;
+      case 'rating':
+        result = SearchService.sortParksByRating(result);
+        break;
+      case 'reviews':
+        result = SearchService.sortParksByReviewCount(result);
+        break;
+      default:
+        // ソートなし
+        break;
+    }
+
+    return result;
+  }, [parks, filters, searchQuery, sortBy, userLocation]);
 
   const recommendedParks = useMemo(() => {
-      // Simple recommendation logic: parks with the most or highest-rated reviews
-      return [...parks]
-          .sort((a, b) => b.reviews.length - a.reviews.length)
-          .slice(0, 5);
+    // Simple recommendation logic: parks with the most or highest-rated reviews
+    return [...parks]
+      .sort((a, b) => b.reviews.length - a.reviews.length)
+      .slice(0, 5);
   }, [parks]);
 
 
@@ -78,19 +128,48 @@ const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark }) => {
       {/* Right column for recommended parks and the list */}
       <div className="w-full md:w-3/4 lg:w-4/5 space-y-8">
         <RecommendedParks parks={recommendedParks} onSelectPark={onSelectPark} />
-        
+
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">公園一覧</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+            <h2 className="text-2xl font-bold text-gray-800">公園一覧</h2>
+
+            {/* ソート機能 */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">並び順:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value as 'distance' | 'rating' | 'reviews' | 'none')}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+              >
+                <option value="none">指定なし</option>
+                {locationPermission && userLocation && (
+                  <option value="distance">距離順</option>
+                )}
+                <option value="rating">評価順</option>
+                <option value="reviews">レビュー数順</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 検索結果の表示 */}
+          {searchQuery && (
+            <div className="mb-4 p-3 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-700">
+                「{searchQuery}」の検索結果: {filteredParks.length}件
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredParks.length > 0 ? (
-                filteredParks.map(park => (
-                  <ParkCard key={park.id} park={park} onSelectPark={onSelectPark} />
-                ))
+              filteredParks.map(park => (
+                <ParkCard key={park.id} park={park} onSelectPark={onSelectPark} />
+              ))
             ) : (
-                <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
-                    <p className="font-semibold">該当する公園が見つかりませんでした。</p>
-                    <p className="text-sm mt-1">絞り込み条件を変更してみてください。</p>
-                </div>
+              <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
+                <p className="font-semibold">該当する公園が見つかりませんでした。</p>
+                <p className="text-sm mt-1">絞り込み条件を変更してみてください。</p>
+              </div>
             )}
           </div>
         </div>

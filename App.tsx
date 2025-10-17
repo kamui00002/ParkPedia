@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [parks, setParks] = useState<Park[]>(PARKS);
   const [selectedPark, setSelectedPark] = useState<Park | null>(null);
   const [view, setView] = useState<View>('list');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleAddReview = (parkId: string, newReviewData: Omit<Review, 'id' | 'author' | 'avatar' | 'helpfulCount' | 'createdAt'>) => {
     const newReview: Review = {
@@ -24,9 +25,9 @@ const App: React.FC = () => {
       createdAt: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
     };
 
-    const updatedParks = parks.map(p => 
-      p.id === parkId 
-        ? { ...p, reviews: [newReview, ...p.reviews] } 
+    const updatedParks = parks.map(p =>
+      p.id === parkId
+        ? { ...p, reviews: [newReview, ...p.reviews] }
         : p
     );
     setParks(updatedParks);
@@ -43,7 +44,7 @@ const App: React.FC = () => {
       distance: '現在地から?', // Placeholder distance
       reviews: [],
       // Placeholder coordinates, ideally we'd get this from an address
-      latitude: 35.658581, 
+      latitude: 35.658581,
       longitude: 139.745438,
     };
     setParks(prevParks => [newPark, ...prevParks]);
@@ -70,6 +71,10 @@ const App: React.FC = () => {
     setView(newView);
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
   const renderContent = () => {
     switch (view) {
       case 'detail':
@@ -84,13 +89,18 @@ const App: React.FC = () => {
         return <AddParkForm onAddPark={handleAddPark} onCancel={() => setView('list')} />;
       case 'list':
       default:
-        return <ParkList parks={parks} onSelectPark={handleSelectPark} />;
+        return <ParkList parks={parks} onSelectPark={handleSelectPark} searchQuery={searchQuery} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-green-50 font-sans">
-      <Header onNavigate={navigateTo} currentView={view} />
+      <Header
+        onNavigate={navigateTo}
+        currentView={view}
+        onSearch={handleSearch}
+        searchQuery={searchQuery}
+      />
       <main className="container mx-auto p-4 max-w-7xl">
         {renderContent()}
       </main>
