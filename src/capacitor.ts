@@ -13,6 +13,13 @@ export const initializeCapacitor = async () => {
         // スプラッシュスクリーンの設定
         await SplashScreen.hide();
 
+        // iOS Safari のスクロールバウンス対策
+        if (Capacitor.getPlatform() === 'ios') {
+            // スクロールバウンスを無効化
+            document.body.style.overscrollBehavior = 'none';
+            document.body.style.webkitOverscrollBehavior = 'none';
+        }
+
         // アプリのライフサイクルイベント
         App.addListener('appStateChange', ({ isActive }) => {
             console.log('App state changed. Is active?', isActive);

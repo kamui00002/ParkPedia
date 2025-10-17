@@ -29,6 +29,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.1.3/24/solid/styles.min.css" rel="stylesheet">
     <style>
+      /* iOS Safari のスクロールバウンス問題を修正 */
+      html, body {
+        height: 100%;
+        height: -webkit-fill-available;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none;
+        -webkit-overscroll-behavior: none;
+      }
+      
+      body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        height: -webkit-fill-available;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      #root {
+        height: 100%;
+        height: -webkit-fill-available;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
       /* ダイナミックアイランド対応のスタイル */
       .safe-area-top {
         padding-top: env(safe-area-inset-top);
@@ -36,7 +62,15 @@
       
       .dynamic-island-header {
         padding-top: max(env(safe-area-inset-top), 20px);
-        min-height: calc(env(safe-area-inset-top) + 80px);
+        min-height: calc(env(safe-area-inset-top) + 100px);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        will-change: transform;
       }
       
       /* iOS Safari の viewport 対応 */
@@ -44,6 +78,20 @@
         .dynamic-island-header {
           padding-top: max(env(safe-area-inset-top), 20px);
         }
+      }
+      
+      /* スクロールバウンスを防ぐ */
+      .no-bounce {
+        overscroll-behavior: none;
+        -webkit-overscroll-behavior: none;
+      }
+      
+      /* モバイルでの100vh問題を修正 */
+      .mobile-viewport {
+        height: 100vh;
+        height: -webkit-fill-available;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
       }
     </style>
   <script type="importmap">

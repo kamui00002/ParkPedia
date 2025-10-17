@@ -9,7 +9,9 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'ParkPedia',
-    contentInset: 'automatic'
+    contentInset: 'automatic',
+    scrollEnabled: true,
+    backgroundColor: '#f0fdf4'
   },
   plugins: {
     SplashScreen: {

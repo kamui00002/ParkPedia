@@ -116,14 +116,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-green-50 font-sans" style={{ backgroundColor: '#f0fdf4' }}>
+    <div className="mobile-viewport bg-green-50 font-sans no-bounce" style={{ backgroundColor: '#f0fdf4' }}>
       <Header
         onNavigate={navigateTo}
         currentView={view}
         onSearch={handleSearch}
         searchQuery={searchQuery}
       />
-      <main className="px-4 bg-green-50" style={{ backgroundColor: '#f0fdf4', paddingTop: 'calc(env(safe-area-inset-top) + 100px)' }}>
+      <main className="px-4 bg-green-50 no-bounce" style={{
+        backgroundColor: '#f0fdf4',
+        paddingTop: 'calc(env(safe-area-inset-top) + 120px)',
+        minHeight: 'calc(100vh - env(safe-area-inset-top) - 120px)'
+      }}>
         {renderContent()}
       </main>
     </div>
