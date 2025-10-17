@@ -8,6 +8,7 @@ export const initializeCapacitor = async () => {
         // ステータスバーの設定
         await StatusBar.setStyle({ style: Style.Dark });
         await StatusBar.setBackgroundColor({ color: '#ffffff' });
+        await StatusBar.setOverlaysWebView({ overlay: false });
 
         // スプラッシュスクリーンの設定
         await SplashScreen.hide();

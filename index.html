@@ -28,6 +28,24 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.1.3/24/solid/styles.min.css" rel="stylesheet">
+    <style>
+      /* ダイナミックアイランド対応のスタイル */
+      .safe-area-top {
+        padding-top: env(safe-area-inset-top);
+      }
+      
+      .dynamic-island-header {
+        padding-top: max(env(safe-area-inset-top), 20px);
+        min-height: calc(env(safe-area-inset-top) + 80px);
+      }
+      
+      /* iOS Safari の viewport 対応 */
+      @supports (padding: max(0px)) {
+        .dynamic-island-header {
+          padding-top: max(env(safe-area-inset-top), 20px);
+        }
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {

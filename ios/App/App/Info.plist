@@ -45,5 +45,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDarkContent</string>
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>このアプリは公園の位置情報を取得し、現在地からの距離を表示するために位置情報を使用します。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>このアプリは公園の写真を撮影してレビューに追加するためにカメラを使用します。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>このアプリは公園の写真を選択してレビューに追加するためにフォトライブラリにアクセスします。</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

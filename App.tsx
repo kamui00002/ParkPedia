@@ -123,7 +123,7 @@ const App: React.FC = () => {
         onSearch={handleSearch}
         searchQuery={searchQuery}
       />
-      <main className="pt-20 px-4 bg-green-50" style={{ backgroundColor: '#f0fdf4' }}>
+      <main className="px-4 bg-green-50" style={{ backgroundColor: '#f0fdf4', paddingTop: 'calc(env(safe-area-inset-top) + 100px)' }}>
         {renderContent()}
       </main>
     </div>
