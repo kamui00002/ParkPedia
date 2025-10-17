@@ -123,7 +123,7 @@ const App: React.FC = () => {
         onSearch={handleSearch}
         searchQuery={searchQuery}
       />
-      <main className="container mx-auto p-4 max-w-7xl">
+      <main className="pt-20 px-4">
         {renderContent()}
       </main>
     </div>

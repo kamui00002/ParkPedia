@@ -95,7 +95,7 @@ const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark, searchQuery = 
 
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       {/* Mobile-optimized filter section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <details className="group">
