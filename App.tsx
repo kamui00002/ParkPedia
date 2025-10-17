@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ParkList from './components/ParkList';
 import ParkDetail from './components/ParkDetail';
@@ -6,6 +6,7 @@ import MyPage from './components/MyPage';
 import AddParkForm from './components/AddParkForm'; // Import the new component
 import { Park, Review, Photo } from './types';
 import { PARKS } from './constants';
+import { DataService } from './services/dataService';
 
 type View = 'list' | 'detail' | 'mypage' | 'addPark';
 
@@ -15,7 +16,21 @@ const App: React.FC = () => {
   const [view, setView] = useState<View>('list');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const handleAddReview = (parkId: string, newReviewData: Omit<Review, 'id' | 'author' | 'avatar' | 'helpfulCount' | 'createdAt'>) => {
+  // アプリ起動時にローカルストレージからデータを読み込み
+  useEffect(() => {
+    const loadParks = async () => {
+      const storedParks = await DataService.getParks();
+      if (storedParks.length > 0) {
+        setParks(storedParks);
+      } else {
+        // 初回起動時はサンプルデータを保存
+        await DataService.saveParks(PARKS);
+      }
+    };
+    loadParks();
+  }, []);
+
+  const handleAddReview = async (parkId: string, newReviewData: Omit<Review, 'id' | 'author' | 'avatar' | 'helpfulCount' | 'createdAt'>) => {
     const newReview: Review = {
       ...newReviewData,
       id: `review-${Date.now()}`,
@@ -24,6 +39,9 @@ const App: React.FC = () => {
       helpfulCount: 0,
       createdAt: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
     };
+
+    // データサービスに保存
+    await DataService.addReview(parkId, newReview);
 
     const updatedParks = parks.map(p =>
       p.id === parkId
@@ -37,7 +55,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddPark = (newParkData: Omit<Park, 'id' | 'distance' | 'reviews' | 'latitude' | 'longitude'>) => {
+  const handleAddPark = async (newParkData: Omit<Park, 'id' | 'distance' | 'reviews' | 'latitude' | 'longitude'>) => {
     const newPark: Park = {
       ...newParkData,
       id: `park-${Date.now()}`,
@@ -47,6 +65,10 @@ const App: React.FC = () => {
       latitude: 35.658581,
       longitude: 139.745438,
     };
+
+    // データサービスに保存
+    await DataService.addPark(newPark);
+
     setParks(prevParks => [newPark, ...prevParks]);
     setView('list'); // Redirect to list view after adding
   };

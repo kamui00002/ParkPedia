@@ -3,6 +3,7 @@ import { Park, FilterOptions } from '../types';
 import { FILTER_CATEGORIES } from '../constants';
 import ParkCard from './ParkCard';
 import RecommendedParks from './RecommendedParks';
+import DataSharingInfo from './DataSharingInfo';
 import { SearchService } from '../services/searchService';
 import { LocationService } from '../services/locationService';
 
@@ -94,52 +95,73 @@ const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark, searchQuery = 
 
 
   return (
-    <div className="flex flex-col md:flex-row gap-8">
-      {/* Left column for filters */}
-      <aside className="w-full md:w-1/4 lg:w-1/5">
-        <div className="bg-white p-4 rounded-lg shadow sticky top-24">
-          <h2 className="text-lg font-bold mb-4 text-gray-800">絞り込み検索</h2>
-          {FILTER_CATEGORIES.map(category => (
-            <div key={category.id} className="mb-4">
-              <h3 className="font-semibold text-gray-700 mb-2">{category.name}</h3>
-              <div className="space-y-2">
-                {category.options.map(option => (
-                  <label key={option} className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={filters[category.id].includes(option)}
-                      onChange={() => handleFilterChange(category.id, option)}
-                    />
-                    <span className="h-4 w-4 rounded border-gray-300 bg-white peer-checked:border-green-600 peer-checked:bg-white border flex items-center justify-center transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 text-green-600 hidden peer-checked:block">
-                        <path d="M12.207 4.793a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.5 9.086l4.293-4.293a1 1 0 0 1 1.414 0Z" />
-                      </svg>
-                    </span>
-                    <span className="ml-2 text-gray-600 text-sm">{option}</span>
-                  </label>
-                ))}
-              </div>
+    <div className="space-y-4">
+      {/* Mobile-optimized filter section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <details className="group">
+          <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50">
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-green-600">
+                <path fillRule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55a.75.75 0 0 1-1.06 0l-1.937-1.55a2.25 2.25 0 0 1-.844-1.757v-3.037a2.25 2.25 0 0 0-.659-1.59L2.659 6.22a2.25 2.25 0 0 1-.659-1.59V2.34a.75.75 0 0 1 .628-.74Z" clipRule="evenodd" />
+              </svg>
+              <span className="font-semibold text-gray-800">絞り込み検索</span>
+              {(filters.age.length + filters.equipment.length + filters.facilities.length) > 0 && (
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                  {filters.age.length + filters.equipment.length + filters.facilities.length}
+                </span>
+              )}
             </div>
-          ))}
-        </div>
-      </aside>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform">
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clipRule="evenodd" />
+            </svg>
+          </summary>
 
-      {/* Right column for recommended parks and the list */}
-      <div className="w-full md:w-3/4 lg:w-4/5 space-y-8">
+          <div className="px-4 pb-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+              {FILTER_CATEGORIES.map(category => (
+                <div key={category.id} className="space-y-2">
+                  <h3 className="font-medium text-gray-700 text-sm">{category.name}</h3>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {category.options.map(option => (
+                      <label key={option} className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={filters[category.id].includes(option)}
+                          onChange={() => handleFilterChange(category.id, option)}
+                        />
+                        <span className="h-3 w-3 rounded border-gray-300 bg-white peer-checked:border-green-600 peer-checked:bg-white border flex items-center justify-center transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-2 h-2 text-green-600 hidden peer-checked:block">
+                            <path d="M12.207 4.793a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.5 9.086l4.293-4.293a1 1 0 0 1 1.414 0Z" />
+                          </svg>
+                        </span>
+                        <span className="ml-2 text-gray-600 text-xs">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+      </div>
+
+      {/* Main content area */}
+      <div className="space-y-6">
+        <DataSharingInfo />
         <RecommendedParks parks={recommendedParks} onSelectPark={onSelectPark} />
 
         <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <h2 className="text-2xl font-bold text-gray-800">公園一覧</h2>
+          <div className="flex flex-col gap-3 mb-4">
+            <h2 className="text-xl font-bold text-gray-800">公園一覧</h2>
 
-            {/* ソート機能 */}
+            {/* ソート機能 - モバイル最適化 */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">並び順:</span>
               <select
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value as 'distance' | 'rating' | 'reviews' | 'none')}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:outline-none bg-white"
               >
                 <option value="none">指定なし</option>
                 {locationPermission && userLocation && (
@@ -160,13 +182,13 @@ const ParkList: React.FC<ParkListProps> = ({ parks, onSelectPark, searchQuery = 
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4">
             {filteredParks.length > 0 ? (
               filteredParks.map(park => (
                 <ParkCard key={park.id} park={park} onSelectPark={onSelectPark} />
               ))
             ) : (
-              <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
+              <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
                 <p className="font-semibold">該当する公園が見つかりませんでした。</p>
                 <p className="text-sm mt-1">絞り込み条件を変更してみてください。</p>
               </div>
