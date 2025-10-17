@@ -116,14 +116,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-green-50 font-sans">
+    <div className="min-h-screen bg-green-50 font-sans" style={{ backgroundColor: '#f0fdf4' }}>
       <Header
         onNavigate={navigateTo}
         currentView={view}
         onSearch={handleSearch}
         searchQuery={searchQuery}
       />
-      <main className="pt-20 px-4">
+      <main className="pt-20 px-4 bg-green-50" style={{ backgroundColor: '#f0fdf4' }}>
         {renderContent()}
       </main>
     </div>

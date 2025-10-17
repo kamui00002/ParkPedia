@@ -7,7 +7,7 @@ export const initializeCapacitor = async () => {
     if (Capacitor.isNativePlatform()) {
         // ステータスバーの設定
         await StatusBar.setStyle({ style: Style.Dark });
-        await StatusBar.setBackgroundColor({ color: '#16a34a' });
+        await StatusBar.setBackgroundColor({ color: '#ffffff' });
 
         // スプラッシュスクリーンの設定
         await SplashScreen.hide();

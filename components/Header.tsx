@@ -43,8 +43,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
-      <div className="px-4 py-2">
+    <header
+      className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50 w-full"
+      style={{ backgroundColor: '#ffffff' }}
+    >
+      <div className="px-4 py-2 w-full">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-xl font-bold text-green-700">ParkPedia</h1>
           <div className="flex items-center space-x-1">
