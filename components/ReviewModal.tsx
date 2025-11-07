@@ -91,7 +91,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onSubmit, pa
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto m-4">
         <form onSubmit={handleSubmit}>
           <div className="p-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">「{parkName}」のレビューを投稿</h2>
               <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,8 +101,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onSubmit, pa
             </div>
 
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700">総合評価</label>
-              <div className="flex items-center mt-1" onMouseLeave={() => setHoverRating(0)}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">総合評価</label>
+              <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
                 {[1, 2, 3, 4, 5].map(star => (
                     <InteractiveStar 
                         key={star}
@@ -114,38 +114,38 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onSubmit, pa
               </div>
             </div>
 
-            <div className="mt-4">
-              <label htmlFor="comment" className="block text-sm font-medium text-gray-700">コメント</label>
-              <div className="mt-1 relative">
+            <div className="mt-6">
+              <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">コメント</label>
+              <div className="relative">
                 <textarea
                   id="comment"
                   rows={4}
                   maxLength={MAX_COMMENT_LENGTH}
-                  className="w-full p-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="公園の良かった点、気になった点などを教えてください。"
                 />
-                <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                   {comment.length}/{MAX_COMMENT_LENGTH}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4">
-               <label className="block text-sm font-medium text-gray-700 mb-1">写真を追加 ({photos.length}/{MAX_PHOTOS})</label>
-                <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 text-sm mb-2">
-                    <p className="font-bold">投稿ルールのお願い</p>
+            <div className="mt-6">
+               <label className="block text-sm font-medium text-gray-700 mb-2">写真を追加 ({photos.length}/{MAX_PHOTOS})</label>
+                <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm mb-3">
+                    <p className="font-bold mb-1">投稿ルールのお願い</p>
                     <p>トラブル防止のため、人物の顔が特定できる写真の投稿は避けてください。</p>
                 </div>
                <div className="flex items-center gap-4">
-                   <label htmlFor="photo-upload" className="cursor-pointer bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                   <label htmlFor="photo-upload" className="cursor-pointer bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                        ファイルを選択
                    </label>
                    <input id="photo-upload" type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoChange} />
                </div>
                {photos.length > 0 && (
-                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-4">
                    {photos.map((photo, index) => (
                      <div key={index} className="relative">
                        <img src={photo.url} alt={`preview ${index}`} className="w-full h-24 object-cover rounded-md" />
@@ -171,14 +171,14 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onSubmit, pa
                  </div>
                )}
             </div>
-             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           </div>
 
-          <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 border-t">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
               キャンセル
             </button>
-            <button type="submit" className="px-4 py-2 bg-green-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-green-700">
+            <button type="submit" className="px-4 py-2 bg-green-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-green-700">
               投稿する
             </button>
           </div>

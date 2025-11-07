@@ -15,18 +15,18 @@ const RecommendedCard: React.FC<{ park: Park; onSelectPark: (park: Park) => void
   return (
     <div
       onClick={() => onSelectPark(park)}
-      className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer transform hover:shadow-md transition-shadow duration-200"
+      className="flex-shrink-0 w-56 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer transform hover:shadow-md transition-shadow duration-200 flex flex-col"
     >
-      <img src={park.mainImage} alt={park.name} className="w-full h-24 object-cover" />
-      <div className="p-2">
-        <h4 className="text-sm font-bold text-gray-800 truncate">{park.name}</h4>
-        <div className="flex items-center mt-1">
+      <img src={park.mainImage} alt={park.name} className="w-full h-40 object-cover" />
+      <div className="p-3 flex flex-col flex-1">
+        <h4 className="text-base font-bold text-gray-800">{park.name}</h4>
+        <div className="flex items-center mt-2">
           <StarRating rating={averageRating} />
-          <span className="text-xs text-gray-600 ml-1">
+          <span className="text-sm text-gray-600 ml-2">
             {averageRating.toFixed(1)}
           </span>
         </div>
-        <p className="text-xs text-gray-500 mt-1 truncate">{park.address}</p>
+        <p className="text-xs text-gray-500 mt-2">{park.address}</p>
       </div>
     </div>
   );
@@ -36,9 +36,9 @@ const RecommendedParks: React.FC<RecommendedParksProps> = ({ parks, onSelectPark
   if (parks.length === 0) return null;
 
   return (
-    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="text-lg font-bold text-gray-800 mb-3">あなたへのおすすめ</h2>
-      <div className="flex space-x-3 overflow-x-auto pb-2 -mb-2">
+    <div>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">あなたへのおすすめ</h2>
+      <div className="flex space-x-4 overflow-x-auto pb-2 -mb-2">
         {parks.map(park => (
           <RecommendedCard key={park.id} park={park} onSelectPark={onSelectPark} />
         ))}
