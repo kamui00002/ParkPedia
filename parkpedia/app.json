@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "ParkPedia",
+    "slug": "parkpedia",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4CAF50"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.parkpedia.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "このアプリは近くの公園を検索するために位置情報を使用します。",
+        "NSCameraUsageDescription": "このアプリは公園の写真を撮影するためにカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4CAF50"
+      },
+      "package": "com.parkpedia.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "このアプリは近くの公園を検索するために位置情報を使用します。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。",
+          "cameraPermission": "このアプリは公園の写真を撮影するためにカメラを使用します。"
+        }
+      ]
+    ]
+  }
+}
+

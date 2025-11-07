@@ -14,9 +14,9 @@ const NavLink: React.FC<{
 }> = ({ onClick, isActive, children }) => (
   <button
     onClick={onClick}
-    className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${isActive
-      ? 'bg-green-600 text-white'
-      : 'text-gray-600 hover:bg-green-100'
+    className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${isActive
+      ? 'bg-green-500 text-white'
+      : 'text-gray-700 hover:bg-green-50'
       }`}
   >
     {children}
@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
 
   return (
     <header
-      className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50 w-full dynamic-island-header no-bounce"
+      className="bg-white shadow-md fixed top-0 left-0 right-0 z-50 w-full dynamic-island-header no-bounce"
       style={{
         backgroundColor: '#ffffff',
         transform: 'translateZ(0)',
@@ -55,8 +55,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
       <div className="px-4 py-3 w-full">
         {/* アプリ名とナビゲーション */}
         <div className="flex justify-between items-center mb-3">
-          <h1 className="text-xl font-bold text-green-700">ParkPedia</h1>
-          <div className="flex items-center space-x-1">
+          <h1 className="text-xl font-bold" style={{ color: '#2d5016' }}>ParkPedia</h1>
+          <div className="flex items-center space-x-2">
             <NavLink onClick={() => onNavigate('list')} isActive={currentView === 'list' || currentView === 'detail'}>
               公園検索
             </NavLink>
@@ -69,16 +69,16 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
           </div>
         </div>
 
-        {/* 検索バー - 上部いっぱいに拡張 */}
+        {/* 検索バー */}
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <input
             type="text"
             placeholder="公園名、地域名で検索..."
             value={localSearchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-base placeholder-gray-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-sm placeholder-gray-400"
           />
-          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
               <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
             </svg>
