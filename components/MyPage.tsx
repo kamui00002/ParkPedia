@@ -8,14 +8,14 @@ interface MyParkCardProps {
 }
 
 const MyParkCard: React.FC<MyParkCardProps> = ({ park }) => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden flex">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex">
         <img src={park.mainImage} alt={park.name} className="w-32 h-32 object-cover flex-shrink-0" />
         <div className="p-4 flex flex-col justify-between flex-grow">
             <div>
-                <h3 className="text-lg font-bold text-gray-800">{park.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{park.address}</p>
+                <h3 className="text-base font-bold text-gray-800">{park.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">{park.address}</p>
             </div>
-            <button className="text-left text-sm text-red-500 font-semibold hover:text-red-700 mt-2">
+            <button className="text-left text-sm text-red-500 font-medium hover:text-red-700 mt-3">
                 リストから削除
             </button>
         </div>
@@ -28,13 +28,13 @@ const MyPage: React.FC = () => {
     const wantToGoParks = PARKS.slice(1, 3);
   
     return (
-        <div className="space-y-12">
+        <div className="space-y-8">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-green-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
                     お気に入りした公園
                 </h2>
                 {favoriteParks.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {favoriteParks.map(park => <MyParkCard key={park.id} park={park} />)}
                     </div>
                 ) : (
@@ -43,11 +43,11 @@ const MyPage: React.FC = () => {
             </div>
 
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-green-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
                     「行ってみたい！」リスト
                 </h2>
                 {wantToGoParks.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {wantToGoParks.map(park => <MyParkCard key={park.id} park={park} />)}
                     </div>
                 ) : (
@@ -56,10 +56,10 @@ const MyPage: React.FC = () => {
             </div>
             
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-green-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
                     獲得したバッジ
                 </h2>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {MOCK_USER.badges.map(badge => (
                         <BadgeCard key={badge.id} badge={badge} />
                     ))}
@@ -67,11 +67,11 @@ const MyPage: React.FC = () => {
             </div>
 
              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-green-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
                     自分の投稿レビュー
                 </h2>
-                <div className="bg-white p-4 rounded-lg shadow-md">
-                   <p className="text-gray-500">まだ投稿したレビューはありません。</p>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                   <p className="text-gray-600">まだ投稿したレビューはありません。</p>
                 </div>
             </div>
         </div>
