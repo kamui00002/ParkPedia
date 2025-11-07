@@ -116,7 +116,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="mobile-viewport bg-green-50 font-sans no-bounce" style={{ backgroundColor: '#f0fdf4' }}>
+    <div className="mobile-viewport bg-green-50 font-sans no-bounce" style={{ backgroundColor: '#F0FBF4' }}>
       <Header
         onNavigate={navigateTo}
         currentView={view}
@@ -124,7 +124,7 @@ const App: React.FC = () => {
         searchQuery={searchQuery}
       />
       <main className="px-4 bg-green-50 no-bounce" style={{
-        backgroundColor: '#f0fdf4',
+        backgroundColor: '#F0FBF4',
         paddingTop: 'calc(env(safe-area-inset-top) + 120px)',
         minHeight: 'calc(100vh - env(safe-area-inset-top) - 120px)'
       }}>

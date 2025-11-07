@@ -1,0 +1,53 @@
+// Firestoreセキュリティルール
+// Firebase Console > Firestore Database > ルール にコピー＆ペーストしてください
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 公園（parks）コレクションのルール
+    match /parks/{parkId} {
+      // 誰でも読み取り可能
+      allow read: if true;
+      
+      // 作成・更新・削除は認証済みユーザーのみ
+      allow create, update, delete: if request.auth != null;
+      
+      // 作成時は作成者IDを自動設定
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // レビュー（reviews）コレクションのルール
+    match /reviews/{reviewId} {
+      // 誰でも読み取り可能
+      allow read: if true;
+      
+      // 作成・更新・削除は認証済みユーザーのみ
+      allow create, update, delete: if request.auth != null;
+      
+      // 作成時は作成者IDを自動設定
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid;
+      
+      // 更新・削除は自分のレビューのみ
+      allow update, delete: if request.auth != null 
+        && resource.data.userId == request.auth.uid;
+    }
+    
+    // ユーザー（users）コレクションのルール
+    match /users/{userId} {
+      // 誰でも読み取り可能（プロフィール情報など）
+      allow read: if true;
+      
+      // 作成・更新は認証済みユーザーで、自分のドキュメントのみ
+      allow create, update: if request.auth != null 
+        && userId == request.auth.uid;
+      
+      // 削除は自分のドキュメントのみ
+      allow delete: if request.auth != null 
+        && userId == request.auth.uid;
+    }
+  }
+}
+
