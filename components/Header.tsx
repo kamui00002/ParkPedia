@@ -14,9 +14,9 @@ const NavLink: React.FC<{
 }> = ({ onClick, isActive, children }) => (
   <button
     onClick={onClick}
-    className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${isActive
+    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isActive
       ? 'bg-green-600 text-white'
-      : 'text-gray-600 hover:bg-green-100'
+      : 'text-gray-700 hover:text-green-600'
       }`}
   >
     {children}
@@ -52,11 +52,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
         willChange: 'transform'
       }}
     >
-      <div className="px-4 py-3 w-full">
+      <div className="px-4 py-3 w-full max-w-7xl mx-auto">
         {/* アプリ名とナビゲーション */}
         <div className="flex justify-between items-center mb-3">
-          <h1 className="text-xl font-bold text-green-700">ParkPedia</h1>
-          <div className="flex items-center space-x-1">
+          <h1 className="text-xl font-bold" style={{ color: '#166534' }}>ParkPedia</h1>
+          <div className="flex items-center space-x-2">
             <NavLink onClick={() => onNavigate('list')} isActive={currentView === 'list' || currentView === 'detail'}>
               公園検索
             </NavLink>
@@ -69,14 +69,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentView, onSearch, sear
           </div>
         </div>
 
-        {/* 検索バー - 上部いっぱいに拡張 */}
-        <form onSubmit={handleSearchSubmit} className="relative w-full">
+        {/* 検索バー - 中央配置 */}
+        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
           <input
             type="text"
             placeholder="公園名、地域名で検索..."
             value={localSearchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-base placeholder-gray-500"
+            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-base placeholder-gray-500"
           />
           <div className="absolute left-4 top-1/2 -translate-y-1/2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
