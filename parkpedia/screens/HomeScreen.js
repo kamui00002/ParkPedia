@@ -346,6 +346,15 @@ export default function HomeScreen({ navigation }) {
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating || 0);
     const emptyStars = 5 - fullStars;
+    if (fullStars === 0 && emptyStars === 5) {
+      return (
+        <View style={styles.starContainer}>
+          {[...Array(5)].map((_, i) => (
+            <Text key={`empty-${i}`} style={styles.starEmpty}>☆</Text>
+          ))}
+        </View>
+      );
+    }
     return (
       <View style={styles.starContainer}>
         {[...Array(fullStars)].map((_, i) => (
@@ -493,7 +502,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
         <View style={styles.parkCardContent}>
-          <Text style={styles.parkName}>{item.name || '名前なし'}</Text>
+          <Text style={styles.parkName}>{String(item.name || '名前なし')}</Text>
           <View style={styles.ratingRow}>
             {renderStars(averageRating)}
             <Text style={styles.ratingText}>
@@ -501,13 +510,13 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
           {item.address && (
-            <Text style={styles.parkDistance}>{item.address}</Text>
+            <Text style={styles.parkDistance}>{String(item.address)}</Text>
           )}
           {uniqueTags.length > 0 && (
             <View style={styles.tagsContainer}>
               {uniqueTags.slice(0, 3).map((tag, index) => (
                 <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
+                  <Text style={styles.tagText}>{String(tag)}</Text>
                 </View>
               ))}
             </View>
@@ -569,7 +578,7 @@ export default function HomeScreen({ navigation }) {
                     <Image source={{ uri: park.mainImage }} style={styles.recommendedImage} />
                   )}
                   <View style={styles.recommendedContent}>
-                    <Text style={styles.recommendedName} numberOfLines={1}>{park.name || '名前なし'}</Text>
+                    <Text style={styles.recommendedName} numberOfLines={1}>{String(park.name || '名前なし')}</Text>
                     <View style={styles.recommendedRating}>
                       {renderStars(averageRating)}
                       <Text style={styles.recommendedRatingText}>
@@ -577,7 +586,7 @@ export default function HomeScreen({ navigation }) {
                       </Text>
                     </View>
                     {park.address && (
-                      <Text style={styles.recommendedAddress} numberOfLines={1}>{park.address}</Text>
+                      <Text style={styles.recommendedAddress} numberOfLines={1}>{String(park.address)}</Text>
                     )}
                     {park.calculatedDistance !== null && park.calculatedDistance !== undefined && (
                       <Text style={styles.recommendedDistance}>
