@@ -702,7 +702,27 @@ export default function ParkDetailScreen({ route, navigation }) {
     {/* 🎯 レビュー投稿ボタン（画面下部固定） */}
     <TouchableOpacity
       style={styles.fixedAddReviewButton}
-      onPress={() => navigation.navigate('AddReview', { parkId, parkName: park.name })}
+      onPress={() => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          Alert.alert(
+            'ログインが必要です',
+            'レビューを投稿するにはログインが必要です。',
+            [
+              {
+                text: 'ログイン',
+                onPress: () => navigation.navigate('Login'),
+              },
+              {
+                text: 'キャンセル',
+                style: 'cancel',
+              },
+            ]
+          );
+        } else {
+          navigation.navigate('AddReview', { parkId, parkName: park.name });
+        }
+      }}
     >
       <Text style={styles.fixedAddReviewButtonText}>レビューを投稿する</Text>
     </TouchableOpacity>

@@ -5,7 +5,9 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
+import { auth } from '../firebaseConfig';
 
 export default function CustomHeader({ navigation, searchQuery, onSearchChange, currentScreen = 'search', onMenuPress }) {
   return (
@@ -32,7 +34,27 @@ export default function CustomHeader({ navigation, searchQuery, onSearchChange, 
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.navButton, currentScreen === 'addPark' && styles.navButtonActive]}
-              onPress={() => navigation.navigate('AddPark')}
+              onPress={() => {
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                  Alert.alert(
+                    'ログインが必要です',
+                    '公園を投稿するにはログインが必要です。',
+                    [
+                      {
+                        text: 'ログイン',
+                        onPress: () => navigation.navigate('Login'),
+                      },
+                      {
+                        text: 'キャンセル',
+                        style: 'cancel',
+                      },
+                    ]
+                  );
+                } else {
+                  navigation.navigate('AddPark');
+                }
+              }}
             >
               <Text style={[styles.navButtonText, currentScreen === 'addPark' && styles.navButtonTextActive]}>
                 公園を投稿
@@ -40,7 +62,27 @@ export default function CustomHeader({ navigation, searchQuery, onSearchChange, 
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.navButton, currentScreen === 'mypage' && styles.navButtonActive]}
-              onPress={() => navigation.navigate('MyPage')}
+              onPress={() => {
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                  Alert.alert(
+                    'ログインが必要です',
+                    'マイページを表示するにはログインが必要です。',
+                    [
+                      {
+                        text: 'ログイン',
+                        onPress: () => navigation.navigate('Login'),
+                      },
+                      {
+                        text: 'キャンセル',
+                        style: 'cancel',
+                      },
+                    ]
+                  );
+                } else {
+                  navigation.navigate('MyPage');
+                }
+              }}
             >
               <Text style={[styles.navButtonText, currentScreen === 'mypage' && styles.navButtonTextActive]}>
                 マイページ

@@ -36,7 +36,8 @@ export default function LoginScreen({ navigation }) {
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      // ログイン成功時はApp.jsのonAuthStateChangedで自動的に画面遷移
+      // ログイン成功後、前の画面に戻る
+      navigation.goBack();
     } catch (error) {
       console.error('ログインエラー:', error);
       let errorMessage = 'ログインに失敗しました';
@@ -77,8 +78,12 @@ export default function LoginScreen({ navigation }) {
     try {
       setLoading(true);
       await createUserWithEmailAndPassword(auth, email.trim(), password);
-      Alert.alert('成功', 'アカウントを作成しました');
-      // 登録成功後は自動的にログイン状態になる
+      Alert.alert('成功', 'アカウントを作成しました', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
     } catch (error) {
       console.error('新規登録エラー:', error);
       let errorMessage = 'アカウントの作成に失敗しました';
@@ -107,6 +112,14 @@ export default function LoginScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
+        {/* ホームに戻るボタン */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.backButtonText}>← ホームに戻る</Text>
+        </TouchableOpacity>
+
         {/* アプリタイトル */}
         <View style={styles.header}>
           <Text style={styles.title}>ParkPedia</Text>
@@ -190,6 +203,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 30,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 10,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     alignItems: 'center',

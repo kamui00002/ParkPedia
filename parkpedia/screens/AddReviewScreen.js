@@ -1,7 +1,7 @@
 // レビュー追加画面
 // 星評価とコメントを入力してFirestoreに保存
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,28 @@ export default function AddReviewScreen({ route, navigation }) {
   const [submitting, setSubmitting] = useState(false);
   
   const MAX_PHOTOS = 5;
+
+  // ログインチェック
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert(
+        'ログインが必要です',
+        'レビューを投稿するにはログインが必要です。',
+        [
+          {
+            text: 'ログイン',
+            onPress: () => navigation.navigate('Login'),
+          },
+          {
+            text: 'キャンセル',
+            style: 'cancel',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    }
+  }, []);
 
   // 写真を選択
   const pickImage = async () => {
