@@ -24,6 +24,7 @@ import ParkDetailScreen from './screens/ParkDetailScreen';
 import AddReviewScreen from './screens/AddReviewScreen';
 import LoginScreen from './screens/LoginScreen';
 import AddParkScreen from './screens/AddParkScreen';
+import MyPageScreen from './screens/MyPageScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,86 +49,70 @@ export default function App() {
         return null;
     }
 
-    return ( <
-        NavigationContainer >
-        <
-        StatusBar style = "auto" / >
-        <
-        Stack.Navigator initialRouteName = {
-            user ? "Home" : "Login"
-        }
-        screenOptions = {
-            {
-                headerStyle: {
-                    backgroundColor: '#4CAF50',
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
-            }
-        } >
-        {
-            !user ? ( <
-                Stack.Screen name = "Login"
-                component = {
-                    LoginScreen
-                }
-                options = {
-                    {
-                        title: 'ログイン',
-                        headerShown: false,
-                    }
-                }
-                />
-            ) : ( <
-                React.Fragment >
-                <
-                Stack.Screen name = "Home"
-                component = {
-                    HomeScreen
-                }
-                options = {
-                    {
-                        title: '🌳 ParkPedia',
-                        headerBackVisible: false,
-                    }
-                }
-                /> <
-                Stack.Screen name = "ParkDetail"
-                component = {
-                    ParkDetailScreen
-                }
-                options = {
-                    {
-                        title: '公園詳細',
-                    }
-                }
-                /> <
-                Stack.Screen name = "AddReview"
-                component = {
-                    AddReviewScreen
-                }
-                options = {
-                    {
-                        title: 'レビューを書く',
-                    }
-                }
-                /> <
-                Stack.Screen name = "AddPark"
-                component = {
-                    AddParkScreen
-                }
-                options = {
-                    {
-                        title: '公園を追加',
-                    }
-                }
-                /> <
-                /React.Fragment>
-            )
-        } <
-        /Stack.Navigator> <
-        /NavigationContainer>
+    return (
+        <NavigationContainer>
+            <StatusBar style="auto" />
+            <Stack.Navigator
+                initialRouteName={user ? "Home" : "Login"}
+                screenOptions={{
+                    headerStyle: {
+                        backgroundColor: '#fff',
+                    },
+                    headerTintColor: '#166534',
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                    },
+                }}
+            >
+                {!user ? (
+                    <Stack.Screen
+                        name="Login"
+                        component={LoginScreen}
+                        options={{
+                            title: 'ログイン',
+                            headerShown: false,
+                        }}
+                    />
+                ) : (
+                    <>
+                        <Stack.Screen
+                            name="Home"
+                            component={HomeScreen}
+                            options={{
+                                headerShown: false,
+                            }}
+                        />
+                        <Stack.Screen
+                            name="ParkDetail"
+                            component={ParkDetailScreen}
+                            options={{
+                                title: '公園詳細',
+                            }}
+                        />
+                        <Stack.Screen
+                            name="AddReview"
+                            component={AddReviewScreen}
+                            options={{
+                                title: 'レビューを書く',
+                            }}
+                        />
+                        <Stack.Screen
+                            name="AddPark"
+                            component={AddParkScreen}
+                            options={{
+                                headerShown: false,
+                            }}
+                        />
+                        <Stack.Screen
+                            name="MyPage"
+                            component={MyPageScreen}
+                            options={{
+                                headerShown: false,
+                            }}
+                        />
+                    </>
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
     );
 }
