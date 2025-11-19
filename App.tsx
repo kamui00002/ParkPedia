@@ -15,16 +15,31 @@ const App: React.FC = () => {
   const [selectedPark, setSelectedPark] = useState<Park | null>(null);
   const [view, setView] = useState<View>('list');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // アプリ起動時にローカルストレージからデータを読み込み
   useEffect(() => {
     const loadParks = async () => {
-      const storedParks = await DataService.getParks();
-      if (storedParks.length > 0) {
-        setParks(storedParks);
-      } else {
-        // 初回起動時はサンプルデータを保存
-        await DataService.saveParks(PARKS);
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+
+        const storedParks = await DataService.getParks();
+        if (storedParks.length > 0) {
+          setParks(storedParks);
+        } else {
+          // 初回起動時はサンプルデータを保存
+          await DataService.saveParks(PARKS);
+          setParks(PARKS);
+        }
+      } catch (error) {
+        console.error('データの読み込みに失敗しました:', error);
+        setLoadError('データの読み込みに失敗しました。アプリを再起動してください。');
+        // エラーが発生してもサンプルデータを表示
+        setParks(PARKS);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadParks();
@@ -98,25 +113,65 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    // ローディング中の表示
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">読み込み中...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // エラー表示（エラーがあってもコンテンツは表示）
+    const errorBanner = loadError ? (
+      <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
+        <p className="font-bold">注意</p>
+        <p>{loadError}</p>
+      </div>
+    ) : null;
+
     switch (view) {
       case 'detail':
-        return selectedPark ? (
-          <ParkDetail park={selectedPark} onBack={handleBackToList} onAddReview={handleAddReview} />
-        ) : (
-          <ParkList parks={parks} onSelectPark={handleSelectPark} />
+        return (
+          <>
+            {errorBanner}
+            {selectedPark ? (
+              <ParkDetail park={selectedPark} onBack={handleBackToList} onAddReview={handleAddReview} />
+            ) : (
+              <ParkList parks={parks} onSelectPark={handleSelectPark} />
+            )}
+          </>
         );
       case 'mypage':
-        return <MyPage />;
+        return (
+          <>
+            {errorBanner}
+            <MyPage />
+          </>
+        );
       case 'addPark':
-        return <AddParkForm onAddPark={handleAddPark} onCancel={() => setView('list')} />;
+        return (
+          <>
+            {errorBanner}
+            <AddParkForm onAddPark={handleAddPark} onCancel={() => setView('list')} />
+          </>
+        );
       case 'list':
       default:
-        return <ParkList parks={parks} onSelectPark={handleSelectPark} searchQuery={searchQuery} />;
+        return (
+          <>
+            {errorBanner}
+            <ParkList parks={parks} onSelectPark={handleSelectPark} searchQuery={searchQuery} />
+          </>
+        );
     }
   };
 
   return (
-    <div className="mobile-viewport bg-green-50 font-sans no-bounce" style={{ backgroundColor: '#f0fdf4' }}>
+    <div className="mobile-viewport bg-green-50 font-sans no-bounce" style={{ backgroundColor: '#F0FBF4' }}>
       <Header
         onNavigate={navigateTo}
         currentView={view}
@@ -124,7 +179,7 @@ const App: React.FC = () => {
         searchQuery={searchQuery}
       />
       <main className="px-4 bg-green-50 no-bounce" style={{
-        backgroundColor: '#f0fdf4',
+        backgroundColor: '#F0FBF4',
         paddingTop: 'calc(env(safe-area-inset-top) + 120px)',
         minHeight: 'calc(100vh - env(safe-area-inset-top) - 120px)'
       }}>

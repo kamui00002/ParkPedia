@@ -5,27 +5,67 @@ import { Park, Review } from '../types';
 export class DataService {
     private static readonly PARKS_KEY = 'parkpedia_parks';
     private static readonly REVIEWS_KEY = 'parkpedia_reviews';
+    private static inMemoryParks: Park[] | null = null;
+    private static localStorageAvailable: boolean | null = null;
+
+    // localStorageが利用可能かチェック
+    private static isLocalStorageAvailable(): boolean {
+        if (this.localStorageAvailable !== null) {
+            return this.localStorageAvailable;
+        }
+
+        try {
+            const testKey = '__parkpedia_storage_test__';
+            localStorage.setItem(testKey, 'test');
+            localStorage.removeItem(testKey);
+            this.localStorageAvailable = true;
+            return true;
+        } catch (error) {
+            console.warn('localStorageが利用できません。メモリ内にデータを保持します:', error);
+            this.localStorageAvailable = false;
+            return false;
+        }
+    }
 
     // 公園データの取得
     static async getParks(): Promise<Park[]> {
         try {
-            const storedParks = localStorage.getItem(this.PARKS_KEY);
-            if (storedParks) {
-                return JSON.parse(storedParks);
+            // localStorageが利用可能な場合
+            if (this.isLocalStorageAvailable()) {
+                const storedParks = localStorage.getItem(this.PARKS_KEY);
+                if (storedParks) {
+                    const parks = JSON.parse(storedParks);
+                    this.inMemoryParks = parks; // メモリにもキャッシュ
+                    return parks;
+                }
             }
+
+            // localStorageが利用不可の場合、メモリ内のデータを返す
+            if (this.inMemoryParks) {
+                return this.inMemoryParks;
+            }
+
             return [];
         } catch (error) {
             console.error('公園データの取得に失敗しました:', error);
-            return [];
+            // エラーが発生してもメモリ内のデータがあれば返す
+            return this.inMemoryParks || [];
         }
     }
 
     // 公園データの保存
     static async saveParks(parks: Park[]): Promise<void> {
         try {
-            localStorage.setItem(this.PARKS_KEY, JSON.stringify(parks));
+            // 常にメモリ内に保存
+            this.inMemoryParks = parks;
+
+            // localStorageが利用可能な場合のみlocalStorageにも保存
+            if (this.isLocalStorageAvailable()) {
+                localStorage.setItem(this.PARKS_KEY, JSON.stringify(parks));
+            }
         } catch (error) {
             console.error('公園データの保存に失敗しました:', error);
+            // メモリ内には保存されているので、エラーは無視
         }
     }
 

@@ -5,7 +5,10 @@ import App from './App';
 import { initializeCapacitor } from './src/capacitor';
 
 // Capacitorの初期化
-initializeCapacitor().catch(console.error);
+initializeCapacitor().catch((error) => {
+  console.error('Capacitorの初期化中にエラーが発生しました:', error);
+  // エラーが発生してもアプリは起動するので、エラーはログのみ
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
