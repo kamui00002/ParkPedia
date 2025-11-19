@@ -1,17 +1,19 @@
 // ログイン画面
 // メール/パスワードでのログインと新規アカウント作成
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  Pressable,
+  TouchableOpacity,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import {
   createUserWithEmailAndPassword,
@@ -27,12 +29,20 @@ export default function LoginScreen({ navigation }) {
   const [isLogin, setIsLogin] = useState(true); // true: ログイン, false: 新規登録
   const [loading, setLoading] = useState(false);
 
+  // Firebase認証の初期化確認
+  useEffect(() => {
+    if (!auth) {
+      Alert.alert(
+        'エラー',
+        '認証サービスの初期化に失敗しました。アプリを再起動してください。'
+      );
+    }
+  }, []);
+
   // ログイン処理
   const handleLogin = async () => {
-    console.log('🔵 ログインボタンがタップされました');
-    // 入力検証
+    // 入力値の検証
     if (!email.trim() || !password.trim()) {
-      console.log('⚠️ 入力が空です');
       Alert.alert('エラー', 'メールアドレスとパスワードを入力してください');
       return;
     }
@@ -44,40 +54,83 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
+    // Firebase認証の確認
+    if (!auth) {
+      Alert.alert(
+        'エラー',
+        '認証サービスが利用できません。アプリを再起動してください。'
+      );
+      return;
+    }
+
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      // ログイン成功時はApp.jsのonAuthStateChangedで自動的に画面遷移
+      
+      // タイムアウト処理（30秒）
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 30000);
+      });
+
+      await Promise.race([
+        signInWithEmailAndPassword(auth, email.trim(), password),
+        timeoutPromise,
+      ]);
+
+      // ログイン成功後、前の画面に戻る
+      navigation.goBack();
     } catch (error) {
-      // 本番環境でもエラーログを出力（コンソールに出力）
-      console.error('ログインエラー:', error.code, error.message);
-      
-      let errorMessage = 'ログインに失敗しました';
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'ユーザーが見つかりません';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'パスワードが正しくありません';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'メールアドレスの形式が正しくありません';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'ログイン試行回数が多すぎます。しばらく待ってから再試行してください';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください';
-          break;
-        case 'auth/invalid-credential':
-          errorMessage = 'メールアドレスまたはパスワードが正しくありません';
-          break;
-        default:
-          errorMessage = `ログインに失敗しました: ${error.message || '不明なエラー'}`;
+      if (__DEV__) {
+        console.error('ログインエラー:', error);
       }
       
-      Alert.alert('エラー', errorMessage);
+      let errorMessage = 'ログインに失敗しました';
+      let errorTitle = 'エラー';
+      
+      // エラーコードに応じたメッセージ
+      if (error.message === 'TIMEOUT') {
+        errorTitle = 'タイムアウト';
+        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
+      } else if (error.code) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = 'このメールアドレスは登録されていません。新規登録を行ってください。';
+            break;
+          case 'auth/wrong-password':
+            errorMessage = 'パスワードが正しくありません。もう一度お試しください。';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'メールアドレスの形式が正しくありません。';
+            break;
+          case 'auth/invalid-credential':
+            errorMessage = 'メールアドレスまたはパスワードが正しくありません。';
+            break;
+          case 'auth/too-many-requests':
+            errorTitle = 'ログイン試行回数制限';
+            errorMessage = 'ログイン試行回数が多すぎます。しばらく待ってから再試行してください。';
+            break;
+          case 'auth/network-request-failed':
+            errorTitle = 'ネットワークエラー';
+            errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
+            break;
+          case 'auth/user-disabled':
+            errorMessage = 'このアカウントは無効化されています。サポートにお問い合わせください。';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'この認証方法は有効になっていません。';
+            break;
+          default:
+            errorMessage = `ログインに失敗しました。エラーコード: ${error.code}`;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert(errorTitle, errorMessage, [
+        {
+          text: 'OK',
+          style: 'default',
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -85,10 +138,8 @@ export default function LoginScreen({ navigation }) {
 
   // 新規登録処理
   const handleSignUp = async () => {
-    console.log('🟢 新規登録ボタンがタップされました');
-    // 入力検証
+    // 入力値の検証
     if (!email.trim() || !password.trim()) {
-      console.log('⚠️ 入力が空です');
       Alert.alert('エラー', 'メールアドレスとパスワードを入力してください');
       return;
     }
@@ -100,40 +151,83 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
+    // パスワードの長さチェック
     if (password.length < 6) {
       Alert.alert('エラー', 'パスワードは6文字以上で入力してください');
       return;
     }
 
+    // Firebase認証の確認
+    if (!auth) {
+      Alert.alert(
+        'エラー',
+        '認証サービスが利用できません。アプリを再起動してください。'
+      );
+      return;
+    }
+
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
-      Alert.alert('成功', 'アカウントを作成しました');
-      // 登録成功後は自動的にログイン状態になる
+      
+      // タイムアウト処理（30秒）
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 30000);
+      });
+
+      await Promise.race([
+        createUserWithEmailAndPassword(auth, email.trim(), password),
+        timeoutPromise,
+      ]);
+
+      Alert.alert('成功', 'アカウントを作成しました', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
     } catch (error) {
-      // 本番環境でもエラーログを出力
-      console.error('新規登録エラー:', error.code, error.message);
-
-      let errorMessage = 'アカウントの作成に失敗しました';
-
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'このメールアドレスは既に使用されています';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'メールアドレスの形式が正しくありません';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'パスワードが弱すぎます。より強いパスワードを設定してください';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください';
-          break;
-        default:
-          errorMessage = `アカウントの作成に失敗しました: ${error.message || '不明なエラー'}`;
+      if (__DEV__) {
+        console.error('新規登録エラー:', error);
       }
-
-      Alert.alert('エラー', errorMessage);
+      
+      let errorMessage = 'アカウントの作成に失敗しました';
+      let errorTitle = 'エラー';
+      
+      // エラーコードに応じたメッセージ
+      if (error.message === 'TIMEOUT') {
+        errorTitle = 'タイムアウト';
+        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
+      } else if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'このメールアドレスは既に使用されています。ログインしてください。';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'メールアドレスの形式が正しくありません。';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'パスワードが弱すぎます。6文字以上のより強いパスワードを設定してください。';
+            break;
+          case 'auth/network-request-failed':
+            errorTitle = 'ネットワークエラー';
+            errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'この認証方法は有効になっていません。';
+            break;
+          default:
+            errorMessage = `アカウントの作成に失敗しました。エラーコード: ${error.code}`;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert(errorTitle, errorMessage, [
+        {
+          text: 'OK',
+          style: 'default',
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -141,145 +235,175 @@ export default function LoginScreen({ navigation }) {
 
   // ゲストログイン処理
   const handleGuestLogin = async () => {
-    console.log('👤 ゲストログインボタンがタップされました');
+    // Firebase認証の確認
+    if (!auth) {
+      Alert.alert(
+        'エラー',
+        '認証サービスが利用できません。アプリを再起動してください。'
+      );
+      return;
+    }
+
     try {
       setLoading(true);
-      await signInAnonymously(auth);
-      console.log('✅ ゲストログイン成功');
-      // ログイン成功時はApp.jsのonAuthStateChangedで自動的に画面遷移
+
+      // タイムアウト処理（30秒）
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 30000);
+      });
+
+      await Promise.race([
+        signInAnonymously(auth),
+        timeoutPromise,
+      ]);
+
+      // ログイン成功後、前の画面に戻る
+      navigation.goBack();
     } catch (error) {
-      console.error('ゲストログインエラー:', error.code, error.message);
-
-      let errorMessage = 'ゲストログインに失敗しました';
-
-      switch (error.code) {
-        case 'auth/network-request-failed':
-          errorMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください';
-          break;
-        default:
-          errorMessage = `ゲストログインに失敗しました: ${error.message || '不明なエラー'}`;
+      if (__DEV__) {
+        console.error('ゲストログインエラー:', error);
       }
 
-      Alert.alert('エラー', errorMessage);
+      let errorMessage = 'ゲストログインに失敗しました';
+      let errorTitle = 'エラー';
+
+      if (error.message === 'TIMEOUT') {
+        errorTitle = 'タイムアウト';
+        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorTitle = 'ネットワークエラー';
+        errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
+      } else if (error.code) {
+        errorMessage = `ゲストログインに失敗しました。エラーコード: ${error.code}`;
+      }
+
+      Alert.alert(errorTitle, errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        {/* アプリタイトル */}
-        <View style={styles.header}>
-          <Text style={styles.title}>ParkPedia</Text>
-          <Text style={styles.subtitle}>
-            {isLogin ? 'ログイン' : '新規登録'}
-          </Text>
-        </View>
-
-        {/* メールアドレス入力 */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>メールアドレス</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="example@email.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        {/* パスワード入力 */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>パスワード</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="パスワードを入力"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoComplete={isLogin ? 'password' : 'password-new'}
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        {/* ログイン/新規登録ボタン */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            loading && styles.buttonDisabled,
-            pressed && styles.buttonPressed
-          ]}
-          onPress={() => {
-            console.log('🔴 Pressable onPress triggered');
-            if (isLogin) {
-              handleLogin();
-            } else {
-              handleSignUp();
-            }
-          }}
-          disabled={loading}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {loading ? (
-            <ActivityIndicator color="#4CAF50" />
-          ) : (
-            <Text style={styles.buttonText}>
-              {isLogin ? 'ログイン' : '新規登録'}
-            </Text>
-          )}
-        </Pressable>
+          <View style={styles.content}>
+            {/* ホームに戻るボタン */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.navigate('Home')}
+              disabled={loading}
+            >
+              <Text style={styles.backButtonText}>← ホームに戻る</Text>
+            </TouchableOpacity>
 
-        {/* ログイン/新規登録切り替え */}
-        <Pressable
-          style={styles.switchButton}
-          onPress={() => {
-            console.log('🟡 切り替えボタンがタップされました');
-            setIsLogin(!isLogin);
-            setEmail('');
-            setPassword('');
-          }}
-          disabled={loading}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.switchButtonText}>
-            {isLogin
-              ? 'アカウントをお持ちでない方はこちら'
-              : '既にアカウントをお持ちの方はこちら'}
-          </Text>
-        </Pressable>
+            {/* アプリタイトル */}
+            <View style={styles.header}>
+              <Text style={styles.title}>ParkPedia</Text>
+              <Text style={styles.subtitle}>
+                {isLogin ? 'ログイン' : '新規登録'}
+              </Text>
+            </View>
 
-        {/* 区切り線 */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>または</Text>
-          <View style={styles.dividerLine} />
-        </View>
+            {/* メールアドレス入力 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>メールアドレス</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="example@email.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
+                placeholderTextColor="#999"
+                editable={!loading}
+              />
+            </View>
 
-        {/* ゲストログインボタン */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.guestButton,
-            loading && styles.buttonDisabled,
-            pressed && styles.buttonPressed
-          ]}
-          onPress={handleGuestLogin}
-          disabled={loading}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.guestButtonText}>
-            ゲストとして続ける
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+            {/* パスワード入力 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>パスワード</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="パスワードを入力"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete={isLogin ? 'password' : 'password-new'}
+                autoCorrect={false}
+                placeholderTextColor="#999"
+                editable={!loading}
+              />
+            </View>
+
+            {/* ログイン/新規登録ボタン */}
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={isLogin ? handleLogin : handleSignUp}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#4CAF50" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isLogin ? 'ログイン' : '新規登録'}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* ログイン/新規登録切り替え */}
+            <TouchableOpacity
+              style={styles.switchButton}
+              onPress={() => {
+                if (!loading) {
+                  setIsLogin(!isLogin);
+                  setEmail('');
+                  setPassword('');
+                }
+              }}
+              disabled={loading}
+            >
+              <Text style={styles.switchButtonText}>
+                {isLogin
+                  ? 'アカウントをお持ちでない方はこちら'
+                  : '既にアカウントをお持ちの方はこちら'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 区切り線 */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>または</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* ゲストログインボタン */}
+            <TouchableOpacity
+              style={[styles.guestButton, loading && styles.buttonDisabled]}
+              onPress={handleGuestLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.guestButtonText}>ゲストとして続ける</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -288,14 +412,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#4CAF50',
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 30,
+    minHeight: '100%',
+  },
+  content: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? -50 : -30,
+    left: -20,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 10,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
+    marginTop: 60,
   },
   title: {
     fontSize: 48,
@@ -323,15 +470,16 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     color: '#333',
+    minHeight: 50,
   },
   button: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 18,
     alignItems: 'center',
-    justifyContent: 'center',
     marginTop: 10,
     minHeight: 56,
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -344,10 +492,6 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
   buttonText: {
     color: '#4CAF50',
     fontSize: 18,
@@ -356,6 +500,7 @@ const styles = StyleSheet.create({
   switchButton: {
     marginTop: 20,
     alignItems: 'center',
+    paddingVertical: 10,
   },
   switchButtonText: {
     color: '#fff',
@@ -395,7 +540,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-
-
 

@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "ParkPedia",
+    "slug": "parkpedia",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#4CAF50",
+    "primaryColor": "#4CAF50",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4CAF50"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.parkpedia.app",
+      "buildNumber": "4",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "このアプリは近くの公園を検索するために位置情報を使用します。",
+        "NSCameraUsageDescription": "このアプリは公園の写真を撮影するためにカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.parkpedia.app",
+      "versionCode": 3,
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "このアプリは近くの公園を検索するために位置情報を使用します。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。",
+          "cameraPermission": "このアプリは公園の写真を撮影するためにカメラを使用します。"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d557bbc6-e7ef-4acc-915b-26ab09766021"
+      }
+    }
+  }
+}
+
+
+
+
+
+
