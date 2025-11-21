@@ -174,6 +174,85 @@ service cloud.firestore {
     }
 
     // ===========================
+    // お気に入り（favorites）コレクション
+    // ===========================
+    match /favorites/{favoriteId} {
+      // 読み取り: 認証済みユーザーが自分のお気に入りのみ
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+
+      // 作成: 認証済み + 必須フィールド + データバリデーション
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        // 必須フィールドチェック
+        && request.resource.data.keys().hasAll(['userId', 'parkId', 'type', 'createdAt'])
+        // parkIdが存在する公園かチェック
+        && exists(/databases/$(database)/documents/parks/$(request.resource.data.parkId))
+        // typeのバリデーション
+        && request.resource.data.type is string
+        && request.resource.data.type in ['favorite', 'visited', 'wantToVisit']
+        // visitedAtはvisitedタイプの場合のみ許可（オプション）
+        && (!request.resource.data.keys().hasAny(['visitedAt'])
+            || (request.resource.data.type == 'visited'
+                && request.resource.data.visitedAt == request.time));
+
+      // 更新: 作成者のみ + userId/parkId/type変更不可 + updatedAt必須
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        && request.resource.data.parkId == resource.data.parkId
+        && request.resource.data.type == resource.data.type;
+
+      // 削除: 作成者のみ
+      allow delete: if isDocumentOwner();
+    }
+
+    // ===========================
+    // 通報（reports）コレクション
+    // ===========================
+    match /reports/{reportId} {
+      // 読み取り: 管理者のみ（カスタムクレームが必要な場合は別途実装）
+      // 通常ユーザーは自分が作成した通報のみ読み取り可能
+      allow read: if isAuthenticated()
+        && resource.data.reportedBy == request.auth.uid;
+
+      // 作成: 認証済み + 必須フィールド + データバリデーション
+      allow create: if isAuthenticated()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        // 必須フィールドチェック
+        && request.resource.data.keys().hasAll(['parkId', 'reviewId', 'reportedBy', 'reason', 'status', 'createdAt'])
+        // reportedByは自分のUID
+        && request.resource.data.reportedBy == request.auth.uid
+        // parkIdとreviewIdが存在するかチェック
+        && exists(/databases/$(database)/documents/parks/$(request.resource.data.parkId))
+        && exists(/databases/$(database)/documents/reviews/$(request.resource.data.reviewId))
+        // reasonのバリデーション
+        && request.resource.data.reason is string
+        && request.resource.data.reason in ['inappropriate_content', 'spam', 'harassment', 'other']
+        // statusは常に'pending'で作成
+        && request.resource.data.status == 'pending'
+        // reportedByEmailのバリデーション（オプション）
+        && (!request.resource.data.keys().hasAny(['reportedByEmail'])
+            || request.resource.data.reportedByEmail is string)
+        // reviewCommentのバリデーション（オプション）
+        && (!request.resource.data.keys().hasAny(['reviewComment'])
+            || (request.resource.data.reviewComment is string
+                && request.resource.data.reviewComment.size() <= 1000));
+
+      // 更新: 管理者のみ（statusの変更など）
+      // 通常ユーザーは更新不可
+      allow update: if false;
+
+      // 削除: 管理者のみ
+      // 通常ユーザーは削除不可
+      allow delete: if false;
+    }
+
+    // ===========================
     // ユーザー（users）コレクション
     // ===========================
     match /users/{userId} {

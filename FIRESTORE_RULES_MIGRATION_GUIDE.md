@@ -54,6 +54,23 @@ await updateDoc(doc(db, 'parks', parkId), {
 - `userId` (string, 自動設定)
 - `createdAt` (timestamp, サーバー時刻)
 
+**favorites コレクション**:
+- `userId` (string, 自動設定)
+- `parkId` (string, 存在する公園のID)
+- `type` (string, 'favorite' | 'visited' | 'wantToVisit')
+- `createdAt` (timestamp, サーバー時刻)
+- `visitedAt` (timestamp, オプション、typeが'visited'の場合のみ)
+
+**reports コレクション**:
+- `parkId` (string, 存在する公園のID)
+- `reviewId` (string, 存在するレビューのID)
+- `reportedBy` (string, 通報者のUID)
+- `reason` (string, 'inappropriate_content' | 'spam' | 'harassment' | 'other')
+- `status` (string, 常に'pending'で作成)
+- `createdAt` (timestamp, サーバー時刻)
+- `reportedByEmail` (string, オプション)
+- `reviewComment` (string, オプション、最大1000文字)
+
 **影響するコード**:
 ```javascript
 // ✅ 公園作成の完全な例
@@ -75,6 +92,35 @@ await addDoc(collection(db, 'reviews'), {
   createdAt: serverTimestamp(),    // 必須
   title: '素晴らしい公園',          // オプション（最大100文字）
   comment: 'とても楽しかった'       // オプション（最大1000文字）
+});
+
+// ✅ お気に入り追加の完全な例
+await addDoc(collection(db, 'favorites'), {
+  userId: user.uid,                // 必須
+  parkId: parkDocId,               // 必須
+  type: 'favorite',                // 必須（'favorite' | 'visited' | 'wantToVisit'）
+  createdAt: serverTimestamp()     // 必須
+});
+
+// ✅ 行った公園の追加（visitedAtを含む）
+await addDoc(collection(db, 'favorites'), {
+  userId: user.uid,
+  parkId: parkDocId,
+  type: 'visited',                 // 必須
+  visitedAt: serverTimestamp(),    // オプション（visitedの場合）
+  createdAt: serverTimestamp()     // 必須
+});
+
+// ✅ レビュー通報の例
+await addDoc(collection(db, 'reports'), {
+  parkId: parkDocId,               // 必須
+  reviewId: reviewDocId,           // 必須
+  reportedBy: user.uid,            // 必須
+  reportedByEmail: user.email,     // オプション
+  reviewComment: '問題のあるレビュー内容',  // オプション（最大1000文字）
+  reason: 'inappropriate_content', // 必須
+  status: 'pending',               // 必須（常に'pending'）
+  createdAt: serverTimestamp()     // 必須
 });
 ```
 

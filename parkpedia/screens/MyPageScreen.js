@@ -171,7 +171,7 @@ export default function MyPageScreen({ navigation, route }) {
         earnedBadges.push({
           id: 'photographer',
           name: 'フォトグラファー',
-          description: '合計10枚の写真を投稿しました。',
+          description: '写真付きレビューを10件投稿しました。',
           icon: '📷',
         });
       }
