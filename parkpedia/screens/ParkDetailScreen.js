@@ -486,25 +486,85 @@ export default function ParkDetailScreen({ route, navigation }) {
     );
   };
 
+  // レビューを報告
+  const handleReportReview = (reviewId, reviewComment) => {
+    Alert.alert(
+      'レビューを報告',
+      'このレビューを不適切なコンテンツとして報告しますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '報告する',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const currentUser = auth.currentUser;
+              if (!currentUser) {
+                Alert.alert('ログインが必要です', '報告機能を使用するにはログインが必要です');
+                return;
+              }
+
+              // reportsコレクションに報告を保存
+              const reportsRef = collection(db, 'reports');
+              await addDoc(reportsRef, {
+                reviewId: reviewId,
+                parkId: parkId,
+                reportedBy: currentUser.uid,
+                reportedByEmail: currentUser.email,
+                reviewComment: reviewComment,
+                reason: 'inappropriate_content',
+                status: 'pending',
+                createdAt: serverTimestamp(),
+              });
+
+              Alert.alert('報告完了', 'レビューを報告しました。運営チームが確認します。');
+            } catch (error) {
+              console.error('報告エラー:', error);
+              Alert.alert('エラー', '報告に失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // レビューカードのレンダリング
-  const renderReviewCard = ({ item }) => (
-    <View style={styles.reviewCard}>
-      <View style={styles.reviewHeader}>
-        <Text style={styles.reviewRating}>
-          {'⭐'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)}
-        </Text>
-        <Text style={styles.reviewDate}>
-          {item.createdAt?.toDate?.().toLocaleDateString('ja-JP') || '日付不明'}
-        </Text>
+  const renderReviewCard = ({ item }) => {
+    const currentUser = auth.currentUser;
+    const isOwnReview = currentUser && item.userId === currentUser.uid;
+
+    return (
+      <View style={styles.reviewCard}>
+        <View style={styles.reviewHeader}>
+          <Text style={styles.reviewRating}>
+            {'⭐'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)}
+          </Text>
+          <Text style={styles.reviewDate}>
+            {item.createdAt?.toDate?.().toLocaleDateString('ja-JP') || '日付不明'}
+          </Text>
+        </View>
+        {item.comment && (
+          <Text style={styles.reviewComment}>{item.comment}</Text>
+        )}
+        <View style={styles.reviewFooter}>
+          {item.userName && (
+            <Text style={styles.reviewUserName}>- {item.userName}</Text>
+          )}
+          {!isOwnReview && (
+            <TouchableOpacity
+              style={styles.reportButton}
+              onPress={() => handleReportReview(item.id, item.comment)}
+            >
+              <Text style={styles.reportButtonText}>🚩 報告</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-      {item.comment && (
-        <Text style={styles.reviewComment}>{item.comment}</Text>
-      )}
-      {item.userName && (
-        <Text style={styles.reviewUserName}>- {item.userName}</Text>
-      )}
-    </View>
-  );
+    );
+  };
 
   if (loading || !park) {
     return (
@@ -904,6 +964,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     fontStyle: 'italic',
+    flex: 1,
+  },
+  reviewFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  reportButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  reportButtonText: {
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '600',
   },
   imageSection: {
     backgroundColor: '#FFFFFF',
@@ -1056,5 +1136,8 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 });
+
+
+
 
 

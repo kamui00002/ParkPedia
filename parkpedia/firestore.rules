@@ -1,60 +1,231 @@
-// Firestoreセキュリティルール
+// Firestoreセキュリティルール（完全セキュア版）
 // Firebase Console > Firestore Database > ルール にコピー＆ペーストしてください
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // 公園（parks）コレクションのルール
+
+    // ===========================
+    // 共通関数
+    // ===========================
+
+    // 認証済みかチェック
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 指定されたuserIdと一致するかチェック
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ドキュメントの所有者かチェック
+    function isDocumentOwner() {
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // リクエストデータのuserIdが自分のものかチェック
+    function hasValidUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+
+    // userIdが変更されていないかチェック
+    function userIdNotChanged() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // createdAtが変更されていないかチェック
+    function createdAtNotChanged() {
+      return request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // updatedAtがサーバー時刻かチェック
+    function hasValidUpdatedAt() {
+      return request.resource.data.updatedAt == request.time;
+    }
+
+    // createdAtがサーバー時刻かチェック
+    function hasValidCreatedAt() {
+      return request.resource.data.createdAt == request.time;
+    }
+
+    // ===========================
+    // 公園（parks）コレクション
+    // ===========================
     match /parks/{parkId} {
       // 誰でも読み取り可能
       allow read: if true;
-      
-      // 作成・更新・削除は認証済みユーザーのみ
-      allow create, update, delete: if request.auth != null;
-      
-      // 作成時は作成者IDを自動設定
-      allow create: if request.auth != null 
-        && request.resource.data.userId == request.auth.uid;
+
+      // 作成: 認証済み + 必須フィールド + データバリデーション
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])  // 作成時にupdatedAtは不要
+        // 必須フィールドチェック
+        && request.resource.data.keys().hasAll(['name', 'address', 'userId', 'createdAt'])
+        // データ型と長さのバリデーション
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 300
+        // 緯度経度がある場合のバリデーション
+        && (!request.resource.data.keys().hasAny(['latitude'])
+            || (request.resource.data.latitude is number
+                && request.resource.data.latitude >= -90
+                && request.resource.data.latitude <= 90))
+        && (!request.resource.data.keys().hasAny(['longitude'])
+            || (request.resource.data.longitude is number
+                && request.resource.data.longitude >= -180
+                && request.resource.data.longitude <= 180))
+        // 説明がある場合のバリデーション
+        && (!request.resource.data.keys().hasAny(['description'])
+            || (request.resource.data.description is string
+                && request.resource.data.description.size() <= 1000));
+
+      // 更新: 作成者のみ + userIdとcreatedAt変更不可 + updatedAt必須
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        // データバリデーション（createと同じ）
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 300
+        && (!request.resource.data.keys().hasAny(['latitude'])
+            || (request.resource.data.latitude is number
+                && request.resource.data.latitude >= -90
+                && request.resource.data.latitude <= 90))
+        && (!request.resource.data.keys().hasAny(['longitude'])
+            || (request.resource.data.longitude is number
+                && request.resource.data.longitude >= -180
+                && request.resource.data.longitude <= 180))
+        && (!request.resource.data.keys().hasAny(['description'])
+            || (request.resource.data.description is string
+                && request.resource.data.description.size() <= 1000));
+
+      // 削除: 作成者のみ
+      allow delete: if isDocumentOwner();
+
+      // 公園の画像サブコレクション
+      match /images/{imageId} {
+        // 誰でも読み取り可能
+        allow read: if true;
+
+        // 作成・更新・削除: 公園の作成者のみ
+        allow write: if isAuthenticated()
+          && get(/databases/$(database)/documents/parks/$(parkId)).data.userId == request.auth.uid;
+      }
     }
-    
-    // レビュー（reviews）コレクションのルール
+
+    // ===========================
+    // レビュー（reviews）コレクション
+    // ===========================
     match /reviews/{reviewId} {
       // 誰でも読み取り可能
       allow read: if true;
-      
-      // 作成・更新・削除は認証済みユーザーのみ
-      allow create, update, delete: if request.auth != null;
-      
-      // 作成時は作成者IDを自動設定
-      allow create: if request.auth != null 
-        && request.resource.data.userId == request.auth.uid;
-      
-      // 更新・削除は自分のレビューのみ
-      allow update, delete: if request.auth != null 
-        && resource.data.userId == request.auth.uid;
+
+      // 作成: 認証済み + 必須フィールド + データバリデーション
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        // 必須フィールドチェック
+        && request.resource.data.keys().hasAll(['parkId', 'rating', 'userId', 'createdAt'])
+        // parkIdが存在する公園かチェック
+        && exists(/databases/$(database)/documents/parks/$(request.resource.data.parkId))
+        // 評価のバリデーション
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        // コメントがある場合のバリデーション
+        && (!request.resource.data.keys().hasAny(['comment'])
+            || (request.resource.data.comment is string
+                && request.resource.data.comment.size() <= 1000))
+        // タイトルがある場合のバリデーション
+        && (!request.resource.data.keys().hasAny(['title'])
+            || (request.resource.data.title is string
+                && request.resource.data.title.size() <= 100));
+
+      // 更新: 作成者のみ + userId/parkId/createdAt変更不可 + updatedAt必須
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        // parkIdも変更不可
+        && request.resource.data.parkId == resource.data.parkId
+        // データバリデーション（createと同じ）
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && (!request.resource.data.keys().hasAny(['comment'])
+            || (request.resource.data.comment is string
+                && request.resource.data.comment.size() <= 1000))
+        && (!request.resource.data.keys().hasAny(['title'])
+            || (request.resource.data.title is string
+                && request.resource.data.title.size() <= 100));
+
+      // 削除: 作成者のみ
+      allow delete: if isDocumentOwner();
     }
-    
-    // ユーザー（users）コレクションのルール
+
+    // ===========================
+    // ユーザー（users）コレクション
+    // ===========================
     match /users/{userId} {
-      // 誰でも読み取り可能（プロフィール情報など）
+      // 公開プロフィール情報は誰でも読み取り可能
+      // 機密情報（email, phone等）は除外
       allow read: if true;
-      
-      // 作成・更新は認証済みユーザーで、自分のドキュメントのみ
-      allow create, update: if request.auth != null 
-        && userId == request.auth.uid;
-      
-      // 削除は自分のドキュメントのみ
-      allow delete: if request.auth != null 
-        && userId == request.auth.uid;
+
+      // 作成: 自分のドキュメントのみ + データバリデーション
+      allow create: if isOwner(userId)
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        // 表示名のバリデーション
+        && (!request.resource.data.keys().hasAny(['displayName'])
+            || (request.resource.data.displayName is string
+                && request.resource.data.displayName.size() <= 50))
+        // プロフィール画像URLのバリデーション
+        && (!request.resource.data.keys().hasAny(['photoURL'])
+            || request.resource.data.photoURL is string)
+        // 自己紹介のバリデーション
+        && (!request.resource.data.keys().hasAny(['bio'])
+            || (request.resource.data.bio is string
+                && request.resource.data.bio.size() <= 500));
+
+      // 更新: 自分のドキュメントのみ + createdAt変更不可 + updatedAt必須
+      allow update: if isOwner(userId)
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        // データバリデーション（createと同じ）
+        && (!request.resource.data.keys().hasAny(['displayName'])
+            || (request.resource.data.displayName is string
+                && request.resource.data.displayName.size() <= 50))
+        && (!request.resource.data.keys().hasAny(['photoURL'])
+            || request.resource.data.photoURL is string)
+        && (!request.resource.data.keys().hasAny(['bio'])
+            || (request.resource.data.bio is string
+                && request.resource.data.bio.size() <= 500));
+
+      // 削除: 自分のドキュメントのみ
+      allow delete: if isOwner(userId);
+
+      // ユーザーの機密情報サブコレクション
+      // email, phone, privateData などはここに保存
+      match /private/{document} {
+        // 読み取り・書き込み: 本人のみ
+        allow read, write: if isOwner(userId);
+      }
+
+      // ユーザーの通知設定サブコレクション
+      match /settings/{document} {
+        // 読み取り・書き込み: 本人のみ
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 }
-
-
-
-
-
-
-
-

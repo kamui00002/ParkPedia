@@ -23,7 +23,7 @@ import {
   getDoc,
 } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
+import { signOut, deleteUser } from 'firebase/auth';
 import CustomHeader from '../components/CustomHeader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -278,6 +278,91 @@ export default function MyPageScreen({ navigation, route }) {
     );
   };
 
+  // アカウント削除処理
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'アカウント削除',
+      'アカウントを削除すると、すべてのデータが完全に削除されます。この操作は取り消せません。本当に削除しますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const currentUser = auth.currentUser;
+              if (!currentUser) {
+                Alert.alert('エラー', 'ユーザー情報が見つかりません');
+                return;
+              }
+
+              setLoading(true);
+
+              // 1. ユーザーに関連するデータをFirestoreから削除
+              // お気に入り/行った/行ってみたいリストを削除
+              const favoritesRef = collection(db, 'favorites');
+              const favoritesQuery = query(favoritesRef, where('userId', '==', currentUser.uid));
+              const favoritesSnapshot = await getDocs(favoritesQuery);
+
+              for (const favoriteDoc of favoritesSnapshot.docs) {
+                await deleteDoc(favoriteDoc.ref);
+              }
+
+              // レビューを削除
+              const reviewsRef = collection(db, 'reviews');
+              const reviewsQuery = query(reviewsRef, where('userId', '==', currentUser.uid));
+              const reviewsSnapshot = await getDocs(reviewsQuery);
+
+              for (const reviewDoc of reviewsSnapshot.docs) {
+                await deleteDoc(reviewDoc.ref);
+              }
+
+              // 2. AsyncStorageから最近見た公園を削除
+              const recentParksKey = `recentParks_${currentUser.uid}`;
+              await AsyncStorage.removeItem(recentParksKey);
+
+              // 3. Firebase Authenticationからユーザーアカウントを削除
+              await deleteUser(currentUser);
+
+              // 4. ログイン画面に遷移
+              Alert.alert('完了', 'アカウントを削除しました', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: 'Login' }],
+                    });
+                  },
+                },
+              ]);
+            } catch (error) {
+              console.error('アカウント削除エラー:', error);
+              setLoading(false);
+
+              if (error.code === 'auth/requires-recent-login') {
+                Alert.alert(
+                  'エラー',
+                  'セキュリティのため、アカウント削除には再ログインが必要です。一度ログアウトして再度ログインしてからお試しください。',
+                  [
+                    {
+                      text: 'OK',
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert('エラー', 'アカウント削除に失敗しました: ' + error.message);
+              }
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // 公園カードをタップしたときの処理
   const handleParkCardPress = (park) => {
     navigation.navigate('ParkDetail', { parkId: park.id, park });
@@ -359,6 +444,12 @@ export default function MyPageScreen({ navigation, route }) {
             onPress={handleLogout}
           >
             <Text style={styles.logoutButtonText}>ログアウト</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteAccountButton}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.deleteAccountButtonText}>アカウントを削除</Text>
           </TouchableOpacity>
         </View>
 
@@ -507,9 +598,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     alignItems: 'center',
+    marginBottom: 12,
   },
   logoutButtonText: {
     color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteAccountButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  deleteAccountButtonText: {
+    color: '#EF4444',
     fontSize: 14,
     fontWeight: '600',
   },
