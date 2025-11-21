@@ -1,40 +1,76 @@
 # EAS Build ignore file
 # Files and directories to exclude from the build
 
-# macOS
+# macOS system files and directories
 .DS_Store
 .Trash
+.Trash-*
 Trash
+**/.Trash
+**/.Trash-*
+**/Trash
+
+# Parent directory exclusions
+../.Trash
+../../.Trash
+~/.Trash
 
 # Node modules (already in .gitignore, but explicitly here)
 node_modules/
+**/node_modules/
 
 # Build artifacts
 dist/
 build/
 .expo/
 web-build/
+android/
+ios/
 
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
+.cursor/
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.npm/
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
+serviceAccountKey.json
 
 # OS files
 Thumbs.db
+Desktop.ini
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+temp/
+
+# Git and version control
+.git/
+.gitignore
+
+# Documentation and scripts (not needed for build)
+*.md
+*.sh
+session_monitor.log
+
+# Project-specific excludes
+.serena/
+serena/
+.claude/
+buildServer.json
+SAMPLE_DATA.js
+scripts/
 
