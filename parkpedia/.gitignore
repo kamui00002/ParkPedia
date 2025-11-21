@@ -33,6 +33,8 @@ ios/
 
 # macOS
 .DS_Store
+.Trash
+Trash
 
 # Logs
 *.log
