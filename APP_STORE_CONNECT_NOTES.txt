@@ -1,0 +1,23 @@
+DEMO ACCOUNT FOR APP REVIEW
+
+Email: reviewer@parkpedia.test
+Password: ReviewTest2024!
+
+TESTING GUIDELINES:
+
+1. ACCOUNT DELETION (Guideline 5.1.1v):
+   - Login → Tap "マイページ" (My Page) tab → See "アカウントを削除" button with RED border
+   - DO NOT delete the account, just verify the button exists
+
+2. REVIEWS IN RECOMMENDED SECTION (Guideline 2.1):
+   - Home screen → Tap any park (e.g., "中央公園")
+   - Scroll down to "レビュー" section → See MULTIPLE reviews with detailed comments
+   - All recommended parks have 2-4 reviews
+
+3. FLAGGING MECHANISM (Guideline 2.1):
+   - Open any park → Scroll to "レビュー" section
+   - See "🚩 報告" (Report) button on the RIGHT side of each review
+   - Tap to report inappropriate content
+   - Note: Button only appears on OTHER users' reviews (not your own)
+
+IMPORTANT: All features are fully implemented. Reviews and flagging are visible in the app. Please see APP_STORE_REVIEW_NOTES.md for detailed screenshots and step-by-step instructions.

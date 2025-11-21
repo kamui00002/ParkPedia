@@ -54,7 +54,7 @@ export default function MyPageScreen({ navigation, route }) {
         },
       ]);
     }
-  }, []);
+  }, [navigation]);
 
   // データ取得
   const fetchMyPageData = useCallback(async () => {

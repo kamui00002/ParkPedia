@@ -69,7 +69,7 @@ export default function AddParkScreen({ navigation }) {
         ]
       );
     }
-  }, []);
+  }, [navigation]);
 
   // 対象年齢の選択/解除
   const toggleAge = (age) => {

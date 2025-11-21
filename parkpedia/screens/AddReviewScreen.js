@@ -48,7 +48,7 @@ export default function AddReviewScreen({ route, navigation }) {
         ]
       );
     }
-  }, []);
+  }, [navigation]);
 
   // 写真を選択
   const pickImage = async () => {

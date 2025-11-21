@@ -1,0 +1,24 @@
+# language of the project (csharp, python, rust, java, typescript, go, cpp, or ruby)
+#  * For C, use cpp
+#  * For JavaScript, use typescript
+language: typescript
+
+# the encoding used by text files in the project
+encoding: "utf-8"
+
+# whether to use the project's gitignore file to ignore files
+ignore_all_files_in_gitignore: true
+
+# list of additional paths to ignore
+ignored_paths: []
+
+# whether the project is in read-only mode
+read_only: false
+
+# list of tool names to exclude
+excluded_tools: []
+
+# initial prompt for the project
+initial_prompt: ""
+
+project_name: "ParkPedia"
