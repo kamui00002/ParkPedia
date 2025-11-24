@@ -13,3 +13,4 @@ npx expo start > /tmp/expo_auto_start.log 2>&1 &
 
 echo "$(date): Expoサーバーを自動起動しました" >> /tmp/expo_auto_start.log
 
+

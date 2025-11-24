@@ -25,6 +25,7 @@ import AddReviewScreen from './screens/AddReviewScreen';
 import LoginScreen from './screens/LoginScreen';
 import AddParkScreen from './screens/AddParkScreen';
 import MyPageScreen from './screens/MyPageScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -97,6 +98,14 @@ export default function App() {
                     component={LoginScreen}
                     options={{
                         title: 'ログイン',
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="TermsOfService"
+                    component={TermsOfServiceScreen}
+                    options={{
+                        title: '利用規約',
                         headerShown: false,
                     }}
                 />

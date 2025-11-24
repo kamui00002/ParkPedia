@@ -28,6 +28,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true); // true: ログイン, false: 新規登録
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false); // 利用規約への同意
 
   // Firebase認証の初期化確認
   useEffect(() => {
@@ -141,6 +142,12 @@ export default function LoginScreen({ navigation }) {
     // 入力値の検証
     if (!email.trim() || !password.trim()) {
       Alert.alert('エラー', 'メールアドレスとパスワードを入力してください');
+      return;
+    }
+
+    // 利用規約への同意チェック
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約に同意する必要があります');
       return;
     }
 
@@ -347,6 +354,32 @@ export default function LoginScreen({ navigation }) {
               />
             </View>
 
+            {/* 利用規約への同意（新規登録時のみ表示） */}
+            {!isLogin && (
+              <View style={styles.termsContainer}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setAgreedToTerms(!agreedToTerms)}
+                  disabled={loading}
+                >
+                  <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                    {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate('TermsOfService')}
+                        disabled={loading}
+                      >
+                        <Text style={styles.termsLink}>利用規約</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.termsText}>に同意します</Text>
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* ログイン/新規登録ボタン */}
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -370,6 +403,7 @@ export default function LoginScreen({ navigation }) {
                   setIsLogin(!isLogin);
                   setEmail('');
                   setPassword('');
+                  setAgreedToTerms(false);
                 }
               }}
               disabled={loading}
@@ -538,6 +572,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  termsContainer: {
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: '#fff',
+  },
+  checkmark: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
+  termsText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  termsLink: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
 });
 

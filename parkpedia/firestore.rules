@@ -254,6 +254,35 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Blocked Users Collection
+    // ===========================
+    match /blockedUsers/{blockId} {
+      // Read: Authenticated users can only read their own blocks
+      allow read: if isAuthenticated()
+        && resource.data.blockedBy == request.auth.uid;
+
+      // Create: Authenticated users only with required fields and validation
+      allow create: if isAuthenticated()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        // Required fields check
+        && request.resource.data.keys().hasAll(['blockedBy', 'blockedUserId', 'createdAt'])
+        // blockedBy must be current user's UID
+        && request.resource.data.blockedBy == request.auth.uid
+        // Cannot block self
+        && request.resource.data.blockedUserId != request.auth.uid
+        // blockedUserId validation
+        && request.resource.data.blockedUserId is string;
+
+      // Update: Not allowed
+      allow update: if false;
+
+      // Delete: Owner only
+      allow delete: if isAuthenticated()
+        && resource.data.blockedBy == request.auth.uid;
+    }
+
+    // ===========================
     // Users Collection
     // ===========================
     match /users/{userId} {
@@ -309,3 +338,4 @@ service cloud.firestore {
     }
   }
 }
+

@@ -43,11 +43,13 @@ export default function ParkDetailScreen({ route, navigation }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isWantToVisit, setIsWantToVisit] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState([]); // ブロックされたユーザーのリスト
   
   const IMAGE_CATEGORIES = ['全て', '遊具', '設備', '風景', 'その他'];
 
   useEffect(() => {
     fetchParkDetails();
+    fetchBlockedUsers();
     fetchReviews();
   }, [parkId]);
 
@@ -59,6 +61,13 @@ export default function ParkDetailScreen({ route, navigation }) {
       saveToRecentParks();
     }
   }, [park]);
+
+  // ブロックユーザーが更新されたらレビューを再取得
+  useEffect(() => {
+    if (blockedUsers.length >= 0) {
+      fetchReviews();
+    }
+  }, [blockedUsers]);
 
   // 最近見た公園に保存
   const saveToRecentParks = async () => {
@@ -149,6 +158,27 @@ export default function ParkDetailScreen({ route, navigation }) {
       setIsWantToVisit(!snapshot.empty);
     } catch (error) {
       console.error('行ってみたい状態確認エラー:', error);
+    }
+  };
+
+  // ブロックされたユーザーのリストを取得
+  const fetchBlockedUsers = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const blockedRef = collection(db, 'blockedUsers');
+      const q = query(blockedRef, where('blockedBy', '==', currentUser.uid));
+      const snapshot = await getDocs(q);
+
+      const blocked = [];
+      snapshot.forEach((doc) => {
+        blocked.push(doc.data().blockedUserId);
+      });
+
+      setBlockedUsers(blocked);
+    } catch (error) {
+      console.error('ブロックユーザー取得エラー:', error);
     }
   };
 
@@ -317,7 +347,11 @@ export default function ParkDetailScreen({ route, navigation }) {
       
       const reviewsData = [];
       querySnapshot.forEach((doc) => {
-        reviewsData.push({ id: doc.id, ...doc.data() });
+        const reviewData = { id: doc.id, ...doc.data() };
+        // ブロックされたユーザーのレビューは除外
+        if (!blockedUsers.includes(reviewData.userId)) {
+          reviewsData.push(reviewData);
+        }
       });
       
       setReviews(reviewsData);
@@ -531,6 +565,50 @@ export default function ParkDetailScreen({ route, navigation }) {
     );
   };
 
+  // ユーザーをブロック
+  const handleBlockUser = (userId, userName) => {
+    Alert.alert(
+      'ユーザーをブロック',
+      `${userName || 'このユーザー'}をブロックしますか？
+ブロックすると、このユーザーのレビューが表示されなくなります。`,
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: 'ブロック',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const currentUser = auth.currentUser;
+              if (!currentUser) {
+                Alert.alert('ログインが必要です', 'ブロック機能を使用するにはログインが必要です');
+                return;
+              }
+
+              // blockedUsersコレクションに追加
+              const blockedRef = collection(db, 'blockedUsers');
+              await addDoc(blockedRef, {
+                blockedBy: currentUser.uid,
+                blockedUserId: userId,
+                createdAt: serverTimestamp(),
+              });
+
+              // ローカル状態を更新
+              setBlockedUsers([...blockedUsers, userId]);
+
+              Alert.alert('ブロック完了', 'ユーザーをブロックしました');
+            } catch (error) {
+              console.error('ブロックエラー:', error);
+              Alert.alert('エラー', 'ブロックに失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // レビューカードのレンダリング
   const renderReviewCard = ({ item }) => {
     const currentUser = auth.currentUser;
@@ -554,12 +632,20 @@ export default function ParkDetailScreen({ route, navigation }) {
             <Text style={styles.reviewUserName}>- {item.userName}</Text>
           )}
           {!isOwnReview && (
-            <TouchableOpacity
-              style={styles.reportButton}
-              onPress={() => handleReportReview(item.id, item.comment)}
-            >
-              <Text style={styles.reportButtonText}>🚩 報告</Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.reportButton}
+                onPress={() => handleReportReview(item.id, item.comment)}
+              >
+                <Text style={styles.reportButtonText}>🚩 報告</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.blockButton}
+                onPress={() => handleBlockUser(item.userId, item.userName)}
+              >
+                <Text style={styles.blockButtonText}>🚫 ブロック</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -985,6 +1071,23 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '600',
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  blockButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  blockButtonText: {
+    fontSize: 12,
+    color: '#D97706',
+    fontWeight: '600',
+  },
   imageSection: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 18,
@@ -1136,6 +1239,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 });
+
 
 
 
