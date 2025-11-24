@@ -77,8 +77,11 @@ export default function LoginScreen({ navigation }) {
         timeoutPromise,
       ]);
 
-      // ログイン成功後、前の画面に戻る
-      navigation.goBack();
+      // ログイン成功後、ホーム画面に戻る
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     } catch (error) {
       if (__DEV__) {
         console.error('ログインエラー:', error);
@@ -269,8 +272,11 @@ export default function LoginScreen({ navigation }) {
         timeoutPromise,
       ]);
 
-      // ログイン成功後、前の画面に戻る
-      navigation.goBack();
+      // ログイン成功後、ホーム画面に戻る
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     } catch (error) {
       if (__DEV__) {
         console.error('ゲストログインエラー:', error);
