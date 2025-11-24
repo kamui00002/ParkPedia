@@ -13,8 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -189,7 +189,12 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('成功', 'アカウントを作成しました', [
         {
           text: 'OK',
-          onPress: () => navigation.goBack(),
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            });
+          },
         },
       ]);
     } catch (error) {
@@ -367,13 +372,13 @@ export default function LoginScreen({ navigation }) {
                   </View>
                   <View style={styles.termsTextContainer}>
                     <Text style={styles.termsText}>
-                      <TouchableOpacity
+                      <Text 
+                        style={styles.termsLink}
                         onPress={() => navigation.navigate('TermsOfService')}
-                        disabled={loading}
                       >
-                        <Text style={styles.termsLink}>利用規約</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.termsText}>に同意します</Text>
+                        利用規約
+                      </Text>
+                      に同意します
                     </Text>
                   </View>
                 </TouchableOpacity>
