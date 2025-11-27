@@ -1,0 +1,177 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocumentOwner() {
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    function hasValidUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+
+    function userIdNotChanged() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    function createdAtNotChanged() {
+      return request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function hasValidUpdatedAt() {
+      return request.resource.data.updatedAt == request.time;
+    }
+
+    function hasValidCreatedAt() {
+      return request.resource.data.createdAt == request.time;
+    }
+
+    match /parks/{parkId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        && request.resource.data.keys().hasAll(['name', 'address', 'userId', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 300;
+
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 300;
+
+      allow delete: if isDocumentOwner();
+
+      match /images/{imageId} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+      }
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        && request.resource.data.keys().hasAll(['parkId', 'rating', 'userId', 'createdAt'])
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && (!request.resource.data.keys().hasAny(['comment'])
+            || (request.resource.data.comment is string
+                && request.resource.data.comment.size() <= 1000));
+
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        && request.resource.data.parkId == resource.data.parkId
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+
+      allow delete: if isDocumentOwner();
+    }
+
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+        && hasValidUserId()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        && request.resource.data.keys().hasAll(['userId', 'parkId', 'type', 'createdAt'])
+        && request.resource.data.type is string
+        && request.resource.data.type in ['favorite', 'visited', 'wantToVisit'];
+
+      allow update: if isDocumentOwner()
+        && userIdNotChanged()
+        && createdAtNotChanged()
+        && hasValidUpdatedAt()
+        && request.resource.data.parkId == resource.data.parkId
+        && request.resource.data.type == resource.data.type;
+
+      allow delete: if isDocumentOwner();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAuthenticated()
+        && resource.data.reportedBy == request.auth.uid;
+
+      allow create: if isAuthenticated()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        && request.resource.data.keys().hasAll(['parkId', 'reviewId', 'reportedBy', 'reason', 'status', 'createdAt'])
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.reason is string
+        && request.resource.data.reason in ['inappropriate_content', 'spam', 'harassment', 'other']
+        && request.resource.data.status == 'pending';
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /blockedUsers/{blockId} {
+      allow read: if isAuthenticated()
+        && resource.data.blockedBy == request.auth.uid;
+
+      allow create: if isAuthenticated()
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt'])
+        && request.resource.data.keys().hasAll(['blockedBy', 'blockedUserId', 'createdAt'])
+        && request.resource.data.blockedBy == request.auth.uid
+        && request.resource.data.blockedUserId != request.auth.uid
+        && request.resource.data.blockedUserId is string;
+
+      allow update: if false;
+
+      allow delete: if isAuthenticated()
+        && resource.data.blockedBy == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+
+      allow create: if isOwner(userId)
+        && hasValidCreatedAt()
+        && !request.resource.data.keys().hasAny(['updatedAt']);
+
+      allow update: if isOwner(userId)
+        && createdAtNotChanged()
+        && hasValidUpdatedAt();
+
+      allow delete: if isOwner(userId);
+
+      match /private/{document} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /settings/{document} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
