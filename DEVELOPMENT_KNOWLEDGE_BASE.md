@@ -251,7 +251,66 @@ git push origin --force --all
 
 ## Firebase設定
 
-### 問題6: Firestoreセキュリティルール
+### 問題6: Firestoreセキュリティルールのデプロイエラー
+
+**問題**: Firebase Consoleでルールをデプロイ時に複数のパースエラーが発生。
+
+**原因**:
+- コメント内に特定のキーワード（`validation`, `match`, `separately`など）が含まれている
+- Firestoreのパーサーがコメント内のキーワードを誤認識
+- `exists()`と`get()`関数の構文が複雑でパースエラーを引き起こす
+
+**エラーメッセージ例**:
+```
+Line 63: Unexpected 'validation'
+Line 187: Missing 'match' keyword before path
+Line 187: Forward slash '/' found where identifier or binding expected
+```
+
+**解決策**:
+
+#### 即座の解決（シンプル版）
+1. すべてのコメントを削除
+2. `exists()`と`get()`チェックを削除
+3. 基本的なバリデーションのみ残す
+
+#### 段階的な解決
+1. **コメントを簡素化**: 特定のキーワードを含むコメントを削除
+2. **関数チェックを簡略化**: 複雑な`exists()`パスを削除
+3. **セクションごとにデプロイ**: 問題のある部分を特定
+
+**実装したシンプル版の特徴**:
+```javascript
+// ✅ 保護されているもの
+- 認証チェック（ログインユーザーのみ書き込み可能）
+- オーナーシップチェック（自分のデータのみ編集・削除可能）
+- 基本的なデータ型チェック
+- 必須フィールドチェック
+- 文字列長チェック
+- 評価範囲チェック（1-5）
+
+// ✂️ 削除したもの
+- exists()チェック（公園やレビューの存在確認）
+- get()チェック（サブコレクションの所有者チェック）
+- 詳細なフィールドバリデーション（latitude, longitude, description）
+```
+
+**教訓**:
+- **Firebase Consoleでのテスト**: ルールを一度にすべてデプロイせず、セクションごとに確認
+- **コメントは最小限に**: 特にキーワードを含むコメントは避ける
+- **複雑なチェックは削減**: `exists()`や`get()`は課金対象でもあり、必要最小限に
+- **アプリ側でバリデーション**: Firestoreルールだけに頼らず、アプリ側でも検証
+- **バックアップを保持**: 完全版のルールは`firestore.rules`に保存、シンプル版は`firestore-rules-simple.txt`に保存
+
+**関連ファイル**:
+- `firestore.rules` - 完全版（コメント付き、デプロイ不可）
+- `firestore-rules-simple.txt` - デプロイ可能なシンプル版
+- `firestore-rules-clean.txt` - コメントなし完全版（試行版）
+- `FIRESTORE_RULES_DEPLOY.md` - デプロイ手順書
+
+---
+
+### 問題7: Firestoreセキュリティルール（既存の実装）
 
 **状況**: Firestoreセキュリティルールは既に実装済み
 
@@ -406,6 +465,73 @@ eas credentials:configure -p ios
 1. ファイルが`docs/`フォルダにあるか確認
 2. GitHub Pages設定でソースが`/docs`になっているか確認
 3. 数分待ってキャッシュをクリア
+4. ビルドログを確認（`gh run list --workflow=pages-build-deployment`）
+
+### エラー: "fatal: No url found for submodule path 'X' in .gitmodules"
+
+**問題**: GitHub Pagesのビルドが「submodule」エラーで失敗する。
+
+**原因**:
+- プロジェクト内のディレクトリに`.git`フォルダが存在
+- Gitがそのディレクトリをサブモジュールとして誤認識
+- `.gitmodules`ファイルがない、または不完全
+
+**発生例（ParkPedia）**:
+```
+fatal: No url found for submodule path 'serena' in .gitmodules
+The process '/usr/bin/git' failed with exit code 128
+```
+
+**解決策**:
+
+#### ステップ1: サブモジュールとして登録されているか確認
+```bash
+git ls-files -s <directory_name>
+```
+- `160000`というmodeが表示された場合、サブモジュールとして登録されている
+
+#### ステップ2: サブモジュールを削除して通常のディレクトリに変換
+```bash
+# Gitのインデックスからサブモジュールを削除
+git rm --cached <directory_name>
+
+# ディレクトリ内の.gitフォルダを削除
+rm -rf <directory_name>/.git
+
+# 通常のディレクトリとして追加
+git add <directory_name>/
+
+# コミット＆プッシュ
+git commit -m "Convert <directory_name> from submodule to regular directory"
+git push origin main
+```
+
+#### ステップ3: ビルドを確認
+```bash
+# 新しいビルドが開始されるまで待つ
+sleep 10
+
+# ビルドステータスを確認
+gh run list --workflow=pages-build-deployment --limit 1
+```
+
+**教訓**:
+- **外部リポジトリをクローンする際**: `.git`フォルダを削除してから追加
+- **MCP ServerやSDKなど**: サブモジュールとして追加する必要がない場合は通常のディレクトリとして管理
+- **ビルドログを確認**: GitHub Pagesのビルドが失敗した場合、`gh run view --log-failed`で詳細を確認
+- **CI/CDパイプライン**: サブモジュールの問題はCI/CDでも発生する可能性がある
+
+**関連コマンド**:
+```bash
+# GitHub Pagesのビルド状況を確認
+gh run list --workflow=pages-build-deployment
+
+# 最新のビルドログを表示
+gh run view $(gh run list --workflow=pages-build-deployment --limit 1 --json databaseId --jq '.[0].databaseId') --log-failed
+
+# Pages設定を確認
+gh api /repos/OWNER/REPO/pages
+```
 
 ---
 
