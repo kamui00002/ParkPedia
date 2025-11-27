@@ -53,6 +53,10 @@ firebase-debug.log
 firestore-debug.log
 serviceAccountKey.json
 
+# Credentials
+credentials.json
+credentials/
+
 # Build files
 *.apk
 *.aab
