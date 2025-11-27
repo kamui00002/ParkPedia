@@ -185,6 +185,15 @@ We have implemented a comprehensive moderation system:
 
 ## Additional Information
 
+### Privacy Policy
+We have published a comprehensive Privacy Policy that includes:
+- **URL**: https://kamui00002.github.io/ParkPedia/privacy-policy.html
+- Data collection and usage policies
+- User rights (account deletion, data access, user blocking)
+- Inappropriate content management
+- 24-hour response policy
+- Available in both Japanese and English
+
 ### Demo Account for Testing:
 - **Email**: reviewer@parkpedia.test
 - **Password**: ReviewTest2024!
