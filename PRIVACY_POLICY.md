@@ -115,7 +115,7 @@ ParkPedia（以下「当アプリ」）をご利用いただきありがとう�
 
 プライバシーに関するご質問やご懸念がある場合は、以下までご連絡ください：
 
-**メール**: privacy@parkpedia.app（仮のアドレス - 実際のメールアドレスに置き換えてください）
+**メール**: kamui00002@yahoo.co.jp
 
 ---
 
@@ -230,7 +230,7 @@ We do not disclose personal information to third parties except:
 
 If you have questions or concerns about privacy, please contact:
 
-**Email**: privacy@parkpedia.app (placeholder - replace with your actual email address)
+**Email**: kamui00002@yahoo.co.jp
 
 ---
 
@@ -263,8 +263,8 @@ This Privacy Policy is governed by and construed in accordance with the laws of 
 
 **連絡先 / Contact Information**:
 - **アプリ名 / App Name**: ParkPedia
-- **メール / Email**: privacy@parkpedia.app（実際のメールアドレスに置き換えてください / Replace with your actual email address）
-- **ウェブサイト / Website**: https://parkpedia.app（該当する場合 / If applicable）
+- **メール / Email**: kamui00002@yahoo.co.jp
+- **ウェブサイト / Website**: https://kamui00002.github.io/ParkPedia/privacy-policy.html
 
 ---
 
