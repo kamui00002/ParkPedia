@@ -62,7 +62,7 @@
   - 日英両言語で記載
   - 適切なスタイル・デザイン
 
-- [ ] **GitHub Pagesで公開されている** ⚠️
+- [x] **GitHub Pagesで公開されている**
   - URL: https://kamui00002.github.io/ParkPedia/privacy-policy.html
   - ブラウザで正しく表示されることを確認
   - メールアドレスが kamui00002@yahoo.co.jp になっている
@@ -84,10 +84,10 @@
   - serviceAccountKey.json は未コミット
   - credentials.json は未コミット
 
-- [ ] **Firestoreセキュリティルールがデプロイされている** ⚠️
+- [x] **Firestoreセキュリティルールがデプロイされている**
   - Firebase Console > Firestore Database > ルール
-  - firestore.rules の内容をコピー＆ペースト
-  - 「公開」をクリック
+  - firestore-rules-simple.txt の内容をデプロイ完了
+  - すべてのコレクション（parks, reviews, favorites, reports, blockedUsers, users）に適切な権限設定
   - 手順書: FIRESTORE_RULES_DEPLOY.md
 
 ---
