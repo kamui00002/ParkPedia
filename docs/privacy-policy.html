@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プライバシーポリシー - ParkPedia</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        .language-toggle {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .language-toggle button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #3498db;
+            background-color: white;
+            color: #3498db;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .language-toggle button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .language-toggle button:hover {
+            background-color: #2980b9;
+            color: white;
+            border-color: #2980b9;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        ul {
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .lang-ja, .lang-en {
+            display: none;
+        }
+        .lang-ja.active, .lang-en.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>プライバシーポリシー / Privacy Policy</h1>
+
+        <div class="language-toggle">
+            <button onclick="switchLanguage('ja')" id="btn-ja" class="active">日本語</button>
+            <button onclick="switchLanguage('en')" id="btn-en">English</button>
+        </div>
+
+        <!-- 日本語版 -->
+        <div class="lang-ja active">
+            <p><strong>最終更新日</strong>: 2025年11月27日</p>
+
+            <div class="section">
+                <h2>1. はじめに</h2>
+                <p>ParkPedia（以下「当アプリ」）をご利用いただきありがとうございます。本プライバシーポリシーは、当アプリがどのように個人情報を収集、使用、保護するかについて説明します。</p>
+                <p>当アプリを利用することで、本プライバシーポリシーに同意したものとみなされます。</p>
+            </div>
+
+            <div class="section">
+                <h2>2. 収集する情報</h2>
+
+                <h3>2.1 アカウント情報</h3>
+                <ul>
+                    <li>メールアドレス</li>
+                    <li>パスワード（暗号化して保存）</li>
+                    <li>プロフィール情報（任意）
+                        <ul>
+                            <li>表示名</li>
+                            <li>プロフィール写真</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>2.2 ユーザー生成コンテンツ</h3>
+                <ul>
+                    <li>公園の投稿（公園名、住所、説明、写真）</li>
+                    <li>レビュー（評価、コメント）</li>
+                    <li>お気に入り、訪問履歴</li>
+                </ul>
+
+                <h3>2.3 位置情報</h3>
+                <ul>
+                    <li>公園の位置情報（緯度・経度）</li>
+                    <li><em>注: 当アプリはユーザーの現在位置を自動的に収集しません</em></li>
+                </ul>
+
+                <h3>2.4 技術情報</h3>
+                <ul>
+                    <li>デバイスの種類とOS</li>
+                    <li>アプリの使用状況（クラッシュレポートなど）</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>3. 情報の使用方法</h2>
+                <p>収集した情報は以下の目的で使用されます：</p>
+                <ul>
+                    <li>サービスの提供と機能の実現</li>
+                    <li>ユーザーエクスペリエンスの向上</li>
+                    <li>不適切なコンテンツの監視と削除</li>
+                    <li>ユーザーサポートの提供</li>
+                    <li>セキュリティとポリシー違反の防止</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>4. 情報の共有</h2>
+
+                <h3>4.1 公開情報</h3>
+                <p>以下の情報は他のユーザーに表示されます：</p>
+                <ul>
+                    <li>公園の投稿（公園名、住所、説明、写真）</li>
+                    <li>レビュー（評価、コメント、投稿者の表示名）</li>
+                    <li>プロフィール情報（表示名、プロフィール写真）</li>
+                </ul>
+
+                <h3>4.2 非公開情報</h3>
+                <p>以下の情報は公開されません：</p>
+                <ul>
+                    <li>メールアドレス</li>
+                    <li>パスワード</li>
+                    <li>お気に入りリスト、訪問履歴</li>
+                </ul>
+
+                <h3>4.3 第三者への開示</h3>
+                <p>当アプリは、以下の場合を除き、個人情報を第三者に開示しません：</p>
+                <ul>
+                    <li>ユーザーの同意がある場合</li>
+                    <li>法的義務がある場合</li>
+                    <li>サービス提供に必要な範囲（Firebase等のインフラストラクチャプロバイダー）</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>5. データの保存とセキュリティ</h2>
+                <ul>
+                    <li>すべてのデータはGoogle Firebase（米国）に保存されます</li>
+                    <li>Firebase Authentication による安全な認証</li>
+                    <li>Firestore Security Rules によるアクセス制御</li>
+                    <li>データは暗号化して送信・保存されます</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>6. ユーザーの権利</h2>
+
+                <h3>6.1 アカウント削除</h3>
+                <ul>
+                    <li>マイページからいつでもアカウントを削除できます</li>
+                    <li>アカウント削除時、すべての個人データが削除されます</li>
+                    <li>投稿した公園やレビューも削除されます</li>
+                </ul>
+
+                <h3>6.2 データへのアクセス</h3>
+                <ul>
+                    <li>自分のデータの閲覧・編集がアプリ内で可能です</li>
+                </ul>
+
+                <h3>6.3 ユーザーブロック</h3>
+                <ul>
+                    <li>不快なユーザーをブロックすることができます</li>
+                    <li>ブロックしたユーザーのレビューは表示されなくなります</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>7. 不適切なコンテンツの管理</h2>
+
+                <h3>7.1 ゼロトレランスポリシー</h3>
+                <ul>
+                    <li>不適切なコンテンツ（攻撃的、違法、有害なコンテンツ）を禁止します</li>
+                    <li>違反コンテンツは24時間以内に削除します</li>
+                </ul>
+
+                <h3>7.2 報告機能</h3>
+                <ul>
+                    <li>不適切なレビューを報告できます</li>
+                    <li>報告は24時間以内に審査されます</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>8. 広告</h2>
+                <ul>
+                    <li>当アプリはGoogle AdMobを使用して広告を表示します</li>
+                    <li>広告の表示には最小限の情報が使用されます</li>
+                    <li>パーソナライズド広告のオプトアウトが可能です</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>9. 子供のプライバシー</h2>
+                <ul>
+                    <li>当アプリは13歳未満の子供を対象としていません</li>
+                    <li>13歳未満の子供の個人情報を故意に収集しません</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>10. プライバシーポリシーの変更</h2>
+                <ul>
+                    <li>本プライバシーポリシーは随時更新される場合があります</li>
+                    <li>重要な変更がある場合は、アプリ内で通知します</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>11. お問い合わせ</h2>
+                <p>プライバシーに関するご質問やご懸念がある場合は、以下までご連絡ください：</p>
+                <div class="highlight">
+                    <p><strong>メール</strong>: privacy@parkpedia.app</p>
+                    <p><strong>GitHub</strong>: <a href="https://github.com/kamui00002/ParkPedia">https://github.com/kamui00002/ParkPedia</a></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>12. Firebase データ処理の詳細</h2>
+
+                <h3>データの保存場所</h3>
+                <p>すべてのユーザーデータはGoogle Firebase（米国）に保存されます</p>
+
+                <h3>使用するFirebaseサービス</h3>
+                <ul>
+                    <li><strong>Firebase Authentication</strong>: ユーザー認証</li>
+                    <li><strong>Cloud Firestore</strong>: データベース</li>
+                    <li><strong>Firebase Storage</strong>: 画像保存</li>
+                </ul>
+
+                <h3>データ保持期間</h3>
+                <ul>
+                    <li>アカウントが有効な間、データは保持されます</li>
+                    <li>アカウント削除時、すべてのデータは削除されます</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>13. 準拠法</h2>
+                <p>本プライバシーポリシーは日本法に準拠し、解釈されます。</p>
+            </div>
+        </div>
+
+        <!-- English Version -->
+        <div class="lang-en">
+            <p><strong>Last Updated</strong>: November 27, 2025</p>
+
+            <div class="section">
+                <h2>1. Introduction</h2>
+                <p>Thank you for using ParkPedia (the "App"). This Privacy Policy explains how the App collects, uses, and protects your personal information.</p>
+                <p>By using the App, you agree to this Privacy Policy.</p>
+            </div>
+
+            <div class="section">
+                <h2>2. Information We Collect</h2>
+
+                <h3>2.1 Account Information</h3>
+                <ul>
+                    <li>Email address</li>
+                    <li>Password (encrypted)</li>
+                    <li>Profile information (optional)
+                        <ul>
+                            <li>Display name</li>
+                            <li>Profile photo</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>2.2 User-Generated Content</h3>
+                <ul>
+                    <li>Park submissions (park name, address, description, photos)</li>
+                    <li>Reviews (ratings, comments)</li>
+                    <li>Favorites, visit history</li>
+                </ul>
+
+                <h3>2.3 Location Information</h3>
+                <ul>
+                    <li>Park location (latitude, longitude)</li>
+                    <li><em>Note: The App does not automatically collect your current location</em></li>
+                </ul>
+
+                <h3>2.4 Technical Information</h3>
+                <ul>
+                    <li>Device type and OS</li>
+                    <li>App usage (crash reports, etc.)</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>3. How We Use Information</h2>
+                <p>We use collected information for:</p>
+                <ul>
+                    <li>Providing and operating the service</li>
+                    <li>Improving user experience</li>
+                    <li>Monitoring and removing inappropriate content</li>
+                    <li>Providing user support</li>
+                    <li>Preventing security and policy violations</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>4. Information Sharing</h2>
+
+                <h3>4.1 Public Information</h3>
+                <p>The following information is visible to other users:</p>
+                <ul>
+                    <li>Park submissions (park name, address, description, photos)</li>
+                    <li>Reviews (ratings, comments, poster's display name)</li>
+                    <li>Profile information (display name, profile photo)</li>
+                </ul>
+
+                <h3>4.2 Private Information</h3>
+                <p>The following information is NOT public:</p>
+                <ul>
+                    <li>Email address</li>
+                    <li>Password</li>
+                    <li>Favorites list, visit history</li>
+                </ul>
+
+                <h3>4.3 Third-Party Disclosure</h3>
+                <p>We do not disclose personal information to third parties except:</p>
+                <ul>
+                    <li>With user consent</li>
+                    <li>When legally required</li>
+                    <li>To service providers necessary for operation (Firebase, etc.)</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>5. Data Storage and Security</h2>
+                <ul>
+                    <li>All data is stored on Google Firebase (USA)</li>
+                    <li>Secure authentication via Firebase Authentication</li>
+                    <li>Access control via Firestore Security Rules</li>
+                    <li>Data is encrypted in transit and at rest</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>6. User Rights</h2>
+
+                <h3>6.1 Account Deletion</h3>
+                <ul>
+                    <li>You can delete your account anytime from the My Page</li>
+                    <li>All personal data is deleted upon account deletion</li>
+                    <li>Parks and reviews you posted will also be deleted</li>
+                </ul>
+
+                <h3>6.2 Data Access</h3>
+                <ul>
+                    <li>You can view and edit your data within the App</li>
+                </ul>
+
+                <h3>6.3 User Blocking</h3>
+                <ul>
+                    <li>You can block users you find objectionable</li>
+                    <li>Reviews from blocked users will not be displayed</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>7. Inappropriate Content Management</h2>
+
+                <h3>7.1 Zero Tolerance Policy</h3>
+                <ul>
+                    <li>Inappropriate content (offensive, illegal, harmful) is prohibited</li>
+                    <li>Violations are removed within 24 hours</li>
+                </ul>
+
+                <h3>7.2 Reporting Feature</h3>
+                <ul>
+                    <li>You can report inappropriate reviews</li>
+                    <li>Reports are reviewed within 24 hours</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>8. Advertising</h2>
+                <ul>
+                    <li>The App uses Google AdMob to display ads</li>
+                    <li>Minimal information is used for ad display</li>
+                    <li>You can opt out of personalized ads</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>9. Children's Privacy</h2>
+                <ul>
+                    <li>The App is not intended for children under 13</li>
+                    <li>We do not knowingly collect personal information from children under 13</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>10. Changes to Privacy Policy</h2>
+                <ul>
+                    <li>This Privacy Policy may be updated from time to time</li>
+                    <li>Important changes will be notified within the App</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>11. Contact Us</h2>
+                <p>If you have questions or concerns about privacy, please contact:</p>
+                <div class="highlight">
+                    <p><strong>Email</strong>: privacy@parkpedia.app</p>
+                    <p><strong>GitHub</strong>: <a href="https://github.com/kamui00002/ParkPedia">https://github.com/kamui00002/ParkPedia</a></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>12. Firebase Data Processing Details</h2>
+
+                <h3>Data Storage Location</h3>
+                <p>All user data is stored on Google Firebase (USA)</p>
+
+                <h3>Firebase Services Used</h3>
+                <ul>
+                    <li><strong>Firebase Authentication</strong>: User authentication</li>
+                    <li><strong>Cloud Firestore</strong>: Database</li>
+                    <li><strong>Firebase Storage</strong>: Image storage</li>
+                </ul>
+
+                <h3>Data Retention</h3>
+                <ul>
+                    <li>Data is retained while the account is active</li>
+                    <li>All data is deleted upon account deletion</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>13. Governing Law</h2>
+                <p>This Privacy Policy is governed by and construed in accordance with the laws of Japan.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>アプリ名 / App Name</strong>: ParkPedia</p>
+            <p><strong>メール / Email</strong>: privacy@parkpedia.app</p>
+            <p><strong>GitHub</strong>: <a href="https://github.com/kamui00002/ParkPedia">https://github.com/kamui00002/ParkPedia</a></p>
+            <p><strong>最終更新日 / Last Updated</strong>: 2025年11月27日 / November 27, 2025</p>
+        </div>
+    </div>
+
+    <script>
+        function switchLanguage(lang) {
+            // Hide all language sections
+            document.querySelectorAll('.lang-ja, .lang-en').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.language-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected language section
+            document.querySelector('.lang-' + lang).classList.add('active');
+
+            // Add active class to selected button
+            document.getElementById('btn-' + lang).classList.add('active');
+        }
+    </script>
+</body>
+</html>

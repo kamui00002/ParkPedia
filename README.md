@@ -1,118 +1,108 @@
-# ParkPedia - 公園レビューアプリ
+# ParkPedia
 
-公園の情報とレビューを共有するモバイルアプリです。React + TypeScript + Capacitorで構築されており、iOSとAndroidの両方で動作します。
+公園情報共有アプリ - React Native + Expo + Firebase
 
-## 機能
+## 概要
 
-- 🏞️ 公園の検索とフィルタリング
-- 📍 位置情報に基づく距離計算
-- ⭐ レビューと評価システム
-- 📸 写真付きレビューの投稿
-- 🏷️ 年齢別・遊具別・設備別のタグ付け
-- 📱 PWA対応（プログレッシブウェブアプリ）
-- 🍎 iOS App Store配信対応
+ParkPediaは、ユーザーが公園の情報を共有し、レビューを投稿できるモバイルアプリケーションです。
+
+## 主な機能
+
+- 🔐 **ユーザー認証**: Firebase Authenticationを使用したメール/パスワード認証
+- 📍 **公園一覧**: Firestoreから公園情報を取得して表示
+- 🔍 **検索機能**: 公園名や住所で検索
+- ⭐ **レビュー機能**: 星評価とコメントによるレビュー投稿
+- 📱 **レスポンシブデザイン**: iOS/Android対応
 
 ## 技術スタック
 
-- **フロントエンド**: React 19, TypeScript, Tailwind CSS
-- **モバイル**: Capacitor 6
-- **ビルドツール**: Vite
-- **PWA**: Workbox, Service Worker
-- **アイコン**: Heroicons
+- **React Native**: 0.74.5
+- **Expo**: ~51.0.0
+- **Firebase**: Authentication, Firestore, Storage
+- **React Navigation**: ナビゲーション管理
 
-## 開発環境のセットアップ
+## セットアップ
 
-### 前提条件
+### 1. 必要な環境
 
-- Node.js 18以上
+- Node.js (v16以上推奨)
 - npm または yarn
-- iOS開発の場合: Xcode 15以上
-- Android開発の場合: Android Studio
+- Expo CLI
+- Firebase プロジェクト
 
-### インストール
-
-1. 依存関係をインストール:
-   ```bash
-   npm install
-   ```
-
-2. 環境変数を設定（オプション）:
-   ```bash
-   # .env.local ファイルを作成
-   GEMINI_API_KEY=your_gemini_api_key_here
-   ```
-
-3. 開発サーバーを起動:
-   ```bash
-   npm run dev
-   ```
-
-## iOS配信の準備
-
-### 1. Capacitorの初期化
+### 2. インストール
 
 ```bash
-# iOSプラットフォームを追加
-npx cap add ios
+# 依存関係のインストール
+npm install
 
-# 依存関係を同期
-npm run sync:ios
+# または
+yarn install
 ```
 
-### 2. Xcodeでプロジェクトを開く
+### 3. Firebase設定
+
+1. [Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成
+2. Authentication を有効化（メール/パスワード認証）
+3. Firestore Database を作成
+4. Storage を有効化（必要に応じて）
+5. `firebaseConfig.js` に設定値を記載
+
+### 4. Firestoreセキュリティルール
+
+`firestore.rules` の内容を Firebase Console > Firestore Database > ルール にコピー＆ペーストしてください。
+
+### 5. サンプルデータの追加
+
+`SAMPLE_DATA.js` を参考に、Firebase Consoleからサンプルデータを追加できます。
+
+### 6. アプリの起動
 
 ```bash
-npm run open:ios
+# 開発サーバーを起動
+npm start
+
+# iOSシミュレーターで起動
+npm run ios
+
+# Androidエミュレーターで起動
+npm run android
 ```
 
-### 3. Xcodeでの設定
-
-1. **Bundle Identifier**: `com.parkpedia.app` に設定
-2. **Team**: あなたのApple Developer Teamを選択
-3. **Signing & Capabilities**: 自動署名を有効化
-4. **Info.plist**: 位置情報とカメラの使用許可を確認
-
-### 4. ビルドと配信
-
-```bash
-# プロダクションビルド
-npm run build:ios
-
-# シミュレーターで実行
-npm run run:ios
-```
-
-### 5. App Store Connectへの配信
-
-1. Xcodeで **Product > Archive** を実行
-2. **Organizer** でアーカイブを選択
-3. **Distribute App** をクリック
-4. **App Store Connect** を選択
-5. 配信設定を完了
-
-## 利用可能なスクリプト
-
-- `npm run dev` - 開発サーバーを起動
-- `npm run build` - プロダクションビルド
-- `npm run preview` - ビルド結果をプレビュー
-- `npm run build:ios` - iOS用ビルドとCapacitor同期
-- `npm run open:ios` - Xcodeでプロジェクトを開く
-- `npm run sync:ios` - iOSプロジェクトを同期
-- `npm run run:ios` - iOSシミュレーターで実行
-
-## プロジェクト構造
+## プロジェクト構成
 
 ```
-ParkPedia/
-├── components/          # Reactコンポーネント
-├── services/           # ビジネスロジック（位置情報、カメラ等）
-├── public/             # 静的ファイル
-├── ios/                # iOSプロジェクト
-├── capacitor.config.ts # Capacitor設定
-├── vite.config.ts      # Vite設定
-└── package.json        # 依存関係
+.
+├── App.js                 # メインアプリケーションファイル
+├── firebaseConfig.js      # Firebase設定
+├── package.json           # 依存関係
+├── app.json              # Expo設定
+├── screens/              # 画面コンポーネント
+│   ├── HomeScreen.js     # ホーム画面
+│   ├── ParkDetailScreen.js  # 公園詳細画面
+│   ├── AddReviewScreen.js   # レビュー追加画面
+│   └── LoginScreen.js    # ログイン画面
+└── SAMPLE_DATA.js        # サンプルデータ
 ```
+
+詳細は `FILE_STRUCTURE.md` を参照してください。
+
+## クイックスタート
+
+詳細なセットアップ手順は `QUICKSTART.md` を参照してください。
 
 ## ライセンス
 
-MIT License
+このプロジェクトはMITライセンスの下で公開されています。
+
+
+
+
+
+
+
+
+
+
+
+
