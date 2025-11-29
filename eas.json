@@ -26,6 +26,10 @@
         "appleId": "kamui00002@yahoo.co.jp",
         "ascAppId": "6755152821",
         "appleTeamId": "B7F79FDM78"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./serviceAccountKey.json",
+        "track": "production"
       }
     }
   }
