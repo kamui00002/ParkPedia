@@ -2,7 +2,7 @@
   "expo": {
     "name": "ParkPedia",
     "slug": "parkpedia",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.parkpedia.app",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "このアプリは近くの公園を検索するために位置情報を使用します。",
