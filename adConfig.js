@@ -1,86 +1,24 @@
-// 広告設定ファイル
+/**
+ * AdMob広告設定
+ *
+ * このファイルでは、AdMob広告の設定を管理します。
+ * - 広告の有効/無効を切り替え
+ * - 広告ユニットIDを管理
+ */
 
-// このファイルで広告のON/OFFを一括管理
+// 広告を有効にするかどうか
+// テスト中は false、本番環境では true に設定
+export const AD_ENABLED = true;
 
-import { Platform } from 'react-native';
-
-
-
-// 🎯 ここを変更するだけで広告の表示/非表示を切り替え
-
-export const AD_ENABLED = false;  // 本番リリース時は true に変更
-
-
-
-// 広告の表示設定
-
-export const AD_SETTINGS = {
-
-  // バナー広告
-
-  banner: {
-
-    enabled: AD_ENABLED,
-
-    height: 50,  // 広告の高さ（ピクセル）
-
-  },
-
-  
-
-  // インタースティシャル広告（全画面）
-
-  interstitial: {
-
-    enabled: AD_ENABLED,
-
-    showAfterReviewCount: 5,  // レビュー投稿5回ごとに表示
-
-  },
-
-  
-
-  // リワード広告（報酬型）
-
-  rewarded: {
-
-    enabled: AD_ENABLED,
-
-    rewardAmount: 10,  // 獲得ポイント
-
-  },
-
-};
-
-
-
-// 開発用：広告スペースの背景色
-
-export const AD_PLACEHOLDER_COLOR = '#FFE5E5';  // ピンク色で視認性UP
-
-
-
-// 広告ユニットID（本番リリース時にAdMobで取得したIDに置き換える）
-
-// ステップ2で取得した広告ユニットIDを以下に設定してください
-
+// AdMob広告ユニットID
 export const AD_UNIT_IDS = {
+  // バナー広告（ホーム画面など）
+  banner: 'ca-app-pub-5237930968754753/1172496343',
 
-  banner: Platform.select({
-
-    ios: 'ca-app-pub-xxxxx/yyyyy',      // ← ステップ2で取得したiOSバナー広告ID
-
-    android: 'ca-app-pub-xxxxx/zzzzz',  // ← ステップ2で取得したAndroidバナー広告ID
-
-  }),
-
-  interstitial: Platform.select({
-
-    ios: 'ca-app-pub-xxxxx/aaaaa',      // ← ステップ2で取得したiOSインタースティシャル広告ID
-
-    android: 'ca-app-pub-xxxxx/bbbbb',  // ← ステップ2で取得したAndroidインタースティシャル広告ID
-
-  }),
-
+  // 今後追加する広告フォーマット用
+  // interstitial: 'ca-app-pub-5237930968754753/XXXXXXXXXX',
+  // rewarded: 'ca-app-pub-5237930968754753/XXXXXXXXXX',
 };
 
+// テスト用の設定
+export const AD_TEST_MODE = __DEV__; // 開発環境では自動的にテストモード

@@ -19,7 +19,7 @@ import { collection, getDocs, query, where, addDoc, deleteDoc, serverTimestamp }
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import FilterDrawer from '../components/FilterDrawer';
-import AdBannerPlaceholder from '../components/AdBannerPlaceholder';
+import AdBanner from '../components/AdBanner';
 import * as Location from 'expo-location';
 
 export default function HomeScreen({ navigation }) {
@@ -706,7 +706,7 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         }
-        ListFooterComponent={<AdBannerPlaceholder />}
+        ListFooterComponent={<AdBanner />}
       />
 
       {/* 公園追加ボタン */}

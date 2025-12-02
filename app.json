@@ -56,6 +56,12 @@
           "photosPermission": "このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。",
           "cameraPermission": "このアプリは公園の写真を撮影するためにカメラを使用します。"
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "iosAppId": "ca-app-pub-5237930968754753~4809377071"
+        }
       ]
     ],
     "extra": {
@@ -65,9 +71,3 @@
     }
   }
 }
-
-
-
-
-
-
