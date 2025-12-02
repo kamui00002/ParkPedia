@@ -29,7 +29,7 @@ import {
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, auth } from '../firebaseConfig';
-import AdBannerPlaceholder from '../components/AdBannerPlaceholder';
+import AdBanner from '../components/AdBanner';
 
 export default function ParkDetailScreen({ route, navigation }) {
   const { parkId, park: initialPark } = route.params;
@@ -874,7 +874,7 @@ export default function ParkDetailScreen({ route, navigation }) {
     </TouchableOpacity>
 
     {/* 🎯 広告プレースホルダー（画面下部固定） */}
-    <AdBannerPlaceholder />
+    <AdBanner />
     </View>
   );
 }
