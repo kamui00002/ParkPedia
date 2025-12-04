@@ -1,0 +1,336 @@
+{
+  "maintenanceChecklist": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-04",
+    "projectName": "ParkPedia",
+    "weekly": {
+      "description": "毎週実施するタスク",
+      "frequency": "weekly",
+      "tasks": [
+        {
+          "id": "weekly-001",
+          "title": "App Store レビューの確認と返信",
+          "day": "月曜日",
+          "estimatedTime": "15分",
+          "priority": "high",
+          "steps": [
+            "App Store Connect にログイン",
+            "新しいレビューを確認",
+            "低評価レビューに丁寧に返信",
+            "バグ報告があれば Issues に記録",
+            "ポジティブなレビューにも返信（任意）"
+          ],
+          "tools": ["App Store Connect"],
+          "completed": false
+        },
+        {
+          "id": "weekly-002",
+          "title": "AdMob 収益の確認",
+          "day": "金曜日",
+          "estimatedTime": "10分",
+          "priority": "high",
+          "steps": [
+            "AdMob Console にログイン",
+            "週次収益を確認",
+            "スプレッドシートに記録",
+            "eCPM と Fill Rate を確認",
+            "異常な変動がないかチェック"
+          ],
+          "tools": ["AdMob Console", "スプレッドシート"],
+          "completed": false
+        },
+        {
+          "id": "weekly-003",
+          "title": "Firebase Console の確認",
+          "day": "水曜日",
+          "estimatedTime": "15分",
+          "priority": "medium",
+          "steps": [
+            "Firebase Console にログイン",
+            "Firestore の使用量を確認",
+            "Authentication のユーザー数を確認",
+            "Storage の使用量を確認",
+            "Crashlytics のエラーを確認（導入後）"
+          ],
+          "tools": ["Firebase Console"],
+          "completed": false
+        }
+      ]
+    },
+    "monthly": {
+      "description": "毎月実施するタスク",
+      "frequency": "monthly",
+      "tasks": [
+        {
+          "id": "monthly-001",
+          "title": "バックアップの確認",
+          "dayOfMonth": 1,
+          "estimatedTime": "10分",
+          "priority": "high",
+          "steps": [
+            "Cloud Storage にアクセス",
+            "firestore-backups フォルダを確認",
+            "最新のバックアップが作成されているか確認",
+            "バックアップサイズを記録",
+            "古いバックアップが削除されているか確認（98日以上前）"
+          ],
+          "tools": ["Cloud Storage"],
+          "completed": false
+        },
+        {
+          "id": "monthly-002",
+          "title": "セキュリティルールの見直し",
+          "dayOfMonth": 28,
+          "estimatedTime": "20分",
+          "priority": "high",
+          "steps": [
+            "Firestore のセキュリティルールを確認",
+            "Firebase のセキュリティアラートを確認",
+            "新しい脆弱性がないか調査",
+            "必要に応じてルールを更新",
+            "テストして動作確認"
+          ],
+          "tools": ["Firebase Console"],
+          "completed": false
+        },
+        {
+          "id": "monthly-003",
+          "title": "依存関係のアップデート",
+          "dayOfMonth": 15,
+          "estimatedTime": "30分",
+          "priority": "medium",
+          "steps": [
+            "ターミナルでプロジェクトディレクトリに移動",
+            "npm outdated を実行",
+            "アップデート可能なパッケージを確認",
+            "重要なセキュリティアップデートを優先的に適用",
+            "npm update を実行",
+            "アプリをテストして動作確認"
+          ],
+          "tools": ["ターミナル", "npm"],
+          "commands": [
+            "cd /Users/yoshidometoru/Documents/GitHub/ParkPedia",
+            "npm outdated",
+            "npm update"
+          ],
+          "completed": false
+        },
+        {
+          "id": "monthly-004",
+          "title": "収益レポートの作成",
+          "dayOfMonth": 30,
+          "estimatedTime": "30分",
+          "priority": "medium",
+          "steps": [
+            "AdMob の月次収益を集計",
+            "App Store Connect でダウンロード数を確認",
+            "Firebase Analytics でユーザー数を確認",
+            "Firestore で公園・レビュー数を確認",
+            "スプレッドシートにまとめる",
+            "前月との比較を記録"
+          ],
+          "tools": ["AdMob Console", "App Store Connect", "Firebase Console", "スプレッドシート"],
+          "metrics": {
+            "revenue": "AdMob 月次収益",
+            "downloads": "App Store ダウンロード数",
+            "activeUsers": "月間アクティブユーザー（MAU）",
+            "parks": "登録公園数",
+            "reviews": "レビュー数"
+          },
+          "completed": false
+        }
+      ]
+    },
+    "quarterly": {
+      "description": "四半期ごとに実施するタスク（3ヶ月ごと）",
+      "frequency": "quarterly",
+      "tasks": [
+        {
+          "id": "quarterly-001",
+          "title": "ロードマップの見直し",
+          "estimatedTime": "60分",
+          "priority": "high",
+          "steps": [
+            "FUTURE_ROADMAP.md を開く",
+            "完了したタスクをチェック",
+            "進捗が遅れているタスクを確認",
+            "優先度を再評価",
+            "新しい機能のアイデアをブレインストーミング",
+            "次の四半期の目標を設定",
+            "ドキュメントを更新"
+          ],
+          "tools": ["テキストエディタ"],
+          "completed": false
+        },
+        {
+          "id": "quarterly-002",
+          "title": "パフォーマンス監査",
+          "estimatedTime": "90分",
+          "priority": "medium",
+          "steps": [
+            "アプリの起動速度を測定",
+            "画面遷移の速度を測定",
+            "データ取得の速度を測定",
+            "メモリ使用量を確認",
+            "改善点をリストアップ",
+            "次のアップデートで対応する項目を決定"
+          ],
+          "tools": ["Xcode", "React Native Profiler"],
+          "completed": false
+        },
+        {
+          "id": "quarterly-003",
+          "title": "ユーザーアンケートの実施",
+          "estimatedTime": "120分",
+          "priority": "medium",
+          "steps": [
+            "アンケート質問を作成",
+            "Google Forms または App 内アンケートを準備",
+            "ユーザーにアンケートを送信（プッシュ通知など）",
+            "回答を収集（1週間程度）",
+            "結果を分析",
+            "改善点を FUTURE_ROADMAP.md に反映"
+          ],
+          "tools": ["Google Forms", "Firebase Cloud Messaging（プッシュ通知）"],
+          "sampleQuestions": [
+            "アプリの満足度（1-5）",
+            "最もよく使う機能は？",
+            "追加してほしい機能は？",
+            "不満な点や改善してほしい点は？",
+            "他の人におすすめしたいですか？（1-10）"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    "immediate": {
+      "description": "すぐに対応が必要な緊急タスク",
+      "frequency": "as-needed",
+      "tasks": [
+        {
+          "id": "immediate-001",
+          "title": "クリティカルバグの修正",
+          "estimatedTime": "可変",
+          "priority": "critical",
+          "steps": [
+            "バグの詳細を確認",
+            "再現手順を特定",
+            "原因を調査",
+            "修正を実装",
+            "テストして動作確認",
+            "緊急アップデート（ホットフィックス）をリリース",
+            "ユーザーに通知（必要に応じて）"
+          ],
+          "tools": ["Xcode", "VS Code", "Firebase Console"],
+          "completed": false
+        },
+        {
+          "id": "immediate-002",
+          "title": "セキュリティ脆弱性の対応",
+          "estimatedTime": "可変",
+          "priority": "critical",
+          "steps": [
+            "脆弱性の詳細を確認",
+            "影響範囲を評価",
+            "緊急パッチを作成",
+            "セキュリティルールを更新",
+            "アプリをアップデート",
+            "ユーザーに通知（必要に応じて）"
+          ],
+          "tools": ["Firebase Console", "Xcode", "VS Code"],
+          "completed": false
+        },
+        {
+          "id": "immediate-003",
+          "title": "App Store 審査の却下対応",
+          "estimatedTime": "可変",
+          "priority": "high",
+          "steps": [
+            "却下理由を確認",
+            "必要な修正を特定",
+            "修正を実装",
+            "テストして動作確認",
+            "再提出",
+            "審査チームに説明（必要に応じて）"
+          ],
+          "tools": ["App Store Connect", "Xcode", "VS Code"],
+          "completed": false
+        }
+      ]
+    },
+    "onDemand": {
+      "description": "必要に応じて実施するタスク",
+      "frequency": "on-demand",
+      "tasks": [
+        {
+          "id": "ondemand-001",
+          "title": "新機能のリリース",
+          "estimatedTime": "可変（数時間〜数日）",
+          "priority": "medium",
+          "steps": [
+            "機能の要件を定義",
+            "設計を作成",
+            "実装",
+            "テスト",
+            "ドキュメント更新",
+            "バージョン番号を更新",
+            "App Store に提出",
+            "リリースノートを作成"
+          ],
+          "tools": ["Xcode", "VS Code", "Firebase Console", "App Store Connect"],
+          "completed": false
+        },
+        {
+          "id": "ondemand-002",
+          "title": "データベースのクリーンアップ",
+          "estimatedTime": "30分",
+          "priority": "low",
+          "steps": [
+            "不要なデータを特定",
+            "バックアップを作成",
+            "削除スクリプトを実行",
+            "Firebase Console で確認",
+            "アプリで動作確認"
+          ],
+          "tools": ["Firebase Console", "ターミナル"],
+          "commands": [
+            "node scripts/deleteTestData.js"
+          ],
+          "completed": false
+        },
+        {
+          "id": "ondemand-003",
+          "title": "パフォーマンス最適化",
+          "estimatedTime": "可変（数時間〜数日）",
+          "priority": "medium",
+          "steps": [
+            "ボトルネックを特定",
+            "最適化戦略を計画",
+            "実装",
+            "ベンチマークテスト",
+            "改善を確認",
+            "ドキュメント更新"
+          ],
+          "tools": ["React Native Profiler", "Xcode Instruments"],
+          "completed": false
+        }
+      ]
+    },
+    "notes": {
+      "backupStrategy": "毎日自動バックアップ、98日間保持",
+      "monitoringTools": [
+        "Firebase Console",
+        "AdMob Console",
+        "App Store Connect"
+      ],
+      "supportChannels": [
+        "App Store レビュー",
+        "メール"
+      ],
+      "emergencyContacts": {
+        "firebase": "https://firebase.google.com/support",
+        "apple": "https://developer.apple.com/contact/"
+      }
+    }
+  }
+}

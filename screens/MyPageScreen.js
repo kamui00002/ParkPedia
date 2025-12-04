@@ -247,6 +247,38 @@ export default function MyPageScreen({ navigation, route }) {
     }
   };
 
+  // レビューを削除
+  const deleteReview = async (reviewId) => {
+    Alert.alert(
+      'レビューを削除',
+      'このレビューを削除しますか？この操作は取り消せません。',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const reviewRef = doc(db, 'reviews', reviewId);
+              await deleteDoc(reviewRef);
+              
+              // ステートから削除
+              setMyReviews(myReviews.filter(r => r.id !== reviewId));
+              
+              Alert.alert('成功', 'レビューを削除しました');
+            } catch (error) {
+              console.error('レビュー削除エラー:', error);
+              Alert.alert('エラー', 'レビューの削除に失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // ログアウト処理
   const handleLogout = () => {
     Alert.alert(
@@ -542,11 +574,24 @@ export default function MyPageScreen({ navigation, route }) {
             <View style={styles.reviewsList}>
               {myReviews.map((review) => (
                 <View key={review.id} style={styles.reviewCard}>
-                  <Text style={styles.reviewRating}>
-                    {'⭐'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                  </Text>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewRating}>
+                      {'⭐'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => deleteReview(review.id)}
+                      style={styles.deleteReviewButton}
+                    >
+                      <Text style={styles.deleteReviewButtonText}>🗑️ 削除</Text>
+                    </TouchableOpacity>
+                  </View>
                   {review.comment && (
                     <Text style={styles.reviewComment}>{review.comment}</Text>
+                  )}
+                  {review.createdAt && (
+                    <Text style={styles.reviewDate}>
+                      投稿日: {new Date(review.createdAt.toDate()).toLocaleDateString('ja-JP')}
+                    </Text>
                   )}
                 </View>
               ))}
@@ -760,9 +805,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F3F4F6',
   },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   reviewRating: {
     fontSize: 15,
-    marginBottom: 10,
+  },
+  deleteReviewButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#FEE2E2',
+  },
+  deleteReviewButtonText: {
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '600',
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 8,
   },
   reviewComment: {
     fontSize: 14,
