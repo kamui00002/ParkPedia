@@ -1,0 +1,221 @@
+name: Security Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 毎週月曜日 10:00 JST (01:00 UTC)
+    - cron: '0 1 * * 1'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Run NPM Audit
+        id: audit
+        run: |
+          npm audit --json > audit-results.json || true
+          cat audit-results.json
+
+      - name: Parse Audit Results
+        id: parse
+        run: |
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' audit-results.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' audit-results.json)
+          TOTAL=$(jq '.metadata.vulnerabilities.total // 0' audit-results.json)
+
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+          echo "low=$LOW" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+      - name: Create Detailed Report
+        if: steps.parse.outputs.total > 0
+        run: |
+          cat > audit-report.md << 'EOF'
+          ## 🔒 NPM Security Audit Report
+
+          **Date**: $(date '+%Y-%m-%d %H:%M:%S')
+          **Total Vulnerabilities**: ${{ steps.parse.outputs.total }}
+
+          ### Summary
+
+          | Severity | Count |
+          |----------|-------|
+          | 🔴 Critical | ${{ steps.parse.outputs.critical }} |
+          | 🟠 High | ${{ steps.parse.outputs.high }} |
+          | 🟡 Moderate | ${{ steps.parse.outputs.moderate }} |
+          | 🟢 Low | ${{ steps.parse.outputs.low }} |
+
+          ### Recommended Actions
+
+          1. **Immediate** (Critical/High):
+             \`\`\`bash
+             npm audit fix --force
+             \`\`\`
+
+          2. **Review Changes**:
+             \`\`\`bash
+             git diff package.json package-lock.json
+             \`\`\`
+
+          3. **Test Application**:
+             - Run local tests
+             - Test on iOS simulator
+             - Verify critical features
+
+          4. **Commit & Deploy**:
+             \`\`\`bash
+             git add package.json package-lock.json
+             git commit -m "fix: Update dependencies to resolve security vulnerabilities"
+             git push
+             \`\`\`
+
+          ### Detailed Findings
+
+          See the full audit results in the workflow artifacts.
+
+          ---
+
+          **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+
+      - name: Upload Audit Results
+        if: steps.parse.outputs.total > 0
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-results-${{ github.run_id }}
+          path: |
+            audit-results.json
+            audit-report.md
+          retention-days: 30
+
+      - name: Create or Update Issue
+        if: steps.parse.outputs.high > 0 || steps.parse.outputs.critical > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.parse.outputs.critical }};
+            const high = ${{ steps.parse.outputs.high }};
+            const moderate = ${{ steps.parse.outputs.moderate }};
+            const low = ${{ steps.parse.outputs.low }};
+
+            const title = `🔴 Security: ${critical + high} Critical/High Vulnerabilities Detected`;
+
+            const body = `## 🔒 NPM Security Audit Report
+
+            **Date**: ${new Date().toISOString()}
+            **Workflow Run**: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+
+            ### Summary
+
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | ${critical} |
+            | 🟠 High | ${high} |
+            | 🟡 Moderate | ${moderate} |
+            | 🟢 Low | ${low} |
+
+            ### Immediate Action Required
+
+            \`\`\`bash
+            # Fix vulnerabilities
+            npm audit fix --force
+
+            # Review changes
+            git diff package.json package-lock.json
+
+            # Test locally
+            npm start
+
+            # If tests pass, commit and push
+            git add package.json package-lock.json
+            git commit -m "fix: Resolve ${critical + high} critical/high security vulnerabilities"
+            git push
+            \`\`\`
+
+            ### Additional Steps
+
+            1. Review the [detailed audit results](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            2. Test the application thoroughly after applying fixes
+            3. Monitor for any breaking changes
+            4. Update this issue when resolved
+
+            ---
+
+            This issue was automatically created by the Security Audit workflow.
+            `;
+
+            // Search for existing open security issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,dependencies'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Security:') && issue.title.includes('Vulnerabilities')
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## 🔄 Updated Security Audit\n\n${body}`
+              });
+
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'dependencies', 'automated']
+              });
+
+              console.log(`Created new issue #${newIssue.data.number}`);
+            }
+
+      - name: Post Summary
+        if: always()
+        run: |
+          echo "### Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 Critical | ${{ steps.parse.outputs.critical }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟠 High | ${{ steps.parse.outputs.high }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Moderate | ${{ steps.parse.outputs.moderate }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟢 Low | ${{ steps.parse.outputs.low }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.parse.outputs.total }}" -gt "0" ]; then
+            echo "⚠️ **Action required**: Review and fix vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No vulnerabilities detected**" >> $GITHUB_STEP_SUMMARY
+          fi
