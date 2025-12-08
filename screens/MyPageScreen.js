@@ -28,6 +28,7 @@ import CustomHeader from '../components/CustomHeader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { checkIsAdmin } from '../utils/adminUtils';
 
 export default function MyPageScreen({ navigation, route }) {
   const [favoriteParks, setFavoriteParks] = useState([]);
@@ -37,6 +38,7 @@ export default function MyPageScreen({ navigation, route }) {
   const [myReviews, setMyReviews] = useState([]);
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // 認証チェック
   useEffect(() => {
@@ -66,6 +68,10 @@ export default function MyPageScreen({ navigation, route }) {
 
     try {
       setLoading(true);
+
+      // 管理者権限をチェック
+      const adminStatus = await checkIsAdmin();
+      setIsAdmin(adminStatus);
 
       // お気に入り公園を取得
       const favoritesRef = collection(db, 'favorites');
@@ -483,6 +489,14 @@ export default function MyPageScreen({ navigation, route }) {
           >
             <Text style={styles.deleteAccountButtonText}>アカウントを削除</Text>
           </TouchableOpacity>
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => navigation.navigate('Admin')}
+            >
+              <Text style={styles.adminButtonText}>🔧 管理者ページ</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* お気に入りした公園 */}
@@ -661,6 +675,19 @@ const styles = StyleSheet.create({
   },
   deleteAccountButtonText: {
     color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  adminButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  adminButtonText: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },

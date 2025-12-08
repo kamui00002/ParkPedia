@@ -1,5 +1,6 @@
 // Firestore Security Rules (Complete Secure Version)
 // Copy and paste this into Firebase Console > Firestore Database > Rules
+// 重要: このファイルの内容をすべてコピーして、Firebase Consoleに貼り付けてください
 
 rules_version = '2';
 service cloud.firestore {
@@ -93,7 +94,7 @@ service cloud.firestore {
             || (request.resource.data.description is string
                 && request.resource.data.description.size() <= 1000));
 
-      // Update: Owner or Admin, userId and createdAt immutable, updatedAt required
+      // Update: Owner only, userId and createdAt immutable, updatedAt required
       // Exception: rating and reviewCount can be updated by any authenticated user
       // (for automatic updates when reviews are added/deleted)
       allow update: if isAuthenticated()
@@ -110,8 +111,8 @@ service cloud.firestore {
             && request.resource.data.address == resource.data.address
             && request.resource.data.createdAt == resource.data.createdAt)
           ||
-          // Case 2: Owner or Admin updating other fields
-          ((isDocumentOwner() || isAdmin())
+          // Case 2: Owner updating other fields
+          (isDocumentOwner()
             && userIdNotChanged()
             && createdAtNotChanged()
             && hasValidUpdatedAt()
@@ -123,13 +124,13 @@ service cloud.firestore {
             && request.resource.data.address.size() > 0
             && request.resource.data.address.size() <= 300
             && (!request.resource.data.keys().hasAny(['latitude'])
-            || (request.resource.data.latitude is number
-                && request.resource.data.latitude >= -90
-                && request.resource.data.latitude <= 90))
-        && (!request.resource.data.keys().hasAny(['longitude'])
-            || (request.resource.data.longitude is number
-                && request.resource.data.longitude >= -180
-                && request.resource.data.longitude <= 180))
+                || (request.resource.data.latitude is number
+                    && request.resource.data.latitude >= -90
+                    && request.resource.data.latitude <= 90))
+            && (!request.resource.data.keys().hasAny(['longitude'])
+                || (request.resource.data.longitude is number
+                    && request.resource.data.longitude >= -180
+                    && request.resource.data.longitude <= 180))
             && (!request.resource.data.keys().hasAny(['description'])
                 || (request.resource.data.description is string
                     && request.resource.data.description.size() <= 1000))
@@ -179,8 +180,8 @@ service cloud.firestore {
             || (request.resource.data.title is string
                 && request.resource.data.title.size() <= 100));
 
-      // Update: Owner or Admin, userId/parkId/createdAt immutable, updatedAt required
-      allow update: if (isDocumentOwner() || isAdmin())
+      // Update: Owner only, userId/parkId/createdAt immutable, updatedAt required
+      allow update: if isDocumentOwner()
         && userIdNotChanged()
         && createdAtNotChanged()
         && hasValidUpdatedAt()
@@ -211,9 +212,8 @@ service cloud.firestore {
 
       // List: Authenticated users can only list their own favorites
       // Note: This requires the query to include a where clause filtering by userId
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100;
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -254,9 +254,8 @@ service cloud.firestore {
 
       // List: Authenticated users can list their own reports, admins can list all
       // Note: App should filter by reportedBy for non-admin users
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100;
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -303,9 +302,8 @@ service cloud.firestore {
         && resource.data.blockedBy == request.auth.uid;
 
       // List: Authenticated users can only list their own blocks
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100;
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -332,36 +330,26 @@ service cloud.firestore {
     // Users Collection
     // ===========================
     match /users/{userId} {
-      // Read: Public profile information readable by anyone
-      // Sensitive info (email, phone, etc.) should be in subcollections
+      // Read: Anyone can read public profile
       allow read: if true;
 
-      // Create: Own document only with data validation
+      // Create: Own document only
       allow create: if isOwner(userId)
         && hasValidCreatedAt()
         && !request.resource.data.keys().hasAny(['updatedAt'])
-        // Display name validation
-        && (!request.resource.data.keys().hasAny(['displayName'])
-            || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50))
-        // Profile photo URL validation
-        && (!request.resource.data.keys().hasAny(['photoURL'])
-            || request.resource.data.photoURL is string)
-        // Bio validation
-        && (!request.resource.data.keys().hasAny(['bio'])
-            || (request.resource.data.bio is string
-                && request.resource.data.bio.size() <= 500));
+        && request.resource.data.keys().hasAll(['userId', 'createdAt'])
+        && request.resource.data.userId == userId;
 
-      // Update: Own document only, createdAt immutable, updatedAt required
+      // Update: Own document only, userId and createdAt immutable, updatedAt required
       allow update: if isOwner(userId)
+        && userIdNotChanged()
         && createdAtNotChanged()
         && hasValidUpdatedAt()
-        // Same data validation as create
+        // Display name validation if present
         && (!request.resource.data.keys().hasAny(['displayName'])
             || (request.resource.data.displayName is string
                 && request.resource.data.displayName.size() <= 50))
-        && (!request.resource.data.keys().hasAny(['photoURL'])
-            || request.resource.data.photoURL is string)
+        // Bio validation if present
         && (!request.resource.data.keys().hasAny(['bio'])
             || (request.resource.data.bio is string
                 && request.resource.data.bio.size() <= 500));
@@ -393,9 +381,8 @@ service cloud.firestore {
       
       // List: Authenticated users can query to check their own admin status
       // This allows where('userId', '==', currentUser.uid) queries
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100;
 
       // Create: Only existing admins can add new admins
       // adminId (document ID) must match userId in the data

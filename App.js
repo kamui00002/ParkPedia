@@ -26,6 +26,7 @@ import LoginScreen from './screens/LoginScreen';
 import AddParkScreen from './screens/AddParkScreen';
 import MyPageScreen from './screens/MyPageScreen';
 import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
+import AdminScreen from './screens/AdminScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -106,6 +107,14 @@ export default function App() {
                     component={TermsOfServiceScreen}
                     options={{
                         title: '利用規約',
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="Admin"
+                    component={AdminScreen}
+                    options={{
+                        title: '管理者ページ',
                         headerShown: false,
                     }}
                 />

@@ -8,6 +8,8 @@
 
 // 広告を有効にするかどうか
 // テスト中は false、本番環境では true に設定
+// 注意: Expo Go環境では広告モジュールが利用できないため、
+//       AdBannerコンポーネント内で自動的に無効化されます
 export const AD_ENABLED = true;
 
 // AdMob広告ユニットID

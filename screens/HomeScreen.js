@@ -146,10 +146,17 @@ export default function HomeScreen({ navigation }) {
     }
   }, [calculateDistance]);
 
-  // 公園データの取得
+  // 公園データの取得（初回）
   useEffect(() => {
     fetchParks();
   }, []);
+
+  // 画面がフォーカスされたときにデータを再取得（レビュー投稿後などに評価を反映）
+  useFocusEffect(
+    useCallback(() => {
+      fetchParks();
+    }, [fetchParks])
+  );
 
   // Firestoreから公園データを取得する関数
   const fetchParks = useCallback(async () => {

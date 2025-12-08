@@ -1,0 +1,123 @@
+// Firebase Storage Security Rules
+// Copy and paste this into Firebase Console > Storage > Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ===========================
+    // Helper Functions
+    // ===========================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if authenticated user matches specified userId
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Validate image file (size and content type)
+    function isValidImage(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    
+    // Validate file name (prevent dangerous file names)
+    // Note: fileName must be passed as parameter since it's from match pattern
+    function isValidFileName(fileName) {
+      return fileName.matches('^[a-zA-Z0-9._-]+$');
+    }
+    
+    // ===========================
+    // Parks Images
+    // ===========================
+    // Specific rules for park images
+    
+    match /images/parks/{userId}/{fileName} {
+      // Read: Anyone can read (public images)
+      allow read: if true;
+      
+      // Create: Authenticated users only, own folder only
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+      
+      // Update: Owner only
+      allow update: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+      
+      // Delete: Owner only
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+    
+    // ===========================
+    // Reviews Images
+    // ===========================
+    // Specific rules for review photos
+    
+    match /images/reviews/{userId}/{fileName} {
+      // Read: Anyone can read (public images)
+      allow read: if true;
+      
+      // Create: Authenticated users only, own folder only
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+      
+      // Update: Owner only
+      allow update: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+      
+      // Delete: Owner only
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+    
+    // ===========================
+    // User Profile Images
+    // ===========================
+    // Profile photos and avatars
+    
+    match /images/profiles/{userId}/{fileName} {
+      // Read: Anyone can read (public profile images)
+      allow read: if true;
+      
+      // Create: Owner only
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(5)
+        && isValidFileName(fileName);
+      
+      // Update: Owner only
+      allow update: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(5)
+        && isValidFileName(fileName);
+      
+      // Delete: Owner only
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+    
+    // ===========================
+    // Default: Deny all other paths
+    // ===========================
+    match /{allPaths=**} {
+      // Deny all other paths by default
+      allow read, write: if false;
+    }
+  }
+}
+
+
+
