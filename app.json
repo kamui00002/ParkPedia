@@ -2,7 +2,7 @@
   "expo": {
     "name": "ParkPedia",
     "slug": "parkpedia",
-    "version": "1.0.13",
+    "version": "1.0.14",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.parkpedia.app",
-      "buildNumber": "17",
+      "buildNumber": "18",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "このアプリは近くの公園を検索するために位置情報を使用します。",
@@ -176,7 +176,7 @@
     },
     "android": {
       "package": "com.parkpedia.app",
-      "versionCode": 13,
+      "versionCode": 14,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -212,6 +212,12 @@
       ],
       "expo-font"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/d557bbc6-e7ef-4acc-915b-26ab09766021"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "eas": {
         "projectId": "d557bbc6-e7ef-4acc-915b-26ab09766021"
