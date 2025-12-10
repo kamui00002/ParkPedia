@@ -17,6 +17,9 @@ import {
     ActivityIndicator
 } from 'react-native';
 import {
+    SafeAreaProvider
+} from 'react-native-safe-area-context';
+import {
     onAuthStateChanged
 } from 'firebase/auth';
 import {
@@ -81,8 +84,9 @@ export default function App() {
     }, []);
 
     return (
-        <NavigationContainer>
-            <StatusBar style="auto" />
+        <SafeAreaProvider>
+            <NavigationContainer>
+                <StatusBar style="auto" />
             <Stack.Navigator
                 initialRouteName="Home"
                 screenOptions={{
@@ -155,6 +159,7 @@ export default function App() {
                     }}
                 />
             </Stack.Navigator>
-        </NavigationContainer>
+            </NavigationContainer>
+        </SafeAreaProvider>
     );
 }

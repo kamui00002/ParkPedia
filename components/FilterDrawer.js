@@ -7,8 +7,8 @@ import {
   Animated,
   Modal,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FILTER_CATEGORIES = [
   {
