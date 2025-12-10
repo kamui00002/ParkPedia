@@ -8,14 +8,17 @@ import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
 // React Native版のみAsyncStorageをインポート
-let AsyncStorage;
-try {
-  if (Platform.OS !== 'web') {
+// Web以外のすべてのプラットフォーム（iOS、Android）で必要
+let AsyncStorage = null;
+if (Platform.OS !== 'web') {
+  try {
     AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  } catch (error) {
+    // AsyncStorageが利用できない場合はエラーをログに記録
+    console.error('CRITICAL: AsyncStorage is not available on native platform:', error);
+    // ネイティブ環境でAsyncStorageが利用できない場合は致命的
+    throw new Error('AsyncStorage is required for Firebase Auth on iOS/Android');
   }
-} catch (error) {
-  // AsyncStorageが利用できない場合は無視
-  console.warn('AsyncStorage is not available:', error);
 }
 
 // Firebase設定オブジェクト
@@ -61,14 +64,17 @@ try {
   if (Platform.OS === 'web') {
     auth = getAuth(app);
   } else {
-    // AsyncStorageが利用可能か確認
+    // ネイティブ環境ではAsyncStorageが必須
     if (!AsyncStorage) {
-      console.warn('AsyncStorageが利用できません。デフォルトのAuthを使用します。');
-      auth = getAuth(app);
-    } else {
-      auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage)
-      });
+      // これは発生してはいけないエラー（上でthrowしているため）
+      throw new Error('AsyncStorage is required for native platforms');
+    }
+    // AsyncStorageを使用してPersistenceを有効化
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+    if (__DEV__) {
+      console.log('🔐 Firebase Auth初期化完了（AsyncStorage Persistence有効）');
     }
   }
 } catch (error) {
@@ -78,9 +84,9 @@ try {
       console.log('🔐 Firebase Auth既存インスタンスを使用');
     }
   } else {
-    // Web版またはフォールバック時はエラーを無視してgetAuthを使用
-    console.warn('Firebase Auth初期化エラー。デフォルトのAuthを使用します:', error);
-    auth = getAuth(app);
+    // その他のエラーは致命的
+    console.error('CRITICAL: Firebase Auth初期化エラー:', error);
+    throw error;
   }
 }
 export { auth };

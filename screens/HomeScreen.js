@@ -146,18 +146,6 @@ export default function HomeScreen({ navigation }) {
     }
   }, [calculateDistance]);
 
-  // 公園データの取得（初回）
-  useEffect(() => {
-    fetchParks();
-  }, []);
-
-  // 画面がフォーカスされたときにデータを再取得（レビュー投稿後などに評価を反映）
-  useFocusEffect(
-    useCallback(() => {
-      fetchParks();
-    }, [fetchParks])
-  );
-
   // Firestoreから公園データを取得する関数
   const fetchParks = useCallback(async () => {
     try {
@@ -248,6 +236,18 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
 
+  // 公園データの取得（初回のみ）
+  useEffect(() => {
+    fetchParks();
+  }, []); // 空の依存配列で初回のみ実行
+
+  // 画面がフォーカスされたときにデータを再取得（レビュー投稿後などに評価を反映）
+  useFocusEffect(
+    useCallback(() => {
+      fetchParks();
+    }, [fetchParks])
+  );
+
   // おすすめ公園を再計算（parksまたはuserLocationが変更されたとき）
   useEffect(() => {
     if (parks.length > 0) {
@@ -255,13 +255,6 @@ export default function HomeScreen({ navigation }) {
       setRecommendedParks(recommended);
     }
   }, [parks, userLocation, calculateRecommendedParks]);
-
-  // 画面がフォーカスされたときにデータを再取得
-  useFocusEffect(
-    useCallback(() => {
-      fetchParks();
-    }, [fetchParks])
-  );
 
   // 検索クエリとフィルターが変更されたときにフィルタリング
   useEffect(() => {
