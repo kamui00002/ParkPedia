@@ -24,3 +24,14 @@ export const AD_UNIT_IDS = {
 
 // テスト用の設定
 export const AD_TEST_MODE = __DEV__; // 開発環境では自動的にテストモード
+
+// 広告表示設定
+export const AD_SETTINGS = {
+  banner: {
+    enabled: true,  // バナー広告を有効にする
+    height: 50,     // バナー広告の高さ（ピクセル）
+  },
+};
+
+// 広告プレースホルダーの背景色
+export const AD_PLACEHOLDER_COLOR = '#FFE5E5';
