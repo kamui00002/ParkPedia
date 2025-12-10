@@ -31,12 +31,27 @@ const firebaseConfig = {
 };
 
 // Firebase初期化
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
 
-// 開発環境でのみログ出力
-if (__DEV__) {
-  console.log('🔥 Firebase初期化完了');
-  console.log('🆔 プロジェクトID:', firebaseConfig.projectId);
+  // 開発環境でのみログ出力
+  if (__DEV__) {
+    console.log('🔥 Firebase初期化完了');
+    console.log('🆔 プロジェクトID:', firebaseConfig.projectId);
+  }
+} catch (error) {
+  if (error.code === 'app/duplicate-app') {
+    // 既に初期化済みの場合は既存のアプリインスタンスを取得
+    const { getApp } = require('firebase/app');
+    app = getApp();
+    if (__DEV__) {
+      console.log('🔥 Firebase既存インスタンスを使用');
+    }
+  } else {
+    console.error('Firebase初期化エラー:', error);
+    throw error;
+  }
 }
 
 // Authentication（認証）- プラットフォーム別の設定
@@ -46,20 +61,26 @@ try {
   if (Platform.OS === 'web') {
     auth = getAuth(app);
   } else {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
+    // AsyncStorageが利用可能か確認
+    if (!AsyncStorage) {
+      console.warn('AsyncStorageが利用できません。デフォルトのAuthを使用します。');
+      auth = getAuth(app);
+    } else {
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage)
+      });
+    }
   }
 } catch (error) {
   if (error.code === 'auth/already-initialized') {
     auth = getAuth(app);
-  } else {
-    // Web版ではエラーを無視してgetAuthを使用
-    if (Platform.OS === 'web') {
-      auth = getAuth(app);
-    } else {
-      throw error;
+    if (__DEV__) {
+      console.log('🔐 Firebase Auth既存インスタンスを使用');
     }
+  } else {
+    // Web版またはフォールバック時はエラーを無視してgetAuthを使用
+    console.warn('Firebase Auth初期化エラー。デフォルトのAuthを使用します:', error);
+    auth = getAuth(app);
   }
 }
 export { auth };
