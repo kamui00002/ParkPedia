@@ -2,7 +2,7 @@
   "expo": {
     "name": "ParkPedia",
     "slug": "parkpedia",
-    "version": "1.0.18",
+    "version": "1.0.19",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.parkpedia.app",
-      "buildNumber": "24",
+      "buildNumber": "25",
       "newArchEnabled": false,
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -178,7 +178,7 @@
     },
     "android": {
       "package": "com.parkpedia.app",
-      "versionCode": 18,
+      "versionCode": 19,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
