@@ -214,6 +214,143 @@ match /images/parks/{userId}/{fileName} {
 
 ---
 
+### エラー事例5: TestFlightでの起動時クラッシュ（StartupProcedure.throwException）
+
+**発生日**: 2025年12月11日
+
+**エラーメッセージ（Xcodeクラッシュレポート）**:
+```
+Thread 4:
+- libobjc.A.dylib: objc_exception_throw
+- CoreFoundation: [NSException raise]
+- ParkPedia: StartupProcedure.throwException(...)
+- ParkPedia: protocol witness for ErrorRecoveryDelegate.throwException(...) in conformance StartupProcedure
+- ParkPedia: ErrorRecovery.crash()
+```
+
+**原因**:
+- v1.0.14で追加したExpo Updatesの設定が、TestFlight環境でクラッシュを引き起こしていた
+- EAS Updateサーバーへの接続試行時に、ネイティブ側でエラーが発生
+- App Storeビルドでは、OTA（Over-The-Air）更新機能は不要かつ推奨されない
+
+**問題のあった設定（v1.0.14）**:
+```json
+"updates": {
+  "url": "https://u.expo.dev/d557bbc6-e7ef-4acc-915b-26ab09766021"
+},
+"runtimeVersion": {
+  "policy": "appVersion"
+}
+```
+
+**解決方法（v1.0.15）**:
+1. `app.json`のExpo Updates設定を完全に無効化
+```json
+"updates": {
+  "enabled": false
+}
+```
+
+2. `runtimeVersion`の設定を削除
+
+3. バージョン更新
+   - version: 1.0.14 → 1.0.15
+   - iOS buildNumber: 18 → 19
+   - Android versionCode: 14 → 15
+
+**重要な学び**:
+- App Storeビルドでは、Expo Updatesは無効化すべき
+- OTA更新は、App Storeのガイドライン（2.5.2）に抵触する可能性がある
+- すべての更新は、App Store経由で行うべき
+
+**検証**:
+```bash
+$ npx expo-doctor
+Running 17 checks on your project...
+17/17 checks passed. No issues detected!
+```
+
+**参考ファイル**: `TESTFLIGHT_CRASH_FIX_V1.0.15.md`, `V1.0.15_FIX_SUMMARY.md`
+
+---
+
+### エラー事例6: グローバルエラーハンドラーによるクラッシュ（RCTExceptionsManager reportFatal）
+
+**発生日**: 2025年12月11日
+
+**エラーメッセージ（Xcodeクラッシュレポート）**:
+```
+Thread 3 Crashed:: com.facebook.react.ExceptionsManagerQueue
+0   Foundation        -[_NSCallStackArray _descriptionWithBuffer:size:] + 484
+1   CoreFoundation    __handleUncaughtException + 1136
+2   libobjc.A.dylib   _objc_terminate() + 112
+3   ParkPedia         RCTGetFatalHandler (RCTAssert.m:161)
+4   ParkPedia         -[RCTExceptionsManager reportFatal:stack:exceptionId:extraDataAsJSON:] + 484
+```
+
+**原因**:
+- v1.0.16のApp.jsで追加したグローバルエラーハンドラーが、**開発環境で元のハンドラーを呼び出していた**ため、ExceptionsManagerのreportFatalを呼び出してクラッシュしていた
+- JavaScriptエラーが発生した際に、エラーハンドラーがネイティブ側にエラーを伝播させてしまっていた
+
+**問題のあったコード（v1.0.16）**:
+```javascript
+// App.js:135-136
+if (__DEV__ && originalHandler && typeof originalHandler === 'function') {
+    originalHandler(error, isFatal);  // ← これがクラッシュの原因！
+}
+```
+
+この`originalHandler(error, isFatal)`の呼び出しが、ExceptionsManagerのreportFatalを呼び出し、それがネイティブ側でクラッシュしていました。
+
+**解決方法（v1.0.17）**:
+1. **開発環境ではエラーハンドラーを無効化**
+```javascript
+useEffect(() => {
+    // グローバルエラーハンドラーを設定（本番環境のみ）
+    // 開発環境ではデフォルトのRed Screenを表示してデバッグを容易にする
+    if (!__DEV__) {
+        const errorHandler = (error, isFatal) => {
+            console.error('グローバルエラー:', error);
+        };
+
+        const ErrorUtils = global.ErrorUtils || (typeof ErrorUtils !== 'undefined' ? ErrorUtils : null);
+        if (ErrorUtils && typeof ErrorUtils.setGlobalHandler === 'function') {
+            ErrorUtils.setGlobalHandler(errorHandler);
+        }
+    }
+
+    // 認証状態の変更を監視（シンプル化）
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+    });
+
+    return () => {
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+}, []);
+```
+
+2. バージョン更新
+   - version: 1.0.16 → 1.0.17
+   - iOS buildNumber: 22 → 23
+   - Android versionCode: 16 → 17
+
+**重要な学び**:
+- **開発環境ではRed Screenを表示**することで、エラーを確認しやすくする
+- **本番環境でのみエラーハンドラーを有効化**して、アプリがクラッシュしないようにする
+- グローバルエラーハンドラー内で**元のハンドラーを呼び出さない**（ExceptionsManagerのreportFatalを呼び出すとクラッシュする可能性がある）
+- エラーログはFirebase Crashlyticsなどに送信することを推奨
+
+**検証**:
+- 開発環境: JavaScriptエラーが発生した場合、Red Screenが表示される
+- 本番環境: JavaScriptエラーが発生した場合、エラーハンドラーが吸収してアプリは続行する
+
+**参考ファイル**: `V1.0.17_FIX_SUMMARY.md`
+
+---
+
 ## 📋 Firebase セキュリティルールのベストプラクティス
 
 ### 1. Firestore ルール
@@ -388,7 +525,7 @@ fileName.matches('^[a-zA-Z0-9._-]+$')
 
 ---
 
-**最終更新**: 2025-11-30
+**最終更新**: 2025-12-11 (v1.0.17)
 
 ---
 
