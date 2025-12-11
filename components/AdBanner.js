@@ -86,23 +86,23 @@ const AdBanner = () => {
   try {
     return (
       <View style={styles.container}>
-        <BannerAdComponent
-          unitId={adUnitId}
-          size={BannerAdSize.BANNER}
-          requestOptions={{
+        {React.createElement(BannerAdComponent, {
+          unitId: adUnitId,
+          size: BannerAdSize.BANNER,
+          requestOptions: {
             requestNonPersonalizedAdsOnly: false,
-          }}
-          onAdLoaded={() => {
+          },
+          onAdLoaded: () => {
             if (__DEV__) {
               console.log('AdMob: 広告が読み込まれました');
             }
-          }}
-          onAdFailedToLoad={(error) => {
+          },
+          onAdFailedToLoad: (error) => {
             if (__DEV__) {
               console.log('AdMob: 広告の読み込みに失敗しました:', error);
             }
-          }}
-        />
+          },
+        })}
       </View>
     );
   } catch (error) {

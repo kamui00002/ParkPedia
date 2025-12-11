@@ -351,6 +351,120 @@ useEffect(() => {
 
 ---
 
+### エラー事例7: AdBanner "Cannot call a class as a function" エラー
+
+**発生日**: 2025年12月11日
+
+**エラーメッセージ（Red Screen）**:
+```
+Render Error
+Cannot call a class as a function
+
+AdBanner.js:17:50
+const [BannerAdComponent, setBannerAdComponent] = useState(null);
+```
+
+**原因**:
+- v1.0.17でグローバルエラーハンドラーの修正後、新たなエラーが発生
+- `AdBanner.js`で、`BannerAd`クラスコンポーネントをstateに保存し、JSX構文で直接レンダリングしようとしていた
+- Reactは、stateに保存されたクラスコンポーネント参照を直接JSXで使用すると、正しくインスタンス化できない
+
+**問題のあったコード（v1.0.17）**:
+```javascript
+// AdBanner.js:89-106
+return (
+  <View style={styles.container}>
+    <BannerAdComponent  // ❌ クラスコンポーネントをJSXで直接使用
+      unitId={adUnitId}
+      size={BannerAdSize.BANNER}
+      requestOptions={{
+        requestNonPersonalizedAdsOnly: false,
+      }}
+      onAdLoaded={() => {
+        if (__DEV__) {
+          console.log('AdMob: 広告が読み込まれました');
+        }
+      }}
+      onAdFailedToLoad={(error) => {
+        if (__DEV__) {
+          console.log('AdMob: 広告の読み込みに失敗しました:', error);
+        }
+      }}
+    />
+  </View>
+);
+```
+
+**解決方法（v1.0.18）**:
+
+1. `AdBanner.js`を修正して、`React.createElement()`を使用
+
+**修正後のコード**:
+```javascript
+// AdBanner.js:89-106
+return (
+  <View style={styles.container}>
+    {React.createElement(BannerAdComponent, {  // ✅ React.createElement()を使用
+      unitId: adUnitId,
+      size: BannerAdSize.BANNER,
+      requestOptions: {
+        requestNonPersonalizedAdsOnly: false,
+      },
+      onAdLoaded: () => {
+        if (__DEV__) {
+          console.log('AdMob: 広告が読み込まれました');
+        }
+      },
+      onAdFailedToLoad: (error) => {
+        if (__DEV__) {
+          console.log('AdMob: 広告の読み込みに失敗しました:', error);
+        }
+      },
+    })}
+  </View>
+);
+```
+
+2. `app.json`のバージョン更新
+   - version: 1.0.17 → 1.0.18
+   - iOS buildNumber: 23 → 24
+   - Android versionCode: 17 → 18
+
+**重要な学び**:
+
+**動的コンポーネントのレンダリングパターン**:
+
+❌ **避けるべきパターン**:
+```javascript
+const [Component, setComponent] = useState(null);
+// ...
+return <Component />;  // クラスコンポーネントでは失敗
+```
+
+✅ **推奨パターン**:
+```javascript
+const [Component, setComponent] = useState(null);
+// ...
+return React.createElement(Component, { /* props */ });  // 正しく動作
+```
+
+**React.createElement()を使用する理由**:
+1. **クラスコンポーネントの正しいインスタンス化**: `React.createElement(Component, props)`は、クラスコンポーネントを正しくインスタンス化する
+2. **動的コンポーネントのレンダリング**: 動的にロードされたコンポーネント（`require()`で取得）をレンダリングする場合、`React.createElement()`が推奨される
+3. **型チェックの回避**: `React.createElement()`を使用することで、Reactの内部型チェックを回避し、stateに保存されたクラスコンポーネント参照でも正しく動作する
+
+**検証**:
+```bash
+$ npx expo run:ios --device "iPad Air 11-inch (M3)"
+› Build Succeeded
+› 0 error(s), and 5 warning(s)
+(エラーログなし - 正常に動作)
+```
+
+**参考ファイル**: `V1.0.18_FIX_SUMMARY.md`
+
+---
+
 ## 📋 Firebase セキュリティルールのベストプラクティス
 
 ### 1. Firestore ルール
@@ -525,7 +639,7 @@ fileName.matches('^[a-zA-Z0-9._-]+$')
 
 ---
 
-**最終更新**: 2025-12-11 (v1.0.17)
+**最終更新**: 2025-12-11 (v1.0.18)
 
 ---
 
