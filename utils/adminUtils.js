@@ -1,5 +1,5 @@
 // 管理者権限チェック用ユーティリティ
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 
 /**

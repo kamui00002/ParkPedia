@@ -93,7 +93,7 @@ service cloud.firestore {
             || (request.resource.data.description is string
                 && request.resource.data.description.size() <= 1000));
 
-      // Update: Owner or Admin, userId and createdAt immutable, updatedAt required
+      // Update: Owner only, userId and createdAt immutable, updatedAt required
       // Exception: rating and reviewCount can be updated by any authenticated user
       // (for automatic updates when reviews are added/deleted)
       allow update: if isAuthenticated()
@@ -110,8 +110,8 @@ service cloud.firestore {
             && request.resource.data.address == resource.data.address
             && request.resource.data.createdAt == resource.data.createdAt)
           ||
-          // Case 2: Owner or Admin updating other fields
-          ((isDocumentOwner() || isAdmin())
+          // Case 2: Owner updating other fields
+          (isDocumentOwner()
             && userIdNotChanged()
             && createdAtNotChanged()
             && hasValidUpdatedAt()
@@ -179,8 +179,8 @@ service cloud.firestore {
             || (request.resource.data.title is string
                 && request.resource.data.title.size() <= 100));
 
-      // Update: Owner or Admin, userId/parkId/createdAt immutable, updatedAt required
-      allow update: if (isDocumentOwner() || isAdmin())
+      // Update: Owner only, userId/parkId/createdAt immutable, updatedAt required
+      allow update: if isDocumentOwner()
         && userIdNotChanged()
         && createdAtNotChanged()
         && hasValidUpdatedAt()

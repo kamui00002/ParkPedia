@@ -204,9 +204,12 @@ export default function MyPageScreen({ navigation, route }) {
       const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'favorite'));
       const snapshot = await getDocs(q);
       
-      snapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      // すべての削除処理が完了するまで待機
+      const deletePromises = [];
+      snapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
       });
+      await Promise.all(deletePromises);
 
       setFavoriteParks(favoriteParks.filter(p => p.id !== parkId));
     } catch (error) {
@@ -222,10 +225,13 @@ export default function MyPageScreen({ navigation, route }) {
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'wantToVisit'));
       const snapshot = await getDocs(q);
-      
-      snapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+
+      // すべての削除処理が完了するまで待機
+      const deletePromises = [];
+      snapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
       });
+      await Promise.all(deletePromises);
 
       setWantToVisitParks(wantToVisitParks.filter(p => p.id !== parkId));
     } catch (error) {
@@ -241,10 +247,13 @@ export default function MyPageScreen({ navigation, route }) {
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'visited'));
       const snapshot = await getDocs(q);
-      
-      snapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+
+      // すべての削除処理が完了するまで待機
+      const deletePromises = [];
+      snapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
       });
+      await Promise.all(deletePromises);
 
       setVisitedParks(visitedParks.filter(p => p.id !== parkId));
     } catch (error) {

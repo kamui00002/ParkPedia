@@ -210,10 +210,12 @@ export default function ParkDetailScreen({ route, navigation }) {
         });
         setIsFavorite(true);
       } else {
-        // 削除
-        snapshot.forEach(async (doc) => {
-          await deleteDoc(doc.ref);
+        // 削除 - すべての削除処理が完了するまで待機
+        const deletePromises = [];
+        snapshot.forEach((doc) => {
+          deletePromises.push(deleteDoc(doc.ref));
         });
+        await Promise.all(deletePromises);
         setIsFavorite(false);
       }
     } catch (error) {
@@ -265,10 +267,12 @@ export default function ParkDetailScreen({ route, navigation }) {
           setIsWantToVisit(false);
         }
       } else {
-        // 削除
-        snapshot.forEach(async (doc) => {
-          await deleteDoc(doc.ref);
+        // 削除 - すべての削除処理が完了するまで待機
+        const deletePromises = [];
+        snapshot.forEach((doc) => {
+          deletePromises.push(deleteDoc(doc.ref));
         });
+        await Promise.all(deletePromises);
         setIsVisited(false);
       }
     } catch (error) {
@@ -305,10 +309,12 @@ export default function ParkDetailScreen({ route, navigation }) {
         });
         setIsWantToVisit(true);
       } else {
-        // 削除
-        snapshot.forEach(async (doc) => {
-          await deleteDoc(doc.ref);
+        // 削除 - すべての削除処理が完了するまで待機
+        const deletePromises = [];
+        snapshot.forEach((doc) => {
+          deletePromises.push(deleteDoc(doc.ref));
         });
+        await Promise.all(deletePromises);
         setIsWantToVisit(false);
       }
     } catch (error) {

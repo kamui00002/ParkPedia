@@ -20,6 +20,7 @@ import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import FilterDrawer from '../components/FilterDrawer';
 import AdBanner from '../components/AdBanner';
+import { AD_ENABLED } from '../adConfig';
 import * as Location from 'expo-location';
 
 export default function HomeScreen({ navigation }) {
@@ -417,13 +418,19 @@ export default function HomeScreen({ navigation }) {
           createdAt: serverTimestamp(),
         });
       } else {
-        // 削除
-        snapshot.forEach(async (doc) => {
-          await deleteDoc(doc.ref);
+        // 削除 - すべての削除処理が完了するまで待機
+        const deletePromises = [];
+        snapshot.forEach((doc) => {
+          deletePromises.push(deleteDoc(doc.ref));
         });
+        await Promise.all(deletePromises);
       }
     } catch (error) {
       console.error('お気に入り操作エラー:', error);
+      Alert.alert(
+        'エラー',
+        'お気に入りの操作に失敗しました。もう一度お試しください。'
+      );
     }
   };
 
@@ -455,7 +462,15 @@ export default function HomeScreen({ navigation }) {
     
     // お気に入り状態を確認
     useEffect(() => {
-      checkIsFavorite(item.id).then(setIsFavorite);
+      let isMounted = true;
+      checkIsFavorite(item.id).then((result) => {
+        if (isMounted) {
+          setIsFavorite(result);
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
     }, [item.id]);
     
     // すべてのタグを収集（facilities、tags.equipment、tags.age）
@@ -706,7 +721,7 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         }
-        ListFooterComponent={<AdBanner />}
+        ListFooterComponent={AD_ENABLED ? <AdBanner /> : null}
       />
 
       {/* 公園追加ボタン */}
@@ -1015,4 +1030,3 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
 });
-

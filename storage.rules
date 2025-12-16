@@ -110,6 +110,34 @@ service firebase.storage {
     }
     
     // ===========================
+    // Legacy Path Support
+    // ===========================
+    // BACKWARD COMPATIBILITY: Support old path structure without /parks/ folder
+    // This allows reading images uploaded before the path structure change
+
+    match /images/{userId}/{fileName} {
+      // Read: Anyone can read (public images)
+      allow read: if true;
+
+      // Create: Authenticated users only, own folder only
+      // Redirect new uploads to /images/parks/ instead
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+
+      // Update: Owner only
+      allow update: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage(10)
+        && isValidFileName(fileName);
+
+      // Delete: Owner only
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+
+    // ===========================
     // Default: Deny all other paths
     // ===========================
     match /{allPaths=**} {

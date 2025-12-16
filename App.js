@@ -26,6 +26,9 @@ import {
     auth
 } from './firebaseConfig';
 
+// コンポーネント
+import ErrorBoundary from './components/ErrorBoundary';
+
 // 画面コンポーネント
 import HomeScreen from './screens/HomeScreen';
 import ParkDetailScreen from './screens/ParkDetailScreen';
@@ -38,61 +41,91 @@ import AdminScreen from './screens/AdminScreen';
 
 const Stack = createNativeStackNavigator();
 
+// AdMobをアプリ起動時に初期化（React Componentの外で実行）
+// これはAdMob公式ドキュメントの推奨事項です
+let isAdMobInitialized = false;
+if (Platform.OS !== 'web') {
+    try {
+        const mobileAds = require('react-native-google-mobile-ads').default;
+        // 同期的に初期化を開始（非同期完了を待たない）
+        mobileAds.initialize().then(() => {
+            isAdMobInitialized = true;
+            if (__DEV__) {
+                console.log('AdMob初期化成功');
+            }
+        }).catch((error) => {
+            if (__DEV__) {
+                console.warn('AdMob初期化失敗:', error.message);
+            }
+            // エラーでもアプリは続行（AdMobなしで動作）
+            isAdMobInitialized = true;
+        });
+    } catch (error) {
+        if (__DEV__) {
+            console.warn('AdMobモジュール読み込み失敗:', error.message);
+        }
+        // モジュールが存在しない場合もアプリは続行
+        isAdMobInitialized = true;
+    }
+} else {
+    // Web環境では初期化不要
+    isAdMobInitialized = true;
+}
+
 export default function App() {
     // 認証状態を管理
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // グローバルエラーハンドラーを設定（本番環境のみ）
-        // 開発環境ではデフォルトのRed Screenを表示してデバッグを容易にする
-        if (!__DEV__) {
-            const errorHandler = (error, isFatal) => {
-                console.error('グローバルエラー:', error);
-                // エラーをログに記録するが、アプリは続行
-            };
-
-            // 未処理のPromise拒否をキャッチ
-            const rejectionHandler = (reason, promise) => {
-                console.error('未処理のPromise拒否:', reason);
-                // エラーをログに記録するが、アプリは続行
-            };
-
-            // エラーハンドラーを登録
-            const ErrorUtils = global.ErrorUtils || (typeof ErrorUtils !== 'undefined' ? ErrorUtils : null);
-            if (ErrorUtils && typeof ErrorUtils.setGlobalHandler === 'function') {
-                try {
-                    ErrorUtils.setGlobalHandler(errorHandler);
-                } catch (setupError) {
-                    console.error('エラーハンドラー設定エラー:', setupError);
+        // Crashlytics初期化（React Component内で実行する：ブリッジ初期化前の呼び出しを避ける）
+        if (Platform.OS !== 'web') {
+            try {
+                const crashlytics = require('@react-native-firebase/crashlytics').default;
+                // 開発中は収集を止めたい場合は true/false を切り替え
+                crashlytics().setCrashlyticsCollectionEnabled(!__DEV__);
+                crashlytics().log('アプリケーション起動');
+                if (__DEV__) {
+                    console.log('Crashlytics初期化成功');
                 }
-            }
-
-            // Promise拒否ハンドラーを登録
-            if (typeof Promise !== 'undefined') {
-                global.onunhandledrejection = (event) => {
-                    rejectionHandler(event.reason, event.promise);
-                    event.preventDefault();
-                };
+            } catch (error) {
+                if (__DEV__) {
+                    console.warn('Crashlyticsモジュール読み込み失敗:', error.message);
+                }
             }
         }
 
         // 認証状態の変更を監視
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+
+            // Firebase AuthのユーザーIDをCrashlyticsに設定
+            if (Platform.OS !== 'web') {
+                try {
+                    const crashlytics = require('@react-native-firebase/crashlytics').default;
+                    if (currentUser) {
+                        crashlytics().setUserId(currentUser.uid);
+                        // 個人情報は送らないのが安全。必要ならメールは削除/匿名化してください。
+                        crashlytics().setAttribute('auth_provider', currentUser.isAnonymous ? 'anonymous' : 'password');
+                    } else {
+                        crashlytics().setUserId('anonymous');
+                    }
+                } catch (error) {
+                    if (__DEV__) {
+                        console.warn('Crashlyticsユーザー設定失敗:', error.message);
+                    }
+                }
+            }
         });
 
         // クリーンアップ
-        return () => {
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        };
+        return () => unsubscribe();
     }, []);
 
     return (
-        <SafeAreaProvider>
-            <NavigationContainer>
-                <StatusBar style="auto" />
+        <ErrorBoundary>
+            <SafeAreaProvider>
+                <NavigationContainer>
+                    <StatusBar style="auto" />
             <Stack.Navigator
                 initialRouteName="Home"
                 screenOptions={{
@@ -165,7 +198,8 @@ export default function App() {
                     }}
                 />
             </Stack.Navigator>
-            </NavigationContainer>
-        </SafeAreaProvider>
+                </NavigationContainer>
+            </SafeAreaProvider>
+        </ErrorBoundary>
     );
 }

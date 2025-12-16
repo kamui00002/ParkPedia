@@ -14,28 +14,23 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { collection, addDoc, doc, updateDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { uploadMultipleImages } from '../utils/imageUploader';
 
 export default function AddReviewScreen({ route, navigation }) {
-  // 編集モードかどうか（route.paramsから取得）
-  const isEditMode = route?.params?.isEditMode || false;
-  const reviewData = route?.params?.reviewData || null;
-  const { parkId, parkName } = route.params || {};
+  const { parkId, parkName } = route.params;
   
   // 状態管理
-  const [rating, setRating] = useState(reviewData?.rating || 0);
-  const [comment, setComment] = useState(reviewData?.comment || '');
-  const [photos, setPhotos] = useState(reviewData?.photos || []);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   
   const MAX_PHOTOS = 5;
 
-  // ログインチェック（編集モードの場合はスキップ）
+  // ログインチェック
   useEffect(() => {
-    if (isEditMode) return; // 編集モードの場合はスキップ
-    
     const currentUser = auth.currentUser;
     if (!currentUser) {
       Alert.alert(
@@ -54,7 +49,7 @@ export default function AddReviewScreen({ route, navigation }) {
         ]
       );
     }
-  }, [navigation, isEditMode]);
+  }, [navigation]);
 
   // 写真を選択
   const pickImage = async () => {
@@ -72,7 +67,7 @@ export default function AddReviewScreen({ route, navigation }) {
 
     // 画像を選択
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: [ImagePicker.MediaType.Images],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -197,29 +192,16 @@ export default function AddReviewScreen({ route, navigation }) {
         }
       }
 
-      // 編集モードか新規作成かで処理を分岐
-      if (isEditMode && reviewData?.id) {
-        // 編集モード: 既存のレビューを更新
-        const reviewRef = doc(db, 'reviews', reviewData.id);
-        await updateDoc(reviewRef, {
-          rating: rating,
-          comment: comment.trim(),
-          photos: uploadedImageUrls.length > 0 ? uploadedImageUrls : (reviewData.photos || []), // 新しい画像がない場合は既存の画像を保持
-          updatedAt: serverTimestamp(),
-          // parkId, userId, userName, createdAtは変更しない
-        });
-      } else {
-        // 新規作成モード: 新しいレビューを作成
-        await addDoc(collection(db, 'reviews'), {
-          parkId: parkId,
-          userId: user.uid,
-          userName: user.displayName || user.email?.split('@')[0] || '匿名ユーザー',
-          rating: rating,
-          comment: comment.trim(),
-          photos: uploadedImageUrls, // Firebase StorageのURLの配列
-          createdAt: serverTimestamp(),
-        });
-      }
+      // Firestoreにレビューを保存
+      await addDoc(collection(db, 'reviews'), {
+        parkId: parkId,
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || '匿名ユーザー',
+        rating: rating,
+        comment: comment.trim(),
+        photos: uploadedImageUrls, // Firebase StorageのURLの配列
+        createdAt: serverTimestamp(),
+      });
 
       // 公園の評価を更新
       try {
@@ -238,7 +220,7 @@ export default function AddReviewScreen({ route, navigation }) {
 
       Alert.alert(
         '成功',
-        isEditMode ? 'レビューを更新しました' : 'レビューを投稿しました',
+        'レビューを投稿しました',
         [
           {
             text: 'OK',
@@ -362,9 +344,7 @@ export default function AddReviewScreen({ route, navigation }) {
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>
-              {isEditMode ? 'レビューを更新' : 'レビューを投稿'}
-            </Text>
+            <Text style={styles.submitButtonText}>レビューを投稿</Text>
           )}
         </TouchableOpacity>
       </View>

@@ -1,6 +1,6 @@
 {
   "name": "parkpedia",
-  "version": "1.0.23",
+  "version": "1.0.25",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-firebase/app": "^23.7.0",
+    "@react-native-firebase/crashlytics": "^23.7.0",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@react-navigation/stack": "^6.4.1",

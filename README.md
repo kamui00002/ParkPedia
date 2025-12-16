@@ -16,10 +16,12 @@ ParkPediaは、ユーザーが公園の情報を共有し、レビューを投�
 
 ## 技術スタック
 
-- **React Native**: 0.74.5
-- **Expo**: ~51.0.0
+- **React**: 18.3.1
+- **React Native**: 0.76.5
+- **Expo SDK**: ~54.0.29
 - **Firebase**: Authentication, Firestore, Storage
 - **React Navigation**: ナビゲーション管理
+- **AdMob**: react-native-google-mobile-ads v16.0.0
 
 ## セットアップ
 
@@ -52,11 +54,27 @@ yarn install
 
 `firestore.rules` の内容を Firebase Console > Firestore Database > ルール にコピー＆ペーストしてください。
 
-### 5. サンプルデータの追加
+### 5. Firebase Storageセキュリティルール（重要）
+
+`storage.rules` の内容を Firebase Console > Storage > ルール にコピー＆ペーストして公開してください。
+
+**詳細な手順は `STORAGE_RULES_DEPLOY_GUIDE.md` を参照してください。**
+
+```bash
+# ルールをクリップボードにコピー（Mac）
+pbcopy < storage.rules
+
+# または内容を表示
+cat storage.rules
+```
+
+⚠️ **Storage Rulesをデプロイしないと画像が表示されません！**
+
+### 6. サンプルデータの追加
 
 `SAMPLE_DATA.js` を参考に、Firebase Consoleからサンプルデータを追加できます。
 
-### 6. アプリの起動
+### 7. アプリの起動
 
 ```bash
 # 開発サーバーを起動
@@ -69,7 +87,20 @@ npm run ios
 npm run android
 ```
 
-## プロジェクト構成
+## クイックスタート（詳細）
+
+- **依存関係のインストール**: `npm install`
+- **Firebaseの準備**: Authentication / Firestore / Storage を有効化し、`firebaseConfig.js` を設定
+- **Firestoreルール適用**: `firestore.rules` を Console に貼り付けて公開
+- **起動**: `npm start`（必要なら `expo start -c` でキャッシュクリア）
+
+よくあるエラー:
+- **Firestore Permission denied**: ルールが未公開 or ログインしていない
+- **Firebase auth/network-request-failed**: ネットワーク/設定値を確認
+
+運用・審査・トラブルシュートの詳細は `docs/DEVELOPMENT_KNOWLEDGE_BASE.md` を参照してください。
+
+## プロジェクト構成（要点）
 
 ```
 .
@@ -85,11 +116,30 @@ npm run android
 └── SAMPLE_DATA.js        # サンプルデータ
 ```
 
-詳細は `FILE_STRUCTURE.md` を参照してください。
+詳細な構造・設計のメモは `docs/DEVELOPMENT_KNOWLEDGE_BASE.md` と `docs/ARCHIVE.md` に統合しました。
 
-## クイックスタート
+## バージョン情報
 
-詳細なセットアップ手順は `QUICKSTART.md` を参照してください。
+- **最新バージョン**: 1.0.25
+- **ビルド番号**: 31 (iOS)
+- **最終更新**: 2025-12-17
+
+### 最新の変更点（v1.0.25）
+
+- ✅ React 18.3.1へのダウングレード（React 19互換性問題を解決）
+- ✅ AdMobバナー広告を再有効化（useState関連エラーを修正）
+- ✅ Firebase Storage画像表示の問題診断とドキュメント作成
+
+詳細は `V1.0.25_FIX_SUMMARY.md` を参照してください。
+
+## ドキュメント
+
+- **v1.0.25修正サマリー**: `V1.0.25_FIX_SUMMARY.md`
+- **Storage Rules デプロイガイド**: `STORAGE_RULES_DEPLOY_GUIDE.md` ⭐重要
+- **運用/審査/トラブルシュート集約**: `docs/DEVELOPMENT_KNOWLEDGE_BASE.md`
+- **過去の作業メモの統合アーカイブ**: `docs/ARCHIVE.md`
+- **公開用プライバシーポリシー（HTML）**: `docs/privacy-policy.html`
+- **広告（app-ads.txt）**: `docs/app-ads.txt`
 
 ## ライセンス
 

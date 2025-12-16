@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
 } from 'react-native';
 import {
   collection,
@@ -28,6 +29,7 @@ import { db, auth } from '../firebaseConfig';
 import { checkIsAdmin } from '../utils/adminUtils';
 import CustomHeader from '../components/CustomHeader';
 import AdBanner from '../components/AdBanner';
+import { AD_ENABLED } from '../adConfig';
 
 export default function AdminScreen({ navigation }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -336,6 +338,56 @@ export default function AdminScreen({ navigation }) {
     }
   };
 
+  // テストクラッシュを発生させる
+  const handleTestCrash = () => {
+    Alert.alert(
+      'テストクラッシュ',
+      'Crashlyticsのテストクラッシュを発生させます。アプリは強制終了されます。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'クラッシュさせる',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              const crashlytics = require('@react-native-firebase/crashlytics').default;
+              crashlytics().log('テストクラッシュボタンが押されました');
+              crashlytics().crash();
+            } catch (error) {
+              Alert.alert('エラー', 'Crashlyticsモジュールの読み込みに失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // テストエラーをCrashlyticsに送信
+  const handleTestError = () => {
+    Alert.alert(
+      'テストエラー',
+      'Crashlyticsにテストエラーを送信します。アプリは継続して動作します。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'エラー送信',
+          onPress: () => {
+            try {
+              const crashlytics = require('@react-native-firebase/crashlytics').default;
+              crashlytics().log('テストエラーボタンが押されました');
+              crashlytics().recordError(
+                new Error('これはテストエラーです。アプリは正常に動作しています。')
+              );
+              Alert.alert('成功', 'テストエラーをCrashlyticsに送信しました');
+            } catch (error) {
+              Alert.alert('エラー', 'Crashlyticsモジュールの読み込みに失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // レポートカードのレンダリング
   const renderReportCard = ({ item }) => {
     const reasonLabels = {
@@ -519,6 +571,30 @@ export default function AdminScreen({ navigation }) {
         currentScreen="admin"
       />
       <ScrollView style={styles.scrollView}>
+        {/* Crashlyticsテストボタン（開発者向け） */}
+        {__DEV__ && Platform.OS !== 'web' && (
+          <View style={styles.testSection}>
+            <Text style={styles.testSectionTitle}>開発者向けツール</Text>
+            <View style={styles.testButtonContainer}>
+              <TouchableOpacity
+                style={styles.testCrashButton}
+                onPress={handleTestCrash}
+              >
+                <Text style={styles.testButtonText}>テストクラッシュ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.testErrorButton}
+                onPress={handleTestError}
+              >
+                <Text style={styles.testButtonText}>テストエラー</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.testDescription}>
+              Crashlyticsの動作確認用。テストクラッシュはアプリが強制終了します。
+            </Text>
+          </View>
+        )}
+
         {/* タブ */}
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -575,7 +651,7 @@ export default function AdminScreen({ navigation }) {
           />
         )}
 
-        <AdBanner />
+        {AD_ENABLED ? <AdBanner /> : null}
       </ScrollView>
     </View>
   );
@@ -609,6 +685,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#EF4444',
     textAlign: 'center',
+  },
+  testSection: {
+    backgroundColor: '#FFFBEB',
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FCD34D',
+  },
+  testSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  testButtonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  testCrashButton: {
+    flex: 1,
+    backgroundColor: '#EF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  testErrorButton: {
+    flex: 1,
+    backgroundColor: '#F59E0B',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  testDescription: {
+    fontSize: 12,
+    color: '#78350F',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -774,4 +897,3 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
-
