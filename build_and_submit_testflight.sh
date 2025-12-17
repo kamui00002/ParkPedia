@@ -43,3 +43,4 @@ eas submit --platform ios --profile production --path "$IPA_PATH"
 echo "✅ 完了: build & submit"
 
 
+

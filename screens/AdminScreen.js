@@ -28,8 +28,6 @@ import {
 import { db, auth } from '../firebaseConfig';
 import { checkIsAdmin } from '../utils/adminUtils';
 import CustomHeader from '../components/CustomHeader';
-import AdBanner from '../components/AdBanner';
-import { AD_ENABLED } from '../adConfig';
 
 export default function AdminScreen({ navigation }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -650,8 +648,6 @@ export default function AdminScreen({ navigation }) {
             scrollEnabled={false}
           />
         )}
-
-        {AD_ENABLED ? <AdBanner /> : null}
       </ScrollView>
     </View>
   );

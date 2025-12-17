@@ -16,7 +16,7 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
@@ -37,7 +37,10 @@ const FACILITIES = [
   { id: 'ball', label: 'ボール遊び可' },
 ];
 
-export default function AddParkScreen({ navigation }) {
+export default function AddParkScreen({ navigation, route }) {
+  // 編集モードのチェック
+  const isEditMode = route.params?.isEditMode || false;
+  const existingParkData = route.params?.parkData || null;
   // 状態管理
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -50,13 +53,41 @@ export default function AddParkScreen({ navigation }) {
   
   const MAX_PHOTOS = 8;
 
+  // 編集モードの場合、既存データを読み込む
+  useEffect(() => {
+    if (isEditMode && existingParkData) {
+      setName(existingParkData.name || '');
+      setAddress(existingParkData.address || '');
+      setDescription(existingParkData.description || '');
+      setSelectedAges(existingParkData.tags?.age || []);
+      setSelectedEquipment(existingParkData.tags?.equipment || []);
+
+      // 施設データを復元
+      const facilityIds = [];
+      if (existingParkData.facilities && Array.isArray(existingParkData.facilities)) {
+        existingParkData.facilities.forEach((label) => {
+          const facility = FACILITIES.find(f => f.label === label);
+          if (facility) {
+            facilityIds.push(facility.id);
+          }
+        });
+      }
+      setSelectedFacilities(facilityIds);
+
+      // 画像データを復元
+      if (existingParkData.images && Array.isArray(existingParkData.images)) {
+        setPhotos(existingParkData.images);
+      }
+    }
+  }, [isEditMode, existingParkData]);
+
   // ログインチェック
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
       Alert.alert(
         'ログインが必要です',
-        '公園を追加するにはログインが必要です。',
+        `公園を${isEditMode ? '編集' : '追加'}するにはログインが必要です。`,
         [
           {
             text: 'ログイン',
@@ -70,7 +101,7 @@ export default function AddParkScreen({ navigation }) {
         ]
       );
     }
-  }, [navigation]);
+  }, [navigation, isEditMode]);
 
   // 対象年齢の選択/解除
   const toggleAge = (age) => {
@@ -142,7 +173,7 @@ export default function AddParkScreen({ navigation }) {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
-  // 公園データをFirestoreに保存
+  // 公園データをFirestoreに保存または更新
   const handleSubmit = async () => {
     // バリデーション
     if (!name.trim()) {
@@ -180,20 +211,27 @@ export default function AddParkScreen({ navigation }) {
       // 画像をFirebase Storageにアップロード
       let uploadedImageUrls = [];
       let mainImageUrl = null;
-      
-      if (photos.length > 0) {
+
+      // 新規画像（httpやhttpsで始まらないローカルURI）のみをアップロード
+      const newPhotos = photos.filter(photo => !photo.startsWith('http'));
+      const existingPhotos = photos.filter(photo => photo.startsWith('http'));
+
+      if (newPhotos.length > 0) {
         try {
-          uploadedImageUrls = await uploadMultipleImages(photos, 'parks');
-          mainImageUrl = uploadedImageUrls[0] || null;
+          const newUploadedUrls = await uploadMultipleImages(newPhotos, 'parks');
+          uploadedImageUrls = [...existingPhotos, ...newUploadedUrls];
         } catch (uploadError) {
           console.error('画像アップロードエラー:', uploadError);
           Alert.alert('警告', '画像のアップロードに失敗しましたが、公園は保存されます。');
-          // アップロードに失敗しても公園は保存する
+          uploadedImageUrls = existingPhotos;
         }
+      } else {
+        uploadedImageUrls = existingPhotos;
       }
 
-      // Firestoreに保存
-      const docRef = await addDoc(collection(db, 'parks'), {
+      mainImageUrl = uploadedImageUrls[0] || null;
+
+      const parkData = {
         name: name.trim(),
         address: address.trim(),
         description: description.trim(),
@@ -202,31 +240,53 @@ export default function AddParkScreen({ navigation }) {
           equipment: selectedEquipment,
         },
         facilities: facilities,
-        mainImage: mainImageUrl, // Firebase StorageのURL
-        images: uploadedImageUrls, // Firebase StorageのURLの配列
-        rating: 0, // 初期評価は0
-        reviewCount: 0, // レビュー数は0
-        userId: currentUser.uid,
-        createdAt: serverTimestamp(),
-      });
+        mainImage: mainImageUrl,
+        images: uploadedImageUrls,
+        updatedAt: serverTimestamp(),
+      };
 
+      if (isEditMode && existingParkData?.id) {
+        // 編集モード: 既存の公園を更新
+        const parkRef = doc(db, 'parks', existingParkData.id);
+        await updateDoc(parkRef, parkData);
 
-      Alert.alert(
-        '成功',
-        '公園を追加しました！',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // ホーム画面に戻る
-              navigation.navigate('Home');
+        Alert.alert(
+          '成功',
+          '公園を更新しました！',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.navigate('Admin');
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      } else {
+        // 新規追加モード
+        parkData.rating = 0;
+        parkData.reviewCount = 0;
+        parkData.userId = currentUser.uid;
+        parkData.createdAt = serverTimestamp();
+
+        await addDoc(collection(db, 'parks'), parkData);
+
+        Alert.alert(
+          '成功',
+          '公園を追加しました！',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.navigate('Home');
+              },
+            },
+          ]
+        );
+      }
     } catch (error) {
       console.error('❌ 公園データの保存エラー:', error);
-      Alert.alert('エラー', `公園の追加に失敗しました: ${error.message}`);
+      Alert.alert('エラー', `公園の${isEditMode ? '更新' : '追加'}に失敗しました: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -399,7 +459,9 @@ export default function AddParkScreen({ navigation }) {
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>公園を追加</Text>
+            <Text style={styles.submitButtonText}>
+              {isEditMode ? '公園を更新' : '公園を追加'}
+            </Text>
           )}
         </TouchableOpacity>
       </ScrollView>

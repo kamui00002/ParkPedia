@@ -19,15 +19,24 @@ import { db, auth } from '../firebaseConfig';
 import { uploadMultipleImages } from '../utils/imageUploader';
 
 export default function AddReviewScreen({ route, navigation }) {
-  const { parkId, parkName } = route.params;
-  
+  const { parkId, parkName, isEditMode, reviewData } = route.params;
+
   // 状態管理
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const MAX_PHOTOS = 5;
+
+  // 編集モードの場合、既存データを読み込む
+  useEffect(() => {
+    if (isEditMode && reviewData) {
+      setRating(reviewData.rating || 0);
+      setComment(reviewData.comment || '');
+      setPhotos(reviewData.photos || []);
+    }
+  }, [isEditMode, reviewData]);
 
   // ログインチェック
   useEffect(() => {
@@ -163,7 +172,7 @@ export default function AddReviewScreen({ route, navigation }) {
     }
   };
 
-  // レビューを送信
+  // レビューを送信または更新
   const handleSubmit = async () => {
     // バリデーション
     if (rating === 0) {
@@ -182,57 +191,100 @@ export default function AddReviewScreen({ route, navigation }) {
 
       // 画像をFirebase Storageにアップロード
       let uploadedImageUrls = [];
-      if (photos.length > 0) {
+
+      // 新規画像（httpやhttpsで始まらないローカルURI）のみをアップロード
+      const newPhotos = photos.filter(photo => !photo.startsWith('http'));
+      const existingPhotos = photos.filter(photo => photo.startsWith('http'));
+
+      if (newPhotos.length > 0) {
         try {
-          uploadedImageUrls = await uploadMultipleImages(photos, 'reviews');
+          const newUploadedUrls = await uploadMultipleImages(newPhotos, 'reviews');
+          uploadedImageUrls = [...existingPhotos, ...newUploadedUrls];
         } catch (uploadError) {
           console.error('画像アップロードエラー:', uploadError);
           Alert.alert('警告', '画像のアップロードに失敗しましたが、レビューは保存されます。');
-          // アップロードに失敗してもレビューは保存する
+          uploadedImageUrls = existingPhotos;
         }
+      } else {
+        uploadedImageUrls = existingPhotos;
       }
 
-      // Firestoreにレビューを保存
-      await addDoc(collection(db, 'reviews'), {
-        parkId: parkId,
-        userId: user.uid,
-        userName: user.displayName || user.email?.split('@')[0] || '匿名ユーザー',
-        rating: rating,
-        comment: comment.trim(),
-        photos: uploadedImageUrls, // Firebase StorageのURLの配列
-        createdAt: serverTimestamp(),
-      });
+      if (isEditMode && reviewData?.id) {
+        // 編集モード: 既存のレビューを更新
+        const reviewRef = doc(db, 'reviews', reviewData.id);
+        await updateDoc(reviewRef, {
+          rating: rating,
+          comment: comment.trim(),
+          photos: uploadedImageUrls,
+          updatedAt: serverTimestamp(),
+        });
 
-      // 公園の評価を更新
-      try {
-        await updateParkRating(parkId);
-      } catch (ratingError) {
-        // 評価更新に失敗してもレビューは保存されているので、警告のみ表示
-        console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
-        if (__DEV__) {
-          Alert.alert(
-            '警告',
-            'レビューは投稿されましたが、評価の自動更新に失敗しました。\n\nしばらくしてからアプリを再起動してください。',
-            [{ text: 'OK' }]
-          );
+        // 公園の評価を更新
+        try {
+          await updateParkRating(parkId);
+        } catch (ratingError) {
+          console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
+          if (__DEV__) {
+            Alert.alert(
+              '警告',
+              'レビューは更新されましたが、評価の自動更新に失敗しました。\n\nしばらくしてからアプリを再起動してください。',
+              [{ text: 'OK' }]
+            );
+          }
         }
-      }
 
-      Alert.alert(
-        '成功',
-        'レビューを投稿しました',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+        Alert.alert(
+          '成功',
+          'レビューを更新しました',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Admin'),
+            },
+          ]
+        );
+      } else {
+        // 新規追加モード
+        await addDoc(collection(db, 'reviews'), {
+          parkId: parkId,
+          userId: user.uid,
+          userName: user.displayName || user.email?.split('@')[0] || '匿名ユーザー',
+          rating: rating,
+          comment: comment.trim(),
+          photos: uploadedImageUrls,
+          createdAt: serverTimestamp(),
+        });
+
+        // 公園の評価を更新
+        try {
+          await updateParkRating(parkId);
+        } catch (ratingError) {
+          console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
+          if (__DEV__) {
+            Alert.alert(
+              '警告',
+              'レビューは投稿されましたが、評価の自動更新に失敗しました。\n\nしばらくしてからアプリを再起動してください。',
+              [{ text: 'OK' }]
+            );
+          }
+        }
+
+        Alert.alert(
+          '成功',
+          'レビューを投稿しました',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      }
     } catch (error) {
       if (__DEV__) {
         console.error('レビュー投稿エラー:', error);
       }
-      Alert.alert('エラー', 'レビューの投稿に失敗しました');
+      Alert.alert('エラー', `レビューの${isEditMode ? '更新' : '投稿'}に失敗しました`);
     } finally {
       setSubmitting(false);
     }
@@ -344,7 +396,9 @@ export default function AddReviewScreen({ route, navigation }) {
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>レビューを投稿</Text>
+            <Text style={styles.submitButtonText}>
+              {isEditMode ? 'レビューを更新' : 'レビューを投稿'}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
