@@ -235,14 +235,18 @@ App Store Connectの「App Review Information」セクションに以下を記�
 
 ```
 Demo Account:
-Username: reviewer@parkpedia.com
-Password: ParkPedia2025!
+Username: [Your demo account email]
+Password: [Your demo account password]
 
 Notes:
-- This account has full access to all features
+- This account should have full access to all features
 - Pre-populated with sample park data
-- You can add new parks and reviews
+- Reviewers can add new parks and reviews
 - Location permission is required for nearby park search
+
+IMPORTANT: Do NOT commit actual credentials to the repository.
+Provide demo account credentials securely through App Store Connect's
+"App Review Information" section or via encrypted communication.
 ```
 
 ---

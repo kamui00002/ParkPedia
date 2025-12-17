@@ -8401,7 +8401,7 @@ Thank you for your review. We have already implemented a complete account deleti
 
 1. **Launch the app** and log in with the demo account:
    - Email: `reviewer@parkpedia.test`
-   - Password: `ReviewTest2024!`
+   - Password: `(removed from repo)`
 
 2. **Navigate to My Page**:
    - Tap the **"マイページ" (My Page)** tab in the bottom navigation bar
@@ -8585,7 +8585,7 @@ We have published a comprehensive Privacy Policy that includes:
 
 ### Demo Account for Testing:
 - **Email**: reviewer@parkpedia.test
-- **Password**: ReviewTest2024!
+- **Password**: (removed from repo)
 
 This account has been pre-configured with sample data to demonstrate all features.
 
@@ -8693,7 +8693,7 @@ If you have any questions or need further clarification, please reply to this me
 
 1. **デモアカウントが有効か確認**
    - Email: `reviewer@parkpedia.test`
-   - Password: `ReviewTest2024!`
+   - Password: `(removed from repo)`
    - このアカウントが削除されていないか確認
 
 2. **アカウント削除機能の動作確認**
@@ -8825,7 +8825,7 @@ If you have any questions or need further clarification, please reply to this me
 
 ### Test Account Credentials
 - **Email**: reviewer@parkpedia.test
-- **Password**: ReviewTest2024!
+- **Password**: (removed from repo)
 
 This account has been pre-configured with sample data to demonstrate all features.
 
@@ -9136,7 +9136,7 @@ If you encounter any issues or need clarification, please contact us through App
 
 - [ ] **デモアカウントが有効**
   - Email: reviewer@parkpedia.test
-  - Password: ReviewTest2024!
+  - Password: (removed from repo)
   - アカウントが削除されていない
   - ログインできる
 
@@ -9934,7 +9934,7 @@ App Store Connectから、アプリの審査で2つの問題が指摘されま�
 **レビュアーがテストに使用するため、必ず有効である必要があります。**
 
 - **Email**: reviewer@parkpedia.test
-- **Password**: ReviewTest2024!
+- **Password**: (removed from repo)
 
 **確認事項**:
 1. アカウントが存在し、ログインできる
@@ -15431,7 +15431,7 @@ google.com, pub-5237930968754753, DIRECT, f08c47fec0942fa0
 
 - [ ] **デモアカウントが有効**
   - Email: reviewer@parkpedia.test
-  - Password: ReviewTest2024!
+  - Password: (removed from repo)
   - アカウントが削除されていない
   - ログインできる
 

@@ -52,6 +52,8 @@ Thumbs.db
 firebase-debug.log
 firestore-debug.log
 serviceAccountKey.json
+GoogleService-Info.plist
+google-services.json
 
 # Credentials
 credentials.json

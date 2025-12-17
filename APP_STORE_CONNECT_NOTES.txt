@@ -1,7 +1,7 @@
 DEMO ACCOUNT FOR APP REVIEW
 
 Email: reviewer@parkpedia.test
-Password: ReviewTest2024!
+Password: (removed from repo)  ※App Store Connectの「Demo Account」に設定したものを参照
 
 TESTING GUIDELINES:
 
