@@ -17,8 +17,8 @@ GitGuardianから「Company Email Password」の検出通知を受け、リポ�
 
 **内容**:
 ```
-Username: reviewer@parkpedia.com
-Password: ParkPedia2025!
+Username: [REDACTED]
+Password: [REDACTED]
 ```
 
 **リスクレベル**: 🟡 低
@@ -52,8 +52,8 @@ Password: ParkPedia2025!
 **変更前**:
 ```
 Demo Account:
-Username: reviewer@parkpedia.com
-Password: ParkPedia2025!
+Username: [REDACTED]
+Password: [REDACTED]
 ```
 
 **変更後**:
@@ -112,7 +112,7 @@ cd ParkPedia
 bfg --delete-files GoogleService-Info.plist
 
 # 特定の文字列を履歴から削除（パスワード）
-bfg --replace-text <(echo 'ParkPedia2025!=>***REMOVED***')
+bfg --replace-text <(echo '[YOUR_PASSWORD]=>***REMOVED***')
 
 # 変更を適用
 git reflog expire --expire=now --all
