@@ -2,9 +2,7 @@ import React from 'react';
 
 import { View, Text, StyleSheet } from 'react-native';
 
-import { AD_ENABLED, AD_SETTINGS, AD_PLACEHOLDER_COLOR } from '../adConfig';
-
-
+import { AD_SETTINGS, AD_PLACEHOLDER_COLOR } from '../adConfig';
 
 /**
 
@@ -31,35 +29,20 @@ import { AD_ENABLED, AD_SETTINGS, AD_PLACEHOLDER_COLOR } from '../adConfig';
  */
 
 export default function AdBannerPlaceholder() {
-
   if (!AD_SETTINGS.banner.enabled) {
-
     // 🎨 広告無効時：スペースだけ確保
 
     return (
-
       <View style={[styles.placeholder, { height: AD_SETTINGS.banner.height }]}>
-
-        <Text style={styles.placeholderText}>
-
-          [広告スペース {AD_SETTINGS.banner.height}px]
-
-        </Text>
-
+        <Text style={styles.placeholderText}>[広告スペース {AD_SETTINGS.banner.height}px]</Text>
       </View>
-
     );
-
   }
-
-
 
   // 🎯 広告有効時：ここに実際の広告コードを追加
 
   return (
-
     <View style={styles.adContainer}>
-
       {/* 
 
         TODO: 本番時にコメントアウトを外す
@@ -87,23 +70,14 @@ export default function AdBannerPlaceholder() {
       */}
 
       <View style={[styles.placeholder, { height: AD_SETTINGS.banner.height }]}>
-
         <Text style={styles.placeholderText}>[広告読み込み中...]</Text>
-
       </View>
-
     </View>
-
   );
-
 }
 
-
-
 const styles = StyleSheet.create({
-
   placeholder: {
-
     backgroundColor: AD_PLACEHOLDER_COLOR,
 
     justifyContent: 'center',
@@ -115,26 +89,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
 
     borderColor: '#FFB3B3',
-
   },
 
   placeholderText: {
-
     fontSize: 12,
 
     color: '#999',
 
     fontStyle: 'italic',
-
   },
 
   adContainer: {
-
     alignItems: 'center',
 
     backgroundColor: '#f5f5f5',
-
   },
-
 });
-

@@ -20,6 +20,7 @@ import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/fi
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
+import { handleError } from '../utils/errorHandler';
 
 // 対象年齢の選択肢
 const AGE_OPTIONS = ['0-2歳', '3-5歳', '6歳以上'];
@@ -50,7 +51,7 @@ export default function AddParkScreen({ navigation, route }) {
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const MAX_PHOTOS = 8;
 
   // 編集モードの場合、既存データを読み込む
@@ -65,7 +66,7 @@ export default function AddParkScreen({ navigation, route }) {
       // 施設データを復元
       const facilityIds = [];
       if (existingParkData.facilities && Array.isArray(existingParkData.facilities)) {
-        existingParkData.facilities.forEach((label) => {
+        existingParkData.facilities.forEach(label => {
           const facility = FACILITIES.find(f => f.label === label);
           if (facility) {
             facilityIds.push(facility.id);
@@ -104,10 +105,10 @@ export default function AddParkScreen({ navigation, route }) {
   }, [navigation, isEditMode]);
 
   // 対象年齢の選択/解除
-  const toggleAge = (age) => {
-    setSelectedAges((prev) => {
+  const toggleAge = age => {
+    setSelectedAges(prev => {
       if (prev.includes(age)) {
-        return prev.filter((item) => item !== age);
+        return prev.filter(item => item !== age);
       } else {
         return [...prev, age];
       }
@@ -115,10 +116,10 @@ export default function AddParkScreen({ navigation, route }) {
   };
 
   // 遊具の選択/解除
-  const toggleEquipment = (equipment) => {
-    setSelectedEquipment((prev) => {
+  const toggleEquipment = equipment => {
+    setSelectedEquipment(prev => {
       if (prev.includes(equipment)) {
-        return prev.filter((item) => item !== equipment);
+        return prev.filter(item => item !== equipment);
       } else {
         return [...prev, equipment];
       }
@@ -126,10 +127,10 @@ export default function AddParkScreen({ navigation, route }) {
   };
 
   // 施設の選択/解除
-  const toggleFacility = (facilityId) => {
-    setSelectedFacilities((prev) => {
+  const toggleFacility = facilityId => {
+    setSelectedFacilities(prev => {
       if (prev.includes(facilityId)) {
-        return prev.filter((id) => id !== facilityId);
+        return prev.filter(id => id !== facilityId);
       } else {
         return [...prev, facilityId];
       }
@@ -169,7 +170,7 @@ export default function AddParkScreen({ navigation, route }) {
   };
 
   // 写真を削除
-  const removePhoto = (index) => {
+  const removePhoto = index => {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
@@ -203,8 +204,8 @@ export default function AddParkScreen({ navigation, route }) {
       setSubmitting(true);
 
       // 施設のラベルを取得
-      const facilities = selectedFacilities.map((id) => {
-        const facility = FACILITIES.find((f) => f.id === id);
+      const facilities = selectedFacilities.map(id => {
+        const facility = FACILITIES.find(f => f.id === id);
         return facility ? facility.label : id;
       });
 
@@ -221,7 +222,7 @@ export default function AddParkScreen({ navigation, route }) {
           const newUploadedUrls = await uploadMultipleImages(newPhotos, 'parks');
           uploadedImageUrls = [...existingPhotos, ...newUploadedUrls];
         } catch (uploadError) {
-          console.error('画像アップロードエラー:', uploadError);
+          if (__DEV__) console.error('画像アップロードエラー:', uploadError);
           Alert.alert('警告', '画像のアップロードに失敗しましたが、公園は保存されます。');
           uploadedImageUrls = existingPhotos;
         }
@@ -250,18 +251,14 @@ export default function AddParkScreen({ navigation, route }) {
         const parkRef = doc(db, 'parks', existingParkData.id);
         await updateDoc(parkRef, parkData);
 
-        Alert.alert(
-          '成功',
-          '公園を更新しました！',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                navigation.navigate('Admin');
-              },
+        Alert.alert('成功', '公園を更新しました！', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('Admin');
             },
-          ]
-        );
+          },
+        ]);
       } else {
         // 新規追加モード
         parkData.rating = 0;
@@ -271,22 +268,22 @@ export default function AddParkScreen({ navigation, route }) {
 
         await addDoc(collection(db, 'parks'), parkData);
 
-        Alert.alert(
-          '成功',
-          '公園を追加しました！',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                navigation.navigate('Home');
-              },
+        Alert.alert('成功', '公園を追加しました！', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('Home');
             },
-          ]
-        );
+          },
+        ]);
       }
     } catch (error) {
-      console.error('❌ 公園データの保存エラー:', error);
-      Alert.alert('エラー', `公園の${isEditMode ? '更新' : '追加'}に失敗しました: ${error.message}`);
+      // 統一されたエラーハンドリング
+      handleError(
+        error,
+        `AddParkScreen.handleSubmit.${isEditMode ? 'update' : 'create'}`,
+        Alert.alert
+      );
     } finally {
       setSubmitting(false);
     }
@@ -306,7 +303,9 @@ export default function AddParkScreen({ navigation, route }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* 公園名入力 */}
         <View style={styles.inputSection}>
-          <Text style={styles.label}>公園名 <Text style={styles.required}>*</Text></Text>
+          <Text style={styles.label}>
+            公園名 <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="例: 代々木公園"
@@ -318,7 +317,9 @@ export default function AddParkScreen({ navigation, route }) {
 
         {/* 住所入力 */}
         <View style={styles.inputSection}>
-          <Text style={styles.label}>住所 <Text style={styles.required}>*</Text></Text>
+          <Text style={styles.label}>
+            住所 <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="例: 東京都渋谷区代々木神園町2-1"
@@ -330,7 +331,9 @@ export default function AddParkScreen({ navigation, route }) {
 
         {/* 説明入力 */}
         <View style={styles.inputSection}>
-          <Text style={styles.label}>説明 <Text style={styles.required}>*</Text></Text>
+          <Text style={styles.label}>
+            説明 <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="公園の特徴や魅力を書いてください..."
@@ -348,9 +351,7 @@ export default function AddParkScreen({ navigation, route }) {
           <Text style={styles.label}>
             写真 ({photos.length}/{MAX_PHOTOS})
           </Text>
-          <Text style={styles.photoHint}>
-            最初の写真がメイン画像になります。
-          </Text>
+          <Text style={styles.photoHint}>最初の写真がメイン画像になります。</Text>
           <TouchableOpacity
             style={styles.photoButton}
             onPress={pickImage}
@@ -358,10 +359,8 @@ export default function AddParkScreen({ navigation, route }) {
           >
             <Text style={styles.photoButtonText}>ファイル選択</Text>
           </TouchableOpacity>
-          {photos.length === 0 && (
-            <Text style={styles.photoStatus}>選択されていません</Text>
-          )}
-          
+          {photos.length === 0 && <Text style={styles.photoStatus}>選択されていません</Text>}
+
           {photos.length > 0 && (
             <View style={styles.photosContainer}>
               {photos.map((photo, index) => (
@@ -388,7 +387,7 @@ export default function AddParkScreen({ navigation, route }) {
         <View style={styles.inputSection}>
           <Text style={styles.label}>対象年齢</Text>
           <View style={styles.optionsContainer}>
-            {AGE_OPTIONS.map((age) => {
+            {AGE_OPTIONS.map(age => {
               const isSelected = selectedAges.includes(age);
               return (
                 <TouchableOpacity
@@ -410,7 +409,7 @@ export default function AddParkScreen({ navigation, route }) {
         <View style={styles.inputSection}>
           <Text style={styles.label}>遊具</Text>
           <View style={styles.optionsContainer}>
-            {EQUIPMENT_OPTIONS.map((equipment) => {
+            {EQUIPMENT_OPTIONS.map(equipment => {
               const isSelected = selectedEquipment.includes(equipment);
               return (
                 <TouchableOpacity
@@ -432,7 +431,7 @@ export default function AddParkScreen({ navigation, route }) {
         <View style={styles.inputSection}>
           <Text style={styles.label}>設備</Text>
           <View style={styles.optionsContainer}>
-            {FACILITIES.map((facility) => {
+            {FACILITIES.map(facility => {
               const isSelected = selectedFacilities.includes(facility.id);
               return (
                 <TouchableOpacity
@@ -459,9 +458,7 @@ export default function AddParkScreen({ navigation, route }) {
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>
-              {isEditMode ? '公園を更新' : '公園を追加'}
-            </Text>
+            <Text style={styles.submitButtonText}>{isEditMode ? '公園を更新' : '公園を追加'}</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -645,9 +642,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
-
-
-
-
-

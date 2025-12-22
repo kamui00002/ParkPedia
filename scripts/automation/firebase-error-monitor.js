@@ -29,9 +29,7 @@ const CONFIG = {
 // Firebase Admin初期化
 function initializeFirebase() {
   if (admin.apps.length === 0) {
-    const serviceAccount = JSON.parse(
-      fs.readFileSync(CONFIG.serviceAccountPath, 'utf8')
-    );
+    const serviceAccount = JSON.parse(fs.readFileSync(CONFIG.serviceAccountPath, 'utf8'));
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
@@ -83,11 +81,7 @@ function categorizeErrors(errors) {
     const message = error.message || '';
 
     // 重大度の判定
-    if (
-      severity === 'critical' ||
-      message.includes('crash') ||
-      message.includes('fatal')
-    ) {
+    if (severity === 'critical' || message.includes('crash') || message.includes('fatal')) {
       categories.critical.push(error);
     } else if (
       severity === 'error' ||
@@ -152,10 +146,7 @@ async function sendSlackNotification(categories, totalErrors) {
   };
 
   // 最新の重要なエラーを追加
-  const topErrors = [
-    ...categories.critical.slice(0, 3),
-    ...categories.high.slice(0, 2),
-  ];
+  const topErrors = [...categories.critical.slice(0, 3), ...categories.high.slice(0, 2)];
 
   if (topErrors.length > 0) {
     message.blocks.push({
@@ -255,8 +246,7 @@ async function main() {
 
     // 閾値チェック
     const criticalAndHigh = categories.critical.length + categories.high.length;
-    const shouldNotify =
-      errors.length > CONFIG.errorThreshold || criticalAndHigh > 0;
+    const shouldNotify = errors.length > CONFIG.errorThreshold || criticalAndHigh > 0;
 
     if (shouldNotify) {
       console.log('⚠️  エラー閾値を超過、通知を送信します');

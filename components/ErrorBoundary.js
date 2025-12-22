@@ -13,7 +13,9 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (__DEV__) {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
 
     // Crashlyticsが利用可能な場合のみ送信（Web以外）
     if (Platform.OS !== 'web') {
@@ -22,7 +24,9 @@ class ErrorBoundary extends React.Component {
         crashlytics().recordError(error);
         crashlytics().log(`Error Info: ${JSON.stringify(errorInfo)}`);
       } catch (e) {
-        console.error('Failed to log error to Crashlytics:', e);
+        if (__DEV__) {
+          console.error('Failed to log error to Crashlytics:', e);
+        }
       }
     }
   }

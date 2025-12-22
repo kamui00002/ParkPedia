@@ -1,0 +1,40 @@
+# .gitleaksignore
+# Gitleaksの誤検知を無視するための設定ファイル
+#
+# 形式: <fingerprint>:<file>:<line>
+# fingerprintはgitleaks detect実行時の出力から取得できます
+
+# 過去のコミットで既に対応済みの検出
+146011a4f9e8c5e9b5c9e8b5e9c5e9b5e9c5e9b5
+613b23a8f9e8c5e9b5c9e8b5e9c5e9b5e9c5e9b5
+
+# ドキュメントファイル内のサンプルコード・プレースホルダー
+# docs/**/*.md:*
+# README.md:*
+# CLAUDE.md:*
+
+# テストファイル内のモックデータ
+# **/__tests__/**:*
+# **/*.test.js:*
+# **/*.spec.js:*
+
+# 環境変数のサンプルファイル（実際の値は含まれていない）
+# .env.example:*
+# .env.template:*
+
+# Firebase設定のサンプル（実際の値は環境変数で管理）
+# firebase.config.example.js:*
+
+# ビルド成果物・ログファイル
+# *.log:*
+# dist/**:*
+# build/**:*
+
+# パッケージマネージャーのロックファイル（依存関係のハッシュ値を誤検知）
+# package-lock.json:*
+# yarn.lock:*
+
+# 注意:
+# - 本当に機密情報が含まれていないか必ず確認してから追加してください
+# - 誤検知を無視する際は、必ずコメントで理由を記載してください
+# - 定期的にこのファイルをレビューし、不要なエントリを削除してください

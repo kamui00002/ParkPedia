@@ -210,10 +210,11 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
 
       // List: Authenticated users can only list their own favorites
-      // Note: This requires the query to include a where clause filtering by userId
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
+      // SECURITY: Requires query to filter by userId to prevent enumeration
+      // Query must include: where('userId', '==', currentUser.uid)
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100
+        && request.auth.uid in request.query.affectedDocuments();
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -253,10 +254,11 @@ service cloud.firestore {
         && (isAdmin() || resource.data.reportedBy == request.auth.uid);
 
       // List: Authenticated users can list their own reports, admins can list all
-      // Note: App should filter by reportedBy for non-admin users
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
+      // SECURITY: Non-admin users must filter by reportedBy
+      // Query must include: where('reportedBy', '==', currentUser.uid) for non-admins
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100
+        && (isAdmin() || request.auth.uid in request.query.affectedDocuments());
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -303,9 +305,11 @@ service cloud.firestore {
         && resource.data.blockedBy == request.auth.uid;
 
       // List: Authenticated users can only list their own blocks
-      // Allow queries with or without limit, but if limit is set, it must be <= 100
+      // SECURITY: Requires query to filter by blockedBy to prevent enumeration
+      // Query must include: where('blockedBy', '==', currentUser.uid)
       allow list: if isAuthenticated()
-        && (request.query.limit == null || request.query.limit <= 100);
+        && request.query.limit <= 100
+        && request.auth.uid in request.query.affectedDocuments();
 
       // Create: Authenticated users only with required fields and validation
       allow create: if isAuthenticated()
@@ -380,6 +384,25 @@ service cloud.firestore {
       match /settings/{document} {
         // Read and write: Owner only
         allow read, write: if isOwner(userId);
+      }
+
+      // User blocked users subcollection
+      match /blockedUsers/{blockedUserId} {
+        // Read: Owner only
+        allow read: if isOwner(userId);
+
+        // Create: Owner only with validation
+        allow create: if isOwner(userId)
+          && hasValidCreatedAt()
+          && request.resource.data.blockedAt == request.time
+          // Cannot block self
+          && blockedUserId != userId;
+
+        // Update: Not allowed
+        allow update: if false;
+
+        // Delete: Owner only
+        allow delete: if isOwner(userId);
       }
     }
 

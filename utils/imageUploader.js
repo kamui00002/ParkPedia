@@ -1,8 +1,10 @@
 // Firebase Storage 画像アップロードユーティリティ
 // 匿名ユーザーにも対応
+// パフォーマンス最適化: アップロード前の画像圧縮を統合
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage, auth } from '../firebaseConfig';
+import { compressImage } from './imageCompressor';
 
 /**
  * 画像をFirebase Storageにアップロード
@@ -12,7 +14,7 @@ import { storage, auth } from '../firebaseConfig';
  */
 export const uploadImageToStorage = async (imageUri, folder = 'parks') => {
   const currentUser = auth.currentUser;
-  
+
   if (!currentUser) {
     throw new Error('ログインが必要です');
   }
@@ -21,6 +23,21 @@ export const uploadImageToStorage = async (imageUri, folder = 'parks') => {
   const userId = currentUser.uid;
 
   try {
+    // パフォーマンス最適化: アップロード前に画像を圧縮
+    let processedImageUri = imageUri;
+    try {
+      processedImageUri = await compressImage(imageUri, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        compress: 0.8,
+      });
+    } catch (compressError) {
+      if (__DEV__)
+        console.warn('画像圧縮に失敗しました。元の画像をアップロードします:', compressError);
+      // 圧縮に失敗した場合は元の画像を使用
+      processedImageUri = imageUri;
+    }
+
     // ファイル名を生成（タイムスタンプ + ランダム文字列）
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
@@ -30,11 +47,11 @@ export const uploadImageToStorage = async (imageUri, folder = 'parks') => {
     const storageRef = ref(storage, `images/${folder}/${userId}/${fileName}`);
 
     // ローカルファイルをBlobに変換
-    const response = await fetch(imageUri);
+    const response = await fetch(processedImageUri);
     if (!response.ok) {
       throw new Error('画像の読み込みに失敗しました');
     }
-    
+
     const blob = await response.blob();
 
     // Content Typeを設定（画像ファイルであることを明示）
@@ -47,11 +64,11 @@ export const uploadImageToStorage = async (imageUri, folder = 'parks') => {
 
     // ダウンロードURLを取得
     const downloadURL = await getDownloadURL(storageRef);
-    
+
     return downloadURL;
   } catch (error) {
-    console.error('画像アップロードエラー:', error);
-    
+    if (__DEV__) console.error('画像アップロードエラー:', error);
+
     // エラーメッセージを分かりやすく
     if (error.code === 'storage/unauthorized') {
       throw new Error('アップロード権限がありません。ログイン状態を確認してください。');
@@ -79,10 +96,7 @@ export const uploadMultipleImages = async (imageUris, folder = 'parks') => {
     const downloadURLs = await Promise.all(uploadPromises);
     return downloadURLs;
   } catch (error) {
-    console.error('複数画像アップロードエラー:', error);
+    if (__DEV__) console.error('複数画像アップロードエラー:', error);
     throw error;
   }
 };
-
-
-

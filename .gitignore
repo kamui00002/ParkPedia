@@ -64,6 +64,11 @@ credentials/
 *.aab
 *.ipa
 
+# Backup files
+*.backup
+*_backup.*
+.cleanup_backup_*/
+
 
 
 

@@ -1,15 +1,14 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { auth } from '../firebaseConfig';
 
-export default function CustomHeader({ navigation, searchQuery, onSearchChange, currentScreen = 'search', onMenuPress }) {
+export default function CustomHeader({
+  navigation,
+  searchQuery,
+  onSearchChange,
+  currentScreen = 'search',
+  onMenuPress,
+}) {
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
@@ -28,7 +27,12 @@ export default function CustomHeader({ navigation, searchQuery, onSearchChange, 
               style={[styles.navButton, currentScreen === 'search' && styles.navButtonActive]}
               onPress={() => navigation.navigate('Home')}
             >
-              <Text style={[styles.navButtonText, currentScreen === 'search' && styles.navButtonTextActive]}>
+              <Text
+                style={[
+                  styles.navButtonText,
+                  currentScreen === 'search' && styles.navButtonTextActive,
+                ]}
+              >
                 公園検索
               </Text>
             </TouchableOpacity>
@@ -37,26 +41,27 @@ export default function CustomHeader({ navigation, searchQuery, onSearchChange, 
               onPress={() => {
                 const currentUser = auth.currentUser;
                 if (!currentUser) {
-                  Alert.alert(
-                    'ログインが必要です',
-                    '公園を投稿するにはログインが必要です。',
-                    [
-                      {
-                        text: 'ログイン',
-                        onPress: () => navigation.navigate('Login'),
-                      },
-                      {
-                        text: 'キャンセル',
-                        style: 'cancel',
-                      },
-                    ]
-                  );
+                  Alert.alert('ログインが必要です', '公園を投稿するにはログインが必要です。', [
+                    {
+                      text: 'ログイン',
+                      onPress: () => navigation.navigate('Login'),
+                    },
+                    {
+                      text: 'キャンセル',
+                      style: 'cancel',
+                    },
+                  ]);
                 } else {
                   navigation.navigate('AddPark');
                 }
               }}
             >
-              <Text style={[styles.navButtonText, currentScreen === 'addPark' && styles.navButtonTextActive]}>
+              <Text
+                style={[
+                  styles.navButtonText,
+                  currentScreen === 'addPark' && styles.navButtonTextActive,
+                ]}
+              >
                 公園を投稿
               </Text>
             </TouchableOpacity>
@@ -84,7 +89,12 @@ export default function CustomHeader({ navigation, searchQuery, onSearchChange, 
                 }
               }}
             >
-              <Text style={[styles.navButtonText, currentScreen === 'mypage' && styles.navButtonTextActive]}>
+              <Text
+                style={[
+                  styles.navButtonText,
+                  currentScreen === 'mypage' && styles.navButtonTextActive,
+                ]}
+              >
                 マイページ
               </Text>
             </TouchableOpacity>
@@ -194,4 +204,3 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
 });
-

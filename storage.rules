@@ -1,32 +1,42 @@
 // Firebase Storage Security Rules
 // Copy and paste this into Firebase Console > Storage > Rules
+//
+// SECURITY FEATURES:
+// - File size limits (5MB for profiles, 10MB for parks/reviews)
+// - Image-only content type validation
+// - Authentication required for uploads
+// - User ownership verification
+// - Safe filename validation
+// - Explicit path structure enforcement
 
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    
+
     // ===========================
     // Helper Functions
     // ===========================
-    
+
     // Check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     // Check if authenticated user matches specified userId
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Validate image file (size and content type)
     function isValidImage(maxSizeMB) {
-      return request.resource.size < maxSizeMB * 1024 * 1024
+      return request.resource != null
+        && request.resource.size < maxSizeMB * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
-    
+
     // Validate file name (prevent dangerous file names)
-    // Note: fileName must be passed as parameter since it's from match pattern
+    // Allows: alphanumeric, dots, underscores, hyphens
+    // Blocks: path traversal attempts (../, //, etc.)
     function isValidFileName(fileName) {
       return fileName.matches('^[a-zA-Z0-9._-]+$');
     }
@@ -34,114 +44,114 @@ service firebase.storage {
     // ===========================
     // Parks Images
     // ===========================
-    // Specific rules for park images
-    
+    // Path: /images/parks/{userId}/{fileName}
+    // Purpose: User-uploaded park photos (public read, owner write)
+    // Max size: 10MB
+
     match /images/parks/{userId}/{fileName} {
       // Read: Anyone can read (public images)
       allow read: if true;
-      
-      // Create: Authenticated users only, own folder only
-      allow create: if isAuthenticated()
-        && isOwner(userId)
+
+      // Create: Authenticated users only, must own the folder
+      allow create: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
-      
-      // Update: Owner only
-      allow update: if isAuthenticated()
-        && isOwner(userId)
+
+      // Update: Owner only, same size/type restrictions
+      allow update: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
-      
+
       // Delete: Owner only
-      allow delete: if isAuthenticated()
-        && isOwner(userId);
+      allow delete: if isOwner(userId);
     }
     
     // ===========================
     // Reviews Images
     // ===========================
-    // Specific rules for review photos
-    
+    // Path: /images/reviews/{userId}/{fileName}
+    // Purpose: User-uploaded review photos (public read, owner write)
+    // Max size: 10MB
+
     match /images/reviews/{userId}/{fileName} {
       // Read: Anyone can read (public images)
       allow read: if true;
-      
-      // Create: Authenticated users only, own folder only
-      allow create: if isAuthenticated()
-        && isOwner(userId)
+
+      // Create: Authenticated users only, must own the folder
+      allow create: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
-      
-      // Update: Owner only
-      allow update: if isAuthenticated()
-        && isOwner(userId)
+
+      // Update: Owner only, same size/type restrictions
+      allow update: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
-      
+
       // Delete: Owner only
-      allow delete: if isAuthenticated()
-        && isOwner(userId);
+      allow delete: if isOwner(userId);
     }
     
     // ===========================
     // User Profile Images
     // ===========================
-    // Profile photos and avatars
-    
+    // Path: /images/profiles/{userId}/{fileName}
+    // Purpose: User profile photos and avatars (public read, owner write)
+    // Max size: 5MB (smaller limit for profiles)
+
     match /images/profiles/{userId}/{fileName} {
       // Read: Anyone can read (public profile images)
       allow read: if true;
-      
-      // Create: Owner only
-      allow create: if isAuthenticated()
-        && isOwner(userId)
+
+      // Create: Owner only, smaller size limit for profiles
+      allow create: if isOwner(userId)
         && isValidImage(5)
         && isValidFileName(fileName);
-      
-      // Update: Owner only
-      allow update: if isAuthenticated()
-        && isOwner(userId)
+
+      // Update: Owner only, same size/type restrictions
+      allow update: if isOwner(userId)
         && isValidImage(5)
         && isValidFileName(fileName);
-      
+
       // Delete: Owner only
-      allow delete: if isAuthenticated()
-        && isOwner(userId);
+      allow delete: if isOwner(userId);
     }
     
     // ===========================
     // Legacy Path Support
     // ===========================
-    // BACKWARD COMPATIBILITY: Support old path structure without /parks/ folder
-    // This allows reading images uploaded before the path structure change
+    // BACKWARD COMPATIBILITY: Support old path structure without subfolder
+    // Path: /images/{userId}/{fileName}
+    // Purpose: Allows reading/managing images uploaded before folder structure change
+    // WARNING: New uploads should use specific folders (parks/reviews/profiles)
+    // Max size: 10MB
 
     match /images/{userId}/{fileName} {
-      // Read: Anyone can read (public images)
+      // Read: Anyone can read (backward compatibility for old images)
       allow read: if true;
 
-      // Create: Authenticated users only, own folder only
-      // Redirect new uploads to /images/parks/ instead
-      allow create: if isAuthenticated()
-        && isOwner(userId)
+      // Create: Allowed but discouraged - use specific folders instead
+      allow create: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
 
       // Update: Owner only
-      allow update: if isAuthenticated()
-        && isOwner(userId)
+      allow update: if isOwner(userId)
         && isValidImage(10)
         && isValidFileName(fileName);
 
       // Delete: Owner only
-      allow delete: if isAuthenticated()
-        && isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     // ===========================
     // Default: Deny all other paths
     // ===========================
+    // IMPORTANT: This rule MUST be last to catch all unmatched paths
+    // Any path not explicitly allowed above will be denied
+
     match /{allPaths=**} {
-      // Deny all other paths by default
+      // Explicitly deny all other paths for security
+      // This prevents access to any unexpected or malicious paths
       allow read, write: if false;
     }
   }

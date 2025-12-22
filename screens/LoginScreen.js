@@ -21,6 +21,7 @@ import {
   signInAnonymously,
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { handleError } from '../utils/errorHandler';
 
 export default function LoginScreen({ navigation }) {
   // 状態管理
@@ -33,10 +34,7 @@ export default function LoginScreen({ navigation }) {
   // Firebase認証の初期化確認
   useEffect(() => {
     if (!auth) {
-      Alert.alert(
-        'エラー',
-        '認証サービスの初期化に失敗しました。アプリを再起動してください。'
-      );
+      Alert.alert('エラー', '認証サービスの初期化に失敗しました。アプリを再起動してください。');
     }
   }, []);
 
@@ -57,16 +55,13 @@ export default function LoginScreen({ navigation }) {
 
     // Firebase認証の確認
     if (!auth) {
-      Alert.alert(
-        'エラー',
-        '認証サービスが利用できません。アプリを再起動してください。'
-      );
+      Alert.alert('エラー', '認証サービスが利用できません。アプリを再起動してください。');
       return;
     }
 
     try {
       setLoading(true);
-      
+
       // タイムアウト処理（30秒）
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('TIMEOUT')), 30000);
@@ -83,58 +78,16 @@ export default function LoginScreen({ navigation }) {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      if (__DEV__) {
-        console.error('ログインエラー:', error);
-      }
-      
-      let errorMessage = 'ログインに失敗しました';
-      let errorTitle = 'エラー';
-      
-      // エラーコードに応じたメッセージ
+      // 統一されたエラーハンドリング
+      // TIMEOUT エラーの特別処理
       if (error.message === 'TIMEOUT') {
-        errorTitle = 'タイムアウト';
-        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
-      } else if (error.code) {
-        switch (error.code) {
-          case 'auth/user-not-found':
-            errorMessage = 'このメールアドレスは登録されていません。新規登録を行ってください。';
-            break;
-          case 'auth/wrong-password':
-            errorMessage = 'パスワードが正しくありません。もう一度お試しください。';
-            break;
-          case 'auth/invalid-email':
-            errorMessage = 'メールアドレスの形式が正しくありません。';
-            break;
-          case 'auth/invalid-credential':
-            errorMessage = 'メールアドレスまたはパスワードが正しくありません。';
-            break;
-          case 'auth/too-many-requests':
-            errorTitle = 'ログイン試行回数制限';
-            errorMessage = 'ログイン試行回数が多すぎます。しばらく待ってから再試行してください。';
-            break;
-          case 'auth/network-request-failed':
-            errorTitle = 'ネットワークエラー';
-            errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
-            break;
-          case 'auth/user-disabled':
-            errorMessage = 'このアカウントは無効化されています。サポートにお問い合わせください。';
-            break;
-          case 'auth/operation-not-allowed':
-            errorMessage = 'この認証方法は有効になっていません。';
-            break;
-          default:
-            errorMessage = `ログインに失敗しました。エラーコード: ${error.code}`;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
+        Alert.alert(
+          'タイムアウト',
+          '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。'
+        );
+      } else {
+        handleError(error, 'LoginScreen.handleLogin', Alert.alert);
       }
-      
-      Alert.alert(errorTitle, errorMessage, [
-        {
-          text: 'OK',
-          style: 'default',
-        },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -169,16 +122,13 @@ export default function LoginScreen({ navigation }) {
 
     // Firebase認証の確認
     if (!auth) {
-      Alert.alert(
-        'エラー',
-        '認証サービスが利用できません。アプリを再起動してください。'
-      );
+      Alert.alert('エラー', '認証サービスが利用できません。アプリを再起動してください。');
       return;
     }
 
     try {
       setLoading(true);
-      
+
       // タイムアウト処理（30秒）
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('TIMEOUT')), 30000);
@@ -201,48 +151,16 @@ export default function LoginScreen({ navigation }) {
         },
       ]);
     } catch (error) {
-      if (__DEV__) {
-        console.error('新規登録エラー:', error);
-      }
-      
-      let errorMessage = 'アカウントの作成に失敗しました';
-      let errorTitle = 'エラー';
-      
-      // エラーコードに応じたメッセージ
+      // 統一されたエラーハンドリング
+      // TIMEOUT エラーの特別処理
       if (error.message === 'TIMEOUT') {
-        errorTitle = 'タイムアウト';
-        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
-      } else if (error.code) {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            errorMessage = 'このメールアドレスは既に使用されています。ログインしてください。';
-            break;
-          case 'auth/invalid-email':
-            errorMessage = 'メールアドレスの形式が正しくありません。';
-            break;
-          case 'auth/weak-password':
-            errorMessage = 'パスワードが弱すぎます。6文字以上のより強いパスワードを設定してください。';
-            break;
-          case 'auth/network-request-failed':
-            errorTitle = 'ネットワークエラー';
-            errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
-            break;
-          case 'auth/operation-not-allowed':
-            errorMessage = 'この認証方法は有効になっていません。';
-            break;
-          default:
-            errorMessage = `アカウントの作成に失敗しました。エラーコード: ${error.code}`;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
+        Alert.alert(
+          'タイムアウト',
+          '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。'
+        );
+      } else {
+        handleError(error, 'LoginScreen.handleSignUp', Alert.alert);
       }
-      
-      Alert.alert(errorTitle, errorMessage, [
-        {
-          text: 'OK',
-          style: 'default',
-        },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -252,10 +170,7 @@ export default function LoginScreen({ navigation }) {
   const handleGuestLogin = async () => {
     // Firebase認証の確認
     if (!auth) {
-      Alert.alert(
-        'エラー',
-        '認証サービスが利用できません。アプリを再起動してください。'
-      );
+      Alert.alert('エラー', '認証サービスが利用できません。アプリを再起動してください。');
       return;
     }
 
@@ -267,10 +182,7 @@ export default function LoginScreen({ navigation }) {
         setTimeout(() => reject(new Error('TIMEOUT')), 30000);
       });
 
-      await Promise.race([
-        signInAnonymously(auth),
-        timeoutPromise,
-      ]);
+      await Promise.race([signInAnonymously(auth), timeoutPromise]);
 
       // ログイン成功後、ホーム画面に戻る
       navigation.reset({
@@ -287,7 +199,8 @@ export default function LoginScreen({ navigation }) {
 
       if (error.message === 'TIMEOUT') {
         errorTitle = 'タイムアウト';
-        errorMessage = '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
+        errorMessage =
+          '接続がタイムアウトしました。ネットワーク接続を確認してから再試行してください。';
       } else if (error.code === 'auth/network-request-failed') {
         errorTitle = 'ネットワークエラー';
         errorMessage = 'ネットワーク接続を確認してから、もう一度お試しください。';
@@ -326,9 +239,7 @@ export default function LoginScreen({ navigation }) {
             {/* アプリタイトル */}
             <View style={styles.header}>
               <Text style={styles.title}>ParkPedia</Text>
-              <Text style={styles.subtitle}>
-                {isLogin ? 'ログイン' : '新規登録'}
-              </Text>
+              <Text style={styles.subtitle}>{isLogin ? 'ログイン' : '新規登録'}</Text>
             </View>
 
             {/* メールアドレス入力 */}
@@ -378,7 +289,7 @@ export default function LoginScreen({ navigation }) {
                   </View>
                   <View style={styles.termsTextContainer}>
                     <Text style={styles.termsText}>
-                      <Text 
+                      <Text
                         style={styles.termsLink}
                         onPress={() => navigation.navigate('TermsOfService')}
                       >
@@ -400,9 +311,7 @@ export default function LoginScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#4CAF50" />
               ) : (
-                <Text style={styles.buttonText}>
-                  {isLogin ? 'ログイン' : '新規登録'}
-                </Text>
+                <Text style={styles.buttonText}>{isLogin ? 'ログイン' : '新規登録'}</Text>
               )}
             </TouchableOpacity>
 
@@ -626,4 +535,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-

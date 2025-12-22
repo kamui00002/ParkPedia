@@ -29,11 +29,12 @@ import {
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, auth } from '../firebaseConfig';
+import { handleError, logError } from '../utils/errorHandler';
 import AdBanner from '../components/AdBanner';
 
 export default function ParkDetailScreen({ route, navigation }) {
   const { parkId, park: initialPark } = route.params;
-  
+
   // 状態管理
   const [park, setPark] = useState(initialPark || null);
   const [reviews, setReviews] = useState([]);
@@ -44,7 +45,7 @@ export default function ParkDetailScreen({ route, navigation }) {
   const [isVisited, setIsVisited] = useState(false);
   const [isWantToVisit, setIsWantToVisit] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]); // ブロックされたユーザーのリスト
-  
+
   const IMAGE_CATEGORIES = ['全て', '遊具', '設備', '風景', 'その他'];
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function ParkDetailScreen({ route, navigation }) {
 
       // 既に存在する場合は削除
       recentParks = recentParks.filter(p => p.id !== parkId);
-      
+
       // 先頭に追加
       recentParks.unshift({
         id: parkId,
@@ -97,7 +98,8 @@ export default function ParkDetailScreen({ route, navigation }) {
 
       await AsyncStorage.setItem(recentParksKey, JSON.stringify(recentParks));
     } catch (error) {
-      console.error('最近見た公園の保存エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.saveRecentPark');
     }
   };
 
@@ -117,7 +119,8 @@ export default function ParkDetailScreen({ route, navigation }) {
       const snapshot = await getDocs(q);
       setIsFavorite(!snapshot.empty);
     } catch (error) {
-      console.error('お気に入り状態確認エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.checkFavoriteStatus');
     }
   };
 
@@ -137,7 +140,8 @@ export default function ParkDetailScreen({ route, navigation }) {
       const snapshot = await getDocs(q);
       setIsVisited(!snapshot.empty);
     } catch (error) {
-      console.error('行った状態確認エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.checkVisitedStatus');
     }
   };
 
@@ -157,7 +161,8 @@ export default function ParkDetailScreen({ route, navigation }) {
       const snapshot = await getDocs(q);
       setIsWantToVisit(!snapshot.empty);
     } catch (error) {
-      console.error('行ってみたい状態確認エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.checkWantToVisitStatus');
     }
   };
 
@@ -172,13 +177,14 @@ export default function ParkDetailScreen({ route, navigation }) {
       const snapshot = await getDocs(q);
 
       const blocked = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         blocked.push(doc.data().blockedUserId);
       });
 
       setBlockedUsers(blocked);
     } catch (error) {
-      console.error('ブロックユーザー取得エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.fetchBlockedUsers');
     }
   };
 
@@ -212,15 +218,15 @@ export default function ParkDetailScreen({ route, navigation }) {
       } else {
         // 削除 - すべての削除処理が完了するまで待機
         const deletePromises = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           deletePromises.push(deleteDoc(doc.ref));
         });
         await Promise.all(deletePromises);
         setIsFavorite(false);
       }
     } catch (error) {
-      console.error('お気に入り操作エラー:', error);
-      Alert.alert('エラー', 'お気に入りの操作に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'ParkDetailScreen.toggleFavorite', Alert.alert);
     }
   };
 
@@ -261,7 +267,7 @@ export default function ParkDetailScreen({ route, navigation }) {
             where('type', '==', 'wantToVisit')
           );
           const wantToVisitSnapshot = await getDocs(wantToVisitQ);
-          wantToVisitSnapshot.forEach(async (doc) => {
+          wantToVisitSnapshot.forEach(async doc => {
             await deleteDoc(doc.ref);
           });
           setIsWantToVisit(false);
@@ -269,15 +275,15 @@ export default function ParkDetailScreen({ route, navigation }) {
       } else {
         // 削除 - すべての削除処理が完了するまで待機
         const deletePromises = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           deletePromises.push(deleteDoc(doc.ref));
         });
         await Promise.all(deletePromises);
         setIsVisited(false);
       }
     } catch (error) {
-      console.error('行った操作エラー:', error);
-      Alert.alert('エラー', 'チェックインの操作に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'ParkDetailScreen.toggleVisited', Alert.alert);
     }
   };
 
@@ -311,15 +317,15 @@ export default function ParkDetailScreen({ route, navigation }) {
       } else {
         // 削除 - すべての削除処理が完了するまで待機
         const deletePromises = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           deletePromises.push(deleteDoc(doc.ref));
         });
         await Promise.all(deletePromises);
         setIsWantToVisit(false);
       }
     } catch (error) {
-      console.error('行ってみたい操作エラー:', error);
-      Alert.alert('エラー', '操作に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'ParkDetailScreen.toggleWantToVisit', Alert.alert);
     }
   };
 
@@ -328,13 +334,13 @@ export default function ParkDetailScreen({ route, navigation }) {
     try {
       const parkRef = doc(db, 'parks', parkId);
       const parkSnap = await getDoc(parkRef);
-      
+
       if (parkSnap.exists()) {
         setPark({ id: parkSnap.id, ...parkSnap.data() });
       }
     } catch (error) {
-      console.error('公園詳細の取得エラー:', error);
-      Alert.alert('エラー', '公園情報の取得に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'ParkDetailScreen.fetchParkDetails', Alert.alert);
     } finally {
       setLoading(false);
     }
@@ -344,25 +350,22 @@ export default function ParkDetailScreen({ route, navigation }) {
   const fetchReviews = async () => {
     try {
       const reviewsRef = collection(db, 'reviews');
-      const q = query(
-        reviewsRef,
-        where('parkId', '==', parkId),
-        orderBy('createdAt', 'desc')
-      );
+      const q = query(reviewsRef, where('parkId', '==', parkId), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
-      
+
       const reviewsData = [];
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach(doc => {
         const reviewData = { id: doc.id, ...doc.data() };
         // ブロックされたユーザーのレビューは除外
         if (!blockedUsers.includes(reviewData.userId)) {
           reviewsData.push(reviewData);
         }
       });
-      
+
       setReviews(reviewsData);
     } catch (error) {
-      console.error('レビューの取得エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'ParkDetailScreen.fetchReviews');
     }
   };
 
@@ -378,11 +381,11 @@ export default function ParkDetailScreen({ route, navigation }) {
     if (!park || !park.images || park.images.length === 0) {
       return [];
     }
-    
+
     if (selectedImageCategory === '全て') {
       return park.images;
     }
-    
+
     // カテゴリ情報がある場合はフィルタリング
     // 現時点では全ての画像を表示（将来的にカテゴリ情報を追加可能）
     return park.images;
@@ -391,22 +394,22 @@ export default function ParkDetailScreen({ route, navigation }) {
   // 設備・遊具のタグを取得
   const getAllTags = () => {
     const tags = [];
-    
+
     // 対象年齢
     if (park.tags && park.tags.age && Array.isArray(park.tags.age)) {
       park.tags.age.forEach(age => tags.push(age));
     }
-    
+
     // 遊具
     if (park.tags && park.tags.equipment && Array.isArray(park.tags.equipment)) {
       park.tags.equipment.forEach(eq => tags.push(eq));
     }
-    
+
     // 設備
     if (park.facilities && Array.isArray(park.facilities)) {
       park.facilities.forEach(fac => tags.push(fac));
     }
-    
+
     return tags;
   };
 
@@ -420,9 +423,9 @@ export default function ParkDetailScreen({ route, navigation }) {
       const encodedAddress = encodeURIComponent(park.address);
       mapSrc = `https://maps.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
-    
+
     if (!mapSrc) return null;
-    
+
     return `
       <!DOCTYPE html>
       <html>
@@ -470,105 +473,93 @@ export default function ParkDetailScreen({ route, navigation }) {
 
   // 公園を削除
   const handleDeletePark = () => {
-    Alert.alert(
-      '削除の確認',
-      'この公園を削除しますか？\n関連するレビューもすべて削除されます。',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
+    Alert.alert('削除の確認', 'この公園を削除しますか？\n関連するレビューもすべて削除されます。', [
+      {
+        text: 'キャンセル',
+        style: 'cancel',
+      },
+      {
+        text: '削除',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setDeleting(true);
+
+            // 関連するレビューを削除
+            const reviewsRef = collection(db, 'reviews');
+            const q = query(reviewsRef, where('parkId', '==', parkId));
+            const querySnapshot = await getDocs(q);
+
+            const deletePromises = [];
+            querySnapshot.forEach(reviewDoc => {
+              deletePromises.push(deleteDoc(doc(db, 'reviews', reviewDoc.id)));
+            });
+
+            // レビューを削除
+            await Promise.all(deletePromises);
+
+            // 公園を削除
+            const parkRef = doc(db, 'parks', parkId);
+            await deleteDoc(parkRef);
+
+            Alert.alert('削除完了', '公園を削除しました', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  navigation.navigate('Home');
+                },
+              },
+            ]);
+          } catch (error) {
+            // 統一されたエラーハンドリング
+            handleError(error, 'ParkDetailScreen.deletePark', Alert.alert);
+          } finally {
+            setDeleting(false);
+          }
         },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeleting(true);
-
-              // 関連するレビューを削除
-              const reviewsRef = collection(db, 'reviews');
-              const q = query(reviewsRef, where('parkId', '==', parkId));
-              const querySnapshot = await getDocs(q);
-              
-              const deletePromises = [];
-              querySnapshot.forEach((reviewDoc) => {
-                deletePromises.push(deleteDoc(doc(db, 'reviews', reviewDoc.id)));
-              });
-
-              // レビューを削除
-              await Promise.all(deletePromises);
-
-              // 公園を削除
-              const parkRef = doc(db, 'parks', parkId);
-              await deleteDoc(parkRef);
-
-              Alert.alert(
-                '削除完了',
-                '公園を削除しました',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      navigation.navigate('Home');
-                    },
-                  },
-                ]
-              );
-            } catch (error) {
-              console.error('削除エラー:', error);
-              Alert.alert('エラー', `削除に失敗しました: ${error.message}`);
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   // レビューを報告
   const handleReportReview = (reviewId, reviewComment) => {
-    Alert.alert(
-      'レビューを報告',
-      'このレビューを不適切なコンテンツとして報告しますか？',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
-        },
-        {
-          text: '報告する',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const currentUser = auth.currentUser;
-              if (!currentUser) {
-                Alert.alert('ログインが必要です', '報告機能を使用するにはログインが必要です');
-                return;
-              }
-
-              // reportsコレクションに報告を保存
-              const reportsRef = collection(db, 'reports');
-              await addDoc(reportsRef, {
-                reviewId: reviewId,
-                parkId: parkId,
-                reportedBy: currentUser.uid,
-                reportedByEmail: currentUser.email,
-                reviewComment: reviewComment,
-                reason: 'inappropriate_content',
-                status: 'pending',
-                createdAt: serverTimestamp(),
-              });
-
-              Alert.alert('報告完了', 'レビューを報告しました。運営チームが確認します。');
-            } catch (error) {
-              console.error('報告エラー:', error);
-              Alert.alert('エラー', '報告に失敗しました');
+    Alert.alert('レビューを報告', 'このレビューを不適切なコンテンツとして報告しますか？', [
+      {
+        text: 'キャンセル',
+        style: 'cancel',
+      },
+      {
+        text: '報告する',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+              Alert.alert('ログインが必要です', '報告機能を使用するにはログインが必要です');
+              return;
             }
-          },
+
+            // reportsコレクションに報告を保存
+            const reportsRef = collection(db, 'reports');
+            await addDoc(reportsRef, {
+              reviewId: reviewId,
+              parkId: parkId,
+              reportedBy: currentUser.uid,
+              reportedByEmail: currentUser.email,
+              reviewComment: reviewComment,
+              reason: 'inappropriate_content',
+              status: 'pending',
+              createdAt: serverTimestamp(),
+            });
+
+            Alert.alert('報告完了', 'レビューを報告しました。運営チームが確認します。');
+          } catch (error) {
+            // 統一されたエラーハンドリング
+            handleError(error, 'ParkDetailScreen.reportReview', Alert.alert);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // ユーザーをブロック
@@ -606,8 +597,8 @@ export default function ParkDetailScreen({ route, navigation }) {
 
               Alert.alert('ブロック完了', 'ユーザーをブロックしました');
             } catch (error) {
-              console.error('ブロックエラー:', error);
-              Alert.alert('エラー', 'ブロックに失敗しました');
+              // 統一されたエラーハンドリング
+              handleError(error, 'ParkDetailScreen.blockUser', Alert.alert);
             }
           },
         },
@@ -624,19 +615,16 @@ export default function ParkDetailScreen({ route, navigation }) {
       <View style={styles.reviewCard}>
         <View style={styles.reviewHeader}>
           <Text style={styles.reviewRating}>
-            {'⭐'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)}
+            {'⭐'.repeat(item.rating)}
+            {'☆'.repeat(5 - item.rating)}
           </Text>
           <Text style={styles.reviewDate}>
             {item.createdAt?.toDate?.().toLocaleDateString('ja-JP') || '日付不明'}
           </Text>
         </View>
-        {item.comment && (
-          <Text style={styles.reviewComment}>{item.comment}</Text>
-        )}
+        {item.comment && <Text style={styles.reviewComment}>{item.comment}</Text>}
         <View style={styles.reviewFooter}>
-          {item.userName && (
-            <Text style={styles.reviewUserName}>- {item.userName}</Text>
-          )}
+          {item.userName && <Text style={styles.reviewUserName}>- {item.userName}</Text>}
           {!isOwnReview && (
             <View style={styles.actionButtons}>
               <TouchableOpacity
@@ -673,194 +661,196 @@ export default function ParkDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-    <ScrollView style={styles.scrollView}>
-      {/* 公園基本情報 */}
-      <View style={styles.parkInfo}>
-        <View style={styles.parkHeader}>
-          <Text style={styles.parkName} numberOfLines={2}>{park.name}</Text>
-          {isOwner() && (
+      <ScrollView style={styles.scrollView}>
+        {/* 公園基本情報 */}
+        <View style={styles.parkInfo}>
+          <View style={styles.parkHeader}>
+            <Text style={styles.parkName} numberOfLines={2}>
+              {park.name}
+            </Text>
+            {isOwner() && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDeletePark}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#ef4444" />
+                ) : (
+                  <Text style={styles.deleteButtonText}>削除</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* アクションボタン */}
+          <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={handleDeletePark}
-              disabled={deleting}
+              style={[styles.actionButton, isFavorite && styles.actionButtonActive]}
+              onPress={toggleFavorite}
             >
-              {deleting ? (
-                <ActivityIndicator size="small" color="#ef4444" />
-              ) : (
-                <Text style={styles.deleteButtonText}>削除</Text>
-              )}
+              <Text style={styles.actionButtonIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+              <Text style={[styles.actionButtonText, isFavorite && styles.actionButtonTextActive]}>
+                お気に入り
+              </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, isVisited && styles.actionButtonActive]}
+              onPress={toggleVisited}
+            >
+              <Text style={styles.actionButtonIcon}>{isVisited ? '✅' : '☑️'}</Text>
+              <Text style={[styles.actionButtonText, isVisited && styles.actionButtonTextActive]}>
+                行った
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, isWantToVisit && styles.actionButtonActive]}
+              onPress={toggleWantToVisit}
+            >
+              <Text style={styles.actionButtonIcon}>{isWantToVisit ? '📌' : '📍'}</Text>
+              <Text
+                style={[styles.actionButtonText, isWantToVisit && styles.actionButtonTextActive]}
+              >
+                行ってみたい
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {park.address && <Text style={styles.parkAddress}>📍 {park.address}</Text>}
+          {park.description && <Text style={styles.parkDescription}>{park.description}</Text>}
+
+          {/* 評価情報 */}
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingLabel}>平均評価:</Text>
+            <Text style={styles.ratingValue}>
+              ⭐ {calculateAverageRating()} ({reviews.length}件のレビュー)
+            </Text>
+          </View>
+        </View>
+
+        {/* 画像ギャラリー */}
+        {filteredImages.length > 0 && (
+          <View style={styles.imageSection}>
+            {/* カテゴリタブ */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoryTabs}
+            >
+              {IMAGE_CATEGORIES.map(category => (
+                <TouchableOpacity
+                  key={category}
+                  style={[
+                    styles.categoryTab,
+                    selectedImageCategory === category && styles.categoryTabActive,
+                  ]}
+                  onPress={() => setSelectedImageCategory(category)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryTabText,
+                      selectedImageCategory === category && styles.categoryTabTextActive,
+                    ]}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* 画像リスト */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.imageGallery}
+            >
+              {filteredImages.map((imageUrl, index) => (
+                <Image
+                  key={index}
+                  source={{ uri: imageUrl }}
+                  style={styles.galleryImage}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 設備・遊具と地図 */}
+        <View style={styles.facilitiesAndMapSection}>
+          <View style={styles.facilitiesAndMapRow}>
+            <View style={styles.facilitiesSection}>
+              <Text style={styles.sectionTitle}>設備・遊具</Text>
+              {allTags.length > 0 ? (
+                <View style={styles.tagsContainer}>
+                  {allTags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>設備・遊具の情報がありません</Text>
+              )}
+            </View>
+
+            <View style={styles.mapSection}>
+              <Text style={styles.sectionTitle}>地図</Text>
+              {mapHtml ? (
+                <View style={styles.mapContainer}>
+                  <WebView
+                    source={{ html: mapHtml }}
+                    style={styles.map}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                  />
+                  <TouchableOpacity style={styles.expandMapButton} onPress={openMapInBrowser}>
+                    <Text style={styles.expandMapButtonText}>拡大地図を表示</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.mapPlaceholder}>
+                  <Text style={styles.emptyText}>地図情報がありません</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* レビュー一覧 */}
+        <View style={styles.reviewsSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>レビュー({reviews.length}件)</Text>
+          </View>
+
+          {reviews.length === 0 ? (
+            <View style={styles.emptyReviews}>
+              <Text style={styles.emptyReviewsText}>
+                まだレビューがありません。最初のレビューを書いてみませんか？
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={reviews}
+              renderItem={renderReviewCard}
+              keyExtractor={item => item.id}
+              scrollEnabled={false}
+            />
           )}
         </View>
-        
-        {/* アクションボタン */}
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, isFavorite && styles.actionButtonActive]}
-            onPress={toggleFavorite}
-          >
-            <Text style={styles.actionButtonIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-            <Text style={[styles.actionButtonText, isFavorite && styles.actionButtonTextActive]}>
-              お気に入り
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, isVisited && styles.actionButtonActive]}
-            onPress={toggleVisited}
-          >
-            <Text style={styles.actionButtonIcon}>{isVisited ? '✅' : '☑️'}</Text>
-            <Text style={[styles.actionButtonText, isVisited && styles.actionButtonTextActive]}>
-              行った
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, isWantToVisit && styles.actionButtonActive]}
-            onPress={toggleWantToVisit}
-          >
-            <Text style={styles.actionButtonIcon}>{isWantToVisit ? '📌' : '📍'}</Text>
-            <Text style={[styles.actionButtonText, isWantToVisit && styles.actionButtonTextActive]}>
-              行ってみたい
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {park.address && (
-          <Text style={styles.parkAddress}>📍 {park.address}</Text>
-        )}
-        {park.description && (
-          <Text style={styles.parkDescription}>{park.description}</Text>
-        )}
-        
-        {/* 評価情報 */}
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingLabel}>平均評価:</Text>
-          <Text style={styles.ratingValue}>
-            ⭐ {calculateAverageRating()} ({reviews.length}件のレビュー)
-          </Text>
-        </View>
-      </View>
 
-      {/* 画像ギャラリー */}
-      {filteredImages.length > 0 && (
-        <View style={styles.imageSection}>
-          {/* カテゴリタブ */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryTabs}>
-            {IMAGE_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryTab,
-                  selectedImageCategory === category && styles.categoryTabActive,
-                ]}
-                onPress={() => setSelectedImageCategory(category)}
-              >
-                <Text
-                  style={[
-                    styles.categoryTabText,
-                    selectedImageCategory === category && styles.categoryTabTextActive,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          {/* 画像リスト */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGallery}>
-            {filteredImages.map((imageUrl, index) => (
-              <Image
-                key={index}
-                source={{ uri: imageUrl }}
-                style={styles.galleryImage}
-                resizeMode="cover"
-              />
-            ))}
-          </ScrollView>
-        </View>
-      )}
+        {/* 下部のスペース確保（固定ボタンと広告のスペース） */}
+        <View style={{ height: 140 }} />
+      </ScrollView>
 
-      {/* 設備・遊具と地図 */}
-      <View style={styles.facilitiesAndMapSection}>
-        <View style={styles.facilitiesAndMapRow}>
-          <View style={styles.facilitiesSection}>
-            <Text style={styles.sectionTitle}>設備・遊具</Text>
-            {allTags.length > 0 ? (
-              <View style={styles.tagsContainer}>
-                {allTags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.emptyText}>設備・遊具の情報がありません</Text>
-            )}
-          </View>
-
-          <View style={styles.mapSection}>
-            <Text style={styles.sectionTitle}>地図</Text>
-            {mapHtml ? (
-              <View style={styles.mapContainer}>
-                <WebView
-                  source={{ html: mapHtml }}
-                  style={styles.map}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                />
-                <TouchableOpacity
-                  style={styles.expandMapButton}
-                  onPress={openMapInBrowser}
-                >
-                  <Text style={styles.expandMapButtonText}>拡大地図を表示</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.mapPlaceholder}>
-                <Text style={styles.emptyText}>地図情報がありません</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-
-      {/* レビュー一覧 */}
-      <View style={styles.reviewsSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>レビュー({reviews.length}件)</Text>
-        </View>
-
-        {reviews.length === 0 ? (
-          <View style={styles.emptyReviews}>
-            <Text style={styles.emptyReviewsText}>
-              まだレビューがありません。最初のレビューを書いてみませんか？
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={reviews}
-            renderItem={renderReviewCard}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        )}
-      </View>
-      
-      {/* 下部のスペース確保（固定ボタンと広告のスペース） */}
-      <View style={{ height: 140 }} />
-    </ScrollView>
-
-    {/* 🎯 レビュー投稿ボタン（画面下部固定） */}
-    <TouchableOpacity
-      style={styles.fixedAddReviewButton}
-      onPress={() => {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          Alert.alert(
-            'ログインが必要です',
-            'レビューを投稿するにはログインが必要です。',
-            [
+      {/* 🎯 レビュー投稿ボタン（画面下部固定） */}
+      <TouchableOpacity
+        style={styles.fixedAddReviewButton}
+        onPress={() => {
+          const currentUser = auth.currentUser;
+          if (!currentUser) {
+            Alert.alert('ログインが必要です', 'レビューを投稿するにはログインが必要です。', [
               {
                 text: 'ログイン',
                 onPress: () => navigation.navigate('Login'),
@@ -869,18 +859,17 @@ export default function ParkDetailScreen({ route, navigation }) {
                 text: 'キャンセル',
                 style: 'cancel',
               },
-            ]
-          );
-        } else {
-          navigation.navigate('AddReview', { parkId, parkName: park.name });
-        }
-      }}
-    >
-      <Text style={styles.fixedAddReviewButtonText}>レビューを投稿する</Text>
-    </TouchableOpacity>
+            ]);
+          } else {
+            navigation.navigate('AddReview', { parkId, parkName: park.name });
+          }
+        }}
+      >
+        <Text style={styles.fixedAddReviewButtonText}>レビューを投稿する</Text>
+      </TouchableOpacity>
 
-    {/* 🎯 広告プレースホルダー（画面下部固定） */}
-    <AdBanner />
+      {/* 🎯 広告プレースホルダー（画面下部固定） */}
+      <AdBanner />
     </View>
   );
 }
@@ -1245,9 +1234,3 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 });
-
-
-
-
-
-

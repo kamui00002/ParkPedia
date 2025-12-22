@@ -20,9 +20,7 @@ export const checkIsAdmin = async () => {
 
     return adminDocSnap.exists();
   } catch (error) {
-    if (__DEV__) {
-      console.error('管理者チェックエラー:', error);
-    }
+    if (__DEV__) console.error('管理者チェックエラー:', error);
     return false;
   }
 };
@@ -35,21 +33,18 @@ export const getAdminUserIds = async () => {
   try {
     const adminsRef = collection(db, 'admins');
     const querySnapshot = await getDocs(adminsRef);
-    
+
     const adminIds = [];
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach(doc => {
       const data = doc.data();
       if (data.userId) {
         adminIds.push(data.userId);
       }
     });
-    
+
     return adminIds;
   } catch (error) {
-    if (__DEV__) {
-      console.error('管理者リスト取得エラー:', error);
-    }
+    if (__DEV__) console.error('管理者リスト取得エラー:', error);
     return [];
   }
 };
-

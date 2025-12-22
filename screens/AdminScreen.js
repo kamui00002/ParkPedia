@@ -66,7 +66,9 @@ export default function AdminScreen({ navigation }) {
         ]);
       }
     } catch (error) {
-      console.error('管理者チェックエラー:', error);
+      if (__DEV__) {
+        console.error('管理者チェックエラー:', error);
+      }
       Alert.alert('エラー', '管理者権限の確認に失敗しました');
     } finally {
       setLoading(false);
@@ -83,7 +85,7 @@ export default function AdminScreen({ navigation }) {
       const reportsData = [];
       for (const docSnapshot of querySnapshot.docs) {
         const reportData = { id: docSnapshot.id, ...docSnapshot.data() };
-        
+
         // 公園名とレビュー内容を取得
         try {
           const parkDoc = await getDoc(doc(db, 'parks', reportData.parkId));
@@ -99,7 +101,9 @@ export default function AdminScreen({ navigation }) {
             reportData.reviewUserName = reviewData.userName;
           }
         } catch (error) {
-          console.error('関連データ取得エラー:', error);
+          if (__DEV__) {
+            console.error('関連データ取得エラー:', error);
+          }
         }
 
         reportsData.push(reportData);
@@ -107,7 +111,9 @@ export default function AdminScreen({ navigation }) {
 
       setReports(reportsData);
     } catch (error) {
-      console.error('レポート取得エラー:', error);
+      if (__DEV__) {
+        console.error('レポート取得エラー:', error);
+      }
       Alert.alert('エラー', 'レポートの取得に失敗しました');
     }
   };
@@ -119,7 +125,7 @@ export default function AdminScreen({ navigation }) {
       const querySnapshot = await getDocs(parksRef);
 
       const parksData = [];
-      querySnapshot.forEach((docSnapshot) => {
+      querySnapshot.forEach(docSnapshot => {
         parksData.push({ id: docSnapshot.id, ...docSnapshot.data() });
       });
 
@@ -132,7 +138,9 @@ export default function AdminScreen({ navigation }) {
 
       setParks(parksData);
     } catch (error) {
-      console.error('公園取得エラー:', error);
+      if (__DEV__) {
+        console.error('公園取得エラー:', error);
+      }
       Alert.alert('エラー', '公園の取得に失敗しました');
     }
   };
@@ -147,7 +155,7 @@ export default function AdminScreen({ navigation }) {
       const reviewsData = [];
       for (const docSnapshot of querySnapshot.docs) {
         const reviewData = { id: docSnapshot.id, ...docSnapshot.data() };
-        
+
         // 公園名を取得
         try {
           const parkDoc = await getDoc(doc(db, 'parks', reviewData.parkId));
@@ -155,7 +163,9 @@ export default function AdminScreen({ navigation }) {
             reviewData.parkName = parkDoc.data().name;
           }
         } catch (error) {
-          console.error('公園名取得エラー:', error);
+          if (__DEV__) {
+            console.error('公園名取得エラー:', error);
+          }
         }
 
         reviewsData.push(reviewData);
@@ -163,101 +173,97 @@ export default function AdminScreen({ navigation }) {
 
       setReviews(reviewsData);
     } catch (error) {
-      console.error('レビュー取得エラー:', error);
+      if (__DEV__) {
+        console.error('レビュー取得エラー:', error);
+      }
       Alert.alert('エラー', 'レビューの取得に失敗しました');
     }
   };
 
   // レポートを解決済みにする
-  const handleResolveReport = async (reportId) => {
-    Alert.alert(
-      'レポートを解決',
-      'このレポートを解決済みにしますか？',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '解決済みにする',
-          onPress: async () => {
-            try {
-              const reportRef = doc(db, 'reports', reportId);
-              await updateDoc(reportRef, {
-                status: 'resolved',
-                updatedAt: serverTimestamp(),
-              });
-              Alert.alert('成功', 'レポートを解決済みにしました');
-              fetchReports();
-            } catch (error) {
+  const handleResolveReport = async reportId => {
+    Alert.alert('レポートを解決', 'このレポートを解決済みにしますか？', [
+      { text: 'キャンセル', style: 'cancel' },
+      {
+        text: '解決済みにする',
+        onPress: async () => {
+          try {
+            const reportRef = doc(db, 'reports', reportId);
+            await updateDoc(reportRef, {
+              status: 'resolved',
+              updatedAt: serverTimestamp(),
+            });
+            Alert.alert('成功', 'レポートを解決済みにしました');
+            fetchReports();
+          } catch (error) {
+            if (__DEV__) {
               console.error('レポート更新エラー:', error);
-              Alert.alert('エラー', 'レポートの更新に失敗しました');
             }
-          },
+            Alert.alert('エラー', 'レポートの更新に失敗しました');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // レポートを却下する
-  const handleDismissReport = async (reportId) => {
-    Alert.alert(
-      'レポートを却下',
-      'このレポートを却下しますか？',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '却下する',
-          onPress: async () => {
-            try {
-              const reportRef = doc(db, 'reports', reportId);
-              await updateDoc(reportRef, {
-                status: 'dismissed',
-                updatedAt: serverTimestamp(),
-              });
-              Alert.alert('成功', 'レポートを却下しました');
-              fetchReports();
-            } catch (error) {
+  const handleDismissReport = async reportId => {
+    Alert.alert('レポートを却下', 'このレポートを却下しますか？', [
+      { text: 'キャンセル', style: 'cancel' },
+      {
+        text: '却下する',
+        onPress: async () => {
+          try {
+            const reportRef = doc(db, 'reports', reportId);
+            await updateDoc(reportRef, {
+              status: 'dismissed',
+              updatedAt: serverTimestamp(),
+            });
+            Alert.alert('成功', 'レポートを却下しました');
+            fetchReports();
+          } catch (error) {
+            if (__DEV__) {
               console.error('レポート更新エラー:', error);
-              Alert.alert('エラー', 'レポートの更新に失敗しました');
             }
-          },
+            Alert.alert('エラー', 'レポートの更新に失敗しました');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // レビューを削除
   const handleDeleteReview = async (reviewId, parkId) => {
-    Alert.alert(
-      'レビューを削除',
-      'このレビューを削除しますか？この操作は取り消せません。',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // レビューを削除
-              const reviewRef = doc(db, 'reviews', reviewId);
-              await deleteDoc(reviewRef);
+    Alert.alert('レビューを削除', 'このレビューを削除しますか？この操作は取り消せません。', [
+      { text: 'キャンセル', style: 'cancel' },
+      {
+        text: '削除',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            // レビューを削除
+            const reviewRef = doc(db, 'reviews', reviewId);
+            await deleteDoc(reviewRef);
 
-              // 公園の評価を更新
-              await updateParkRating(parkId);
+            // 公園の評価を更新
+            await updateParkRating(parkId);
 
-              Alert.alert('成功', 'レビューを削除しました');
-              fetchReviews();
-              fetchReports(); // レポートも更新
-            } catch (error) {
+            Alert.alert('成功', 'レビューを削除しました');
+            fetchReviews();
+            fetchReports(); // レポートも更新
+          } catch (error) {
+            if (__DEV__) {
               console.error('レビュー削除エラー:', error);
-              Alert.alert('エラー', 'レビューの削除に失敗しました');
             }
-          },
+            Alert.alert('エラー', 'レビューの削除に失敗しました');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // 公園を削除
-  const handleDeletePark = async (parkId) => {
+  const handleDeletePark = async parkId => {
     Alert.alert(
       '公園を削除',
       'この公園を削除しますか？関連するレビューもすべて削除されます。この操作は取り消せません。',
@@ -274,7 +280,7 @@ export default function AdminScreen({ navigation }) {
               const querySnapshot = await getDocs(q);
 
               const deletePromises = [];
-              querySnapshot.forEach((reviewDoc) => {
+              querySnapshot.forEach(reviewDoc => {
                 deletePromises.push(deleteDoc(doc(db, 'reviews', reviewDoc.id)));
               });
 
@@ -288,7 +294,9 @@ export default function AdminScreen({ navigation }) {
               fetchParks();
               fetchReports();
             } catch (error) {
-              console.error('公園削除エラー:', error);
+              if (__DEV__) {
+                console.error('公園削除エラー:', error);
+              }
               Alert.alert('エラー', '公園の削除に失敗しました');
             }
           },
@@ -298,7 +306,7 @@ export default function AdminScreen({ navigation }) {
   };
 
   // 公園の評価を更新（レビュー削除後）
-  const updateParkRating = async (parkId) => {
+  const updateParkRating = async parkId => {
     try {
       const reviewsRef = collection(db, 'reviews');
       const q = query(reviewsRef, where('parkId', '==', parkId));
@@ -316,7 +324,7 @@ export default function AdminScreen({ navigation }) {
       let totalRating = 0;
       let reviewCount = 0;
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach(doc => {
         const reviewData = doc.data();
         if (reviewData.rating && typeof reviewData.rating === 'number') {
           totalRating += reviewData.rating;
@@ -332,7 +340,9 @@ export default function AdminScreen({ navigation }) {
         reviewCount: reviewCount,
       });
     } catch (error) {
-      console.error('公園の評価更新エラー:', error);
+      if (__DEV__) {
+        console.error('公園の評価更新エラー:', error);
+      }
     }
   };
 
@@ -351,7 +361,7 @@ export default function AdminScreen({ navigation }) {
               const crashlytics = require('@react-native-firebase/crashlytics').default;
               crashlytics().log('テストクラッシュボタンが押されました');
               crashlytics().crash();
-            } catch (error) {
+            } catch {
               Alert.alert('エラー', 'Crashlyticsモジュールの読み込みに失敗しました');
             }
           },
@@ -377,7 +387,7 @@ export default function AdminScreen({ navigation }) {
                 new Error('これはテストエラーです。アプリは正常に動作しています。')
               );
               Alert.alert('成功', 'テストエラーをCrashlyticsに送信しました');
-            } catch (error) {
+            } catch {
               Alert.alert('エラー', 'Crashlyticsモジュールの読み込みに失敗しました');
             }
           },
@@ -410,7 +420,10 @@ export default function AdminScreen({ navigation }) {
     return (
       <View style={styles.reportCard}>
         <View style={styles.reportHeader}>
-          <Text style={styles.reportStatus} style={{ color: statusColors[item.status] || '#6B7280' }}>
+          <Text
+            style={styles.reportStatus}
+            style={{ color: statusColors[item.status] || '#6B7280' }}
+          >
             {statusLabels[item.status] || item.status}
           </Text>
           <Text style={styles.reportDate}>
@@ -425,7 +438,8 @@ export default function AdminScreen({ navigation }) {
             <Text style={styles.reviewPreviewText}>{item.reviewComment}</Text>
             {item.reviewRating && (
               <Text style={styles.reviewRating}>
-                {'⭐'.repeat(item.reviewRating)}{'☆'.repeat(5 - item.reviewRating)}
+                {'⭐'.repeat(item.reviewRating)}
+                {'☆'.repeat(5 - item.reviewRating)}
               </Text>
             )}
           </View>
@@ -457,7 +471,7 @@ export default function AdminScreen({ navigation }) {
   };
 
   // 公園を編集
-  const handleEditPark = (park) => {
+  const handleEditPark = park => {
     navigation.navigate('AddPark', {
       isEditMode: true,
       parkData: park,
@@ -490,7 +504,7 @@ export default function AdminScreen({ navigation }) {
   );
 
   // レビューを編集
-  const handleEditReview = (review) => {
+  const handleEditReview = review => {
     // 公園名を取得
     const parkName = review.parkName || '公園名不明';
     navigation.navigate('AddReview', {
@@ -506,7 +520,8 @@ export default function AdminScreen({ navigation }) {
     <View style={styles.reviewCard}>
       <Text style={styles.reviewParkName}>{item.parkName || item.parkId}</Text>
       <Text style={styles.reviewRating}>
-        {'⭐'.repeat(item.rating || 0)}{'☆'.repeat(5 - (item.rating || 0))}
+        {'⭐'.repeat(item.rating || 0)}
+        {'☆'.repeat(5 - (item.rating || 0))}
       </Text>
       {item.comment && <Text style={styles.reviewComment}>{item.comment}</Text>}
       <Text style={styles.reviewUserName}>- {item.userName || '匿名ユーザー'}</Text>
@@ -574,16 +589,10 @@ export default function AdminScreen({ navigation }) {
           <View style={styles.testSection}>
             <Text style={styles.testSectionTitle}>開発者向けツール</Text>
             <View style={styles.testButtonContainer}>
-              <TouchableOpacity
-                style={styles.testCrashButton}
-                onPress={handleTestCrash}
-              >
+              <TouchableOpacity style={styles.testCrashButton} onPress={handleTestCrash}>
                 <Text style={styles.testButtonText}>テストクラッシュ</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.testErrorButton}
-                onPress={handleTestError}
-              >
+              <TouchableOpacity style={styles.testErrorButton} onPress={handleTestError}>
                 <Text style={styles.testButtonText}>テストエラー</Text>
               </TouchableOpacity>
             </View>
@@ -626,7 +635,7 @@ export default function AdminScreen({ navigation }) {
           <FlatList
             data={reports}
             renderItem={renderReportCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             scrollEnabled={false}
           />
         )}
@@ -635,7 +644,7 @@ export default function AdminScreen({ navigation }) {
           <FlatList
             data={parks}
             renderItem={renderParkCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             scrollEnabled={false}
           />
         )}
@@ -644,7 +653,7 @@ export default function AdminScreen({ navigation }) {
           <FlatList
             data={reviews}
             renderItem={renderReviewCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             scrollEnabled={false}
           />
         )}

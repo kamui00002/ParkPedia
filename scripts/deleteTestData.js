@@ -38,25 +38,30 @@ if (!fs.existsSync(serviceAccountPath)) {
 const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
 
 // テストデータのパターン
-const TEST_PARK_NAMES = [
-  '中央公園',
-  '桜の森公園',
-  'こどもの森公園',
-  '水と緑の広場',
-  '展望台公園'
-];
+const TEST_PARK_NAMES = ['中央公園', '桜の森公園', 'こどもの森公園', '水と緑の広場', '展望台公園'];
 
 const TEST_USER_NAMES = [
-  '田中太郎', '佐藤花子', '山田次郎', '高橋美咲',
-  '鈴木一郎', '伊藤舞', '中村健太', '小林愛子',
-  '渡辺真由美', '佐々木大輔', '松本優子', '加藤直樹',
-  '木村由紀', '林浩二', '井上さくら'
+  '田中太郎',
+  '佐藤花子',
+  '山田次郎',
+  '高橋美咲',
+  '鈴木一郎',
+  '伊藤舞',
+  '中村健太',
+  '小林愛子',
+  '渡辺真由美',
+  '佐々木大輔',
+  '松本優子',
+  '加藤直樹',
+  '木村由紀',
+  '林浩二',
+  '井上さくら',
 ];
 
 // ユーザー入力を取得する関数
@@ -66,10 +71,12 @@ function askQuestion(query) {
     output: process.stdout,
   });
 
-  return new Promise(resolve => rl.question(query, ans => {
-    rl.close();
-    resolve(ans);
-  }));
+  return new Promise(resolve =>
+    rl.question(query, ans => {
+      rl.close();
+      resolve(ans);
+    })
+  );
 }
 
 // テスト公園を検索
@@ -78,22 +85,22 @@ async function findTestParks() {
   const testParks = [];
 
   const parksSnapshot = await db.collection('parks').get();
-  
-  parksSnapshot.forEach((doc) => {
+
+  parksSnapshot.forEach(doc => {
     const data = doc.data();
-    
+
     // テスト公園の条件をチェック
-    const isTestPark = 
+    const isTestPark =
       TEST_PARK_NAMES.includes(data.name) ||
       (data.userId && data.userId.startsWith('sample-user-')) ||
       (data.address && data.address.endsWith('1-1-1'));
-    
+
     if (isTestPark) {
       testParks.push({
         id: doc.id,
         name: data.name,
         address: data.address,
-        userId: data.userId
+        userId: data.userId,
       });
     }
   });
@@ -107,22 +114,22 @@ async function findTestReviews() {
   const testReviews = [];
 
   const reviewsSnapshot = await db.collection('reviews').get();
-  
-  reviewsSnapshot.forEach((doc) => {
+
+  reviewsSnapshot.forEach(doc => {
     const data = doc.data();
-    
+
     // テストレビューの条件をチェック
-    const isTestReview = 
+    const isTestReview =
       TEST_USER_NAMES.includes(data.userName) ||
       (data.userId && data.userId.startsWith('sample-user-'));
-    
+
     if (isTestReview) {
       testReviews.push({
         id: doc.id,
         userName: data.userName,
         userId: data.userId,
         parkId: data.parkId,
-        rating: data.rating
+        rating: data.rating,
       });
     }
   });
@@ -136,19 +143,19 @@ async function findTestFavorites() {
   const testFavorites = [];
 
   const favoritesSnapshot = await db.collection('favorites').get();
-  
-  favoritesSnapshot.forEach((doc) => {
+
+  favoritesSnapshot.forEach(doc => {
     const data = doc.data();
-    
+
     // テストお気に入りの条件をチェック
     const isTestFavorite = data.userId && data.userId.startsWith('sample-user-');
-    
+
     if (isTestFavorite) {
       testFavorites.push({
         id: doc.id,
         userId: data.userId,
         parkId: data.parkId,
-        type: data.type
+        type: data.type,
       });
     }
   });
@@ -163,20 +170,20 @@ async function findTestReports() {
 
   try {
     const reportsSnapshot = await db.collection('reports').get();
-    
-    reportsSnapshot.forEach((doc) => {
+
+    reportsSnapshot.forEach(doc => {
       const data = doc.data();
-      
+
       // テスト報告の条件をチェック
-      const isTestReport = 
+      const isTestReport =
         (data.reportedBy && data.reportedBy.startsWith('sample-user-')) ||
         (data.reportedUser && data.reportedUser.startsWith('sample-user-'));
-      
+
       if (isTestReport) {
         testReports.push({
           id: doc.id,
           reportedBy: data.reportedBy,
-          reportedUser: data.reportedUser
+          reportedUser: data.reportedUser,
         });
       }
     });
@@ -194,20 +201,20 @@ async function findTestBlockedUsers() {
 
   try {
     const blockedSnapshot = await db.collection('blockedUsers').get();
-    
-    blockedSnapshot.forEach((doc) => {
+
+    blockedSnapshot.forEach(doc => {
       const data = doc.data();
-      
+
       // テストブロックの条件をチェック
-      const isTestBlocked = 
+      const isTestBlocked =
         (data.userId && data.userId.startsWith('sample-user-')) ||
         (data.blockedUserId && data.blockedUserId.startsWith('sample-user-'));
-      
+
       if (isTestBlocked) {
         testBlocked.push({
           id: doc.id,
           userId: data.userId,
-          blockedUserId: data.blockedUserId
+          blockedUserId: data.blockedUserId,
         });
       }
     });
@@ -225,7 +232,7 @@ async function deleteData(collectionName, items) {
   }
 
   console.log(`\n🗑️  ${collectionName} から ${items.length}件のテストデータを削除中...`);
-  
+
   const batch = db.batch();
   let batchCount = 0;
   let totalDeleted = 0;
@@ -269,7 +276,7 @@ async function main() {
     console.log('');
     console.log('📊 削除対象のテストデータ:');
     console.log('='.repeat(50));
-    
+
     // テスト公園の表示
     if (testParks.length > 0) {
       console.log(`\n🏞️  公園: ${testParks.length}件`);
@@ -311,7 +318,12 @@ async function main() {
       console.log('\n🚫 ブロックユーザー: 0件（削除対象なし）');
     }
 
-    const totalItems = testParks.length + testReviews.length + testFavorites.length + testReports.length + testBlocked.length;
+    const totalItems =
+      testParks.length +
+      testReviews.length +
+      testFavorites.length +
+      testReports.length +
+      testBlocked.length;
 
     if (totalItems === 0) {
       console.log('');
@@ -340,7 +352,7 @@ async function main() {
     // 削除実行
     console.log('');
     console.log('🗑️  削除を開始します...');
-    
+
     await deleteData('parks', testParks);
     await deleteData('reviews', testReviews);
     await deleteData('favorites', testFavorites);
@@ -359,9 +371,10 @@ async function main() {
     console.log(`  - 合計: ${totalItems}件`);
     console.log('');
     console.log('🔍 Firebase Consoleで確認してください:');
-    console.log('  https://console.firebase.google.com/project/' + serviceAccount.project_id + '/firestore');
+    console.log(
+      '  https://console.firebase.google.com/project/' + serviceAccount.project_id + '/firestore'
+    );
     console.log('');
-
   } catch (error) {
     console.error('');
     console.error('❌ エラーが発生しました:', error);
@@ -376,7 +389,7 @@ main()
     console.log('✅ 処理が正常に完了しました');
     process.exit(0);
   })
-  .catch((error) => {
+  .catch(error => {
     console.error('❌ 処理中にエラーが発生しました:', error);
     process.exit(1);
   });

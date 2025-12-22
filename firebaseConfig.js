@@ -1,11 +1,13 @@
 // Firebase設定ファイル
-// Firebase Consoleから取得した設定値をここに記載してください
+// 環境変数から設定値を読み込むように変更（セキュリティ向上）
+// 実際の設定値は .env ファイルまたは EAS Secrets で管理
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // React Native版のみAsyncStorageをインポート
 // Web以外のすべてのプラットフォーム（iOS、Android）で必要
@@ -15,23 +17,41 @@ if (Platform.OS !== 'web') {
     AsyncStorage = require('@react-native-async-storage/async-storage').default;
   } catch (error) {
     // AsyncStorageが利用できない場合はエラーをログに記録
-    console.error('CRITICAL: AsyncStorage is not available on native platform:', error);
+    if (__DEV__) {
+      console.error('CRITICAL: AsyncStorage is not available on native platform:', error);
+    }
     // ネイティブ環境でAsyncStorageが利用できない場合は致命的
     throw new Error('AsyncStorage is required for Firebase Auth on iOS/Android');
   }
 }
 
 // Firebase設定オブジェクト
-// Firebase Console > プロジェクト設定 > 全般 > あなたのアプリ
-// から取得した設定値を以下に記載してください
+// 環境変数から読み込み（app.config.js の extra フィールド経由）
+// ローカル開発: .env ファイルから読み込み
+// 本番ビルド: EAS Secrets から読み込み
 const firebaseConfig = {
-  apiKey: "AIzaSyCQlkTZ43bdJ8wsbZm8h4qrIU_mxjCTXUE",
-  authDomain: "parkpedia-app.firebaseapp.com",
-  projectId: "parkpedia-app",
-  storageBucket: "parkpedia-app.firebasestorage.app",
-  messagingSenderId: "118041891633",
-  appId: "1:118041891633:ios:25c857a6e7d53dd7d51610"
+  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
+  authDomain: Constants.expoConfig?.extra?.firebaseAuthDomain,
+  projectId: Constants.expoConfig?.extra?.firebaseProjectId,
+  storageBucket: Constants.expoConfig?.extra?.firebaseStorageBucket,
+  messagingSenderId: Constants.expoConfig?.extra?.firebaseMessagingSenderId,
+  appId: Constants.expoConfig?.extra?.firebaseAppId,
 };
+
+// 設定値の検証（必須フィールドチェック）
+const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'appId'];
+const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+
+if (missingFields.length > 0) {
+  const errorMsg =
+    `Missing Firebase configuration: ${missingFields.join(', ')}. ` +
+    'Please check your .env file or EAS Secrets configuration.';
+  if (__DEV__) {
+    console.error('❌', errorMsg);
+    console.error('Current config:', firebaseConfig);
+  }
+  throw new Error(errorMsg);
+}
 
 // Firebase初期化
 let app;
@@ -52,7 +72,9 @@ try {
       console.log('🔥 Firebase既存インスタンスを使用');
     }
   } else {
-    console.error('Firebase初期化エラー:', error);
+    if (__DEV__) {
+      console.error('Firebase初期化エラー:', error);
+    }
     throw error;
   }
 }
@@ -71,7 +93,7 @@ try {
     }
     // AsyncStorageを使用してPersistenceを有効化
     auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
+      persistence: getReactNativePersistence(AsyncStorage),
     });
     if (__DEV__) {
       console.log('🔐 Firebase Auth初期化完了（AsyncStorage Persistence有効）');
@@ -85,7 +107,9 @@ try {
     }
   } else {
     // その他のエラーは致命的
-    console.error('CRITICAL: Firebase Auth初期化エラー:', error);
+    if (__DEV__) {
+      console.error('CRITICAL: Firebase Auth初期化エラー:', error);
+    }
     throw error;
   }
 }
@@ -98,4 +122,3 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export default app;
-

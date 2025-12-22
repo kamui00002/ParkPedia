@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.expo/
+.expo-shared/
+
+# Build outputs
+dist/
+build/
+.next/
+android/
+ios/
+
+# Generated files
+*.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Metro bundler
+.metro-health-check*
+
+# Expo
+.expo/
+web-build/
+
+# Configuration files
+.eslintrc.js
+babel.config.js
+jest.config.js
+metro.config.js
+app.config.js

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# GitLeaksチェック（インストールされている場合のみ実行）
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "🔐 Running GitLeaks scan on staged files..."
+  gitleaks protect --staged --verbose
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ GitLeaks detected potential secrets in your staged changes."
+    echo ""
+    echo "Please review the findings above and take one of the following actions:"
+    echo "  1. Remove the secret and use environment variables instead"
+    echo "  2. If it's a false positive, add it to .gitleaksignore with a comment"
+    echo ""
+    echo "To bypass this check (NOT recommended):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+  echo "✅ GitLeaks scan passed"
+else
+  echo "ℹ️  GitLeaks not installed. Skipping secret scan."
+  echo "   Install with: brew install gitleaks"
+fi
+
+npx lint-staged

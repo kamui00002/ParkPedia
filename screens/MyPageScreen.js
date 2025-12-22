@@ -13,22 +13,16 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  doc,
-  getDoc,
-} from 'firebase/firestore';
-import { db, auth } from '../firebaseConfig';
+import { collection, getDocs, query, where, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { db, auth, storage } from '../firebaseConfig';
 import { signOut, deleteUser } from 'firebase/auth';
+import { ref as storageRef, deleteObject, listAll } from 'firebase/storage';
 import CustomHeader from '../components/CustomHeader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkIsAdmin } from '../utils/adminUtils';
+import { handleError, logError } from '../utils/errorHandler';
 
 export default function MyPageScreen({ navigation, route }) {
   const [favoriteParks, setFavoriteParks] = useState([]);
@@ -75,11 +69,15 @@ export default function MyPageScreen({ navigation, route }) {
 
       // お気に入り公園を取得
       const favoritesRef = collection(db, 'favorites');
-      const favoritesQuery = query(favoritesRef, where('userId', '==', currentUser.uid), where('type', '==', 'favorite'));
+      const favoritesQuery = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('type', '==', 'favorite')
+      );
       const favoritesSnapshot = await getDocs(favoritesQuery);
-      
+
       const favoriteParkIds = [];
-      favoritesSnapshot.forEach((doc) => {
+      favoritesSnapshot.forEach(doc => {
         favoriteParkIds.push(doc.data().parkId);
       });
 
@@ -94,11 +92,15 @@ export default function MyPageScreen({ navigation, route }) {
       setFavoriteParks(favoriteParksData);
 
       // 行ってみたいリストを取得
-      const wantToVisitQuery = query(favoritesRef, where('userId', '==', currentUser.uid), where('type', '==', 'wantToVisit'));
+      const wantToVisitQuery = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('type', '==', 'wantToVisit')
+      );
       const wantToVisitSnapshot = await getDocs(wantToVisitQuery);
-      
+
       const wantToVisitParkIds = [];
-      wantToVisitSnapshot.forEach((doc) => {
+      wantToVisitSnapshot.forEach(doc => {
         wantToVisitParkIds.push(doc.data().parkId);
       });
 
@@ -113,11 +115,15 @@ export default function MyPageScreen({ navigation, route }) {
       setWantToVisitParks(wantToVisitParksData);
 
       // 行った公園を取得
-      const visitedQuery = query(favoritesRef, where('userId', '==', currentUser.uid), where('type', '==', 'visited'));
+      const visitedQuery = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('type', '==', 'visited')
+      );
       const visitedSnapshot = await getDocs(visitedQuery);
-      
+
       const visitedParkIds = [];
-      visitedSnapshot.forEach((doc) => {
+      visitedSnapshot.forEach(doc => {
         visitedParkIds.push(doc.data().parkId);
       });
 
@@ -135,7 +141,7 @@ export default function MyPageScreen({ navigation, route }) {
       const recentParksKey = `recentParks_${currentUser.uid}`;
       const recentParksJson = await AsyncStorage.getItem(recentParksKey);
       const recentParksData = recentParksJson ? JSON.parse(recentParksJson) : [];
-      
+
       // 最近見た公園のIDから公園データを取得
       const recentParksWithData = [];
       for (const recentPark of recentParksData.slice(0, 10)) {
@@ -151,16 +157,16 @@ export default function MyPageScreen({ navigation, route }) {
       const reviewsRef = collection(db, 'reviews');
       const reviewsQuery = query(reviewsRef, where('userId', '==', currentUser.uid));
       const reviewsSnapshot = await getDocs(reviewsQuery);
-      
+
       const reviewsData = [];
-      reviewsSnapshot.forEach((doc) => {
+      reviewsSnapshot.forEach(doc => {
         reviewsData.push({ id: doc.id, ...doc.data() });
       });
       setMyReviews(reviewsData);
 
       // バッジを計算
       const earnedBadges = [];
-      
+
       // はじめての投稿バッジ
       if (reviewsData.length > 0) {
         earnedBadges.push({
@@ -184,7 +190,8 @@ export default function MyPageScreen({ navigation, route }) {
 
       setBadges(earnedBadges);
     } catch (error) {
-      console.error('マイページデータ取得エラー:', error);
+      // エラーログのみ記録（ユーザーには表示しない）
+      logError(error, 'MyPageScreen.fetchMyPageData');
     } finally {
       setLoading(false);
     }
@@ -197,132 +204,139 @@ export default function MyPageScreen({ navigation, route }) {
   );
 
   // お気に入りから削除
-  const removeFromFavorites = async (parkId) => {
+  const removeFromFavorites = async parkId => {
     try {
       const currentUser = auth.currentUser;
       const favoritesRef = collection(db, 'favorites');
-      const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'favorite'));
+      const q = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('parkId', '==', parkId),
+        where('type', '==', 'favorite')
+      );
       const snapshot = await getDocs(q);
-      
+
       // すべての削除処理が完了するまで待機
       const deletePromises = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         deletePromises.push(deleteDoc(doc.ref));
       });
       await Promise.all(deletePromises);
 
       setFavoriteParks(favoriteParks.filter(p => p.id !== parkId));
     } catch (error) {
-      console.error('削除エラー:', error);
-      Alert.alert('エラー', '削除に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'MyPageScreen.removeFromFavorites', Alert.alert);
     }
   };
 
   // 行ってみたいリストから削除
-  const removeFromWantToVisit = async (parkId) => {
+  const removeFromWantToVisit = async parkId => {
     try {
       const currentUser = auth.currentUser;
       const favoritesRef = collection(db, 'favorites');
-      const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'wantToVisit'));
+      const q = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('parkId', '==', parkId),
+        where('type', '==', 'wantToVisit')
+      );
       const snapshot = await getDocs(q);
 
       // すべての削除処理が完了するまで待機
       const deletePromises = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         deletePromises.push(deleteDoc(doc.ref));
       });
       await Promise.all(deletePromises);
 
       setWantToVisitParks(wantToVisitParks.filter(p => p.id !== parkId));
     } catch (error) {
-      console.error('削除エラー:', error);
-      Alert.alert('エラー', '削除に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'MyPageScreen.removeFromFavorites', Alert.alert);
     }
   };
 
   // 行った公園から削除
-  const removeFromVisited = async (parkId) => {
+  const removeFromVisited = async parkId => {
     try {
       const currentUser = auth.currentUser;
       const favoritesRef = collection(db, 'favorites');
-      const q = query(favoritesRef, where('userId', '==', currentUser.uid), where('parkId', '==', parkId), where('type', '==', 'visited'));
+      const q = query(
+        favoritesRef,
+        where('userId', '==', currentUser.uid),
+        where('parkId', '==', parkId),
+        where('type', '==', 'visited')
+      );
       const snapshot = await getDocs(q);
 
       // すべての削除処理が完了するまで待機
       const deletePromises = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         deletePromises.push(deleteDoc(doc.ref));
       });
       await Promise.all(deletePromises);
 
       setVisitedParks(visitedParks.filter(p => p.id !== parkId));
     } catch (error) {
-      console.error('削除エラー:', error);
-      Alert.alert('エラー', '削除に失敗しました');
+      // 統一されたエラーハンドリング
+      handleError(error, 'MyPageScreen.removeFromFavorites', Alert.alert);
     }
   };
 
   // レビューを削除
-  const deleteReview = async (reviewId) => {
-    Alert.alert(
-      'レビューを削除',
-      'このレビューを削除しますか？この操作は取り消せません。',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
+  const deleteReview = async reviewId => {
+    Alert.alert('レビューを削除', 'このレビューを削除しますか？この操作は取り消せません。', [
+      {
+        text: 'キャンセル',
+        style: 'cancel',
+      },
+      {
+        text: '削除',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const reviewRef = doc(db, 'reviews', reviewId);
+            await deleteDoc(reviewRef);
+
+            // ステートから削除
+            setMyReviews(myReviews.filter(r => r.id !== reviewId));
+
+            Alert.alert('成功', 'レビューを削除しました');
+          } catch (error) {
+            // 統一されたエラーハンドリング
+            handleError(error, 'MyPageScreen.deleteReview', Alert.alert);
+          }
         },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const reviewRef = doc(db, 'reviews', reviewId);
-              await deleteDoc(reviewRef);
-              
-              // ステートから削除
-              setMyReviews(myReviews.filter(r => r.id !== reviewId));
-              
-              Alert.alert('成功', 'レビューを削除しました');
-            } catch (error) {
-              console.error('レビュー削除エラー:', error);
-              Alert.alert('エラー', 'レビューの削除に失敗しました');
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   // ログアウト処理
   const handleLogout = () => {
-    Alert.alert(
-      'ログアウト',
-      'ログアウトしますか？',
-      [
-        {
-          text: 'キャンセル',
-          style: 'cancel',
+    Alert.alert('ログアウト', 'ログアウトしますか？', [
+      {
+        text: 'キャンセル',
+        style: 'cancel',
+      },
+      {
+        text: 'ログアウト',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut(auth);
+            // ログアウト後、ログイン画面に遷移
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } catch (error) {
+            // 統一されたエラーハンドリング
+            handleError(error, 'MyPageScreen.handleLogout', Alert.alert);
+          }
         },
-        {
-          text: 'ログアウト',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut(auth);
-              // ログアウト後、ログイン画面に遷移
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
-            } catch (error) {
-              console.error('ログアウトエラー:', error);
-              Alert.alert('エラー', 'ログアウトに失敗しました');
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   // アカウント削除処理
@@ -358,13 +372,99 @@ export default function MyPageScreen({ navigation, route }) {
                 await deleteDoc(favoriteDoc.ref);
               }
 
-              // レビューを削除
+              // レビューを削除（Storage内の画像も削除）
               const reviewsRef = collection(db, 'reviews');
               const reviewsQuery = query(reviewsRef, where('userId', '==', currentUser.uid));
               const reviewsSnapshot = await getDocs(reviewsQuery);
 
               for (const reviewDoc of reviewsSnapshot.docs) {
+                const reviewData = reviewDoc.data();
+
+                // レビューの画像をStorageから削除
+                if (reviewData.photos && reviewData.photos.length > 0) {
+                  for (const photoUrl of reviewData.photos) {
+                    try {
+                      // URLからStorage参照を取得して削除
+                      const photoRef = storageRef(storage, photoUrl);
+                      await deleteObject(photoRef);
+                    } catch (storageError) {
+                      if (__DEV__) console.error('レビュー画像削除エラー:', storageError);
+                      // 画像が既に削除されている場合などはエラーを無視
+                    }
+                  }
+                }
+
                 await deleteDoc(reviewDoc.ref);
+              }
+
+              // 公園投稿を削除（Storage内の画像も削除）
+              const parksRef = collection(db, 'parks');
+              const parksQuery = query(parksRef, where('userId', '==', currentUser.uid));
+              const parksSnapshot = await getDocs(parksQuery);
+
+              for (const parkDoc of parksSnapshot.docs) {
+                const parkData = parkDoc.data();
+
+                // 公園のメイン画像を削除
+                if (parkData.mainImage) {
+                  try {
+                    const mainImageRef = storageRef(storage, parkData.mainImage);
+                    await deleteObject(mainImageRef);
+                  } catch (storageError) {
+                    if (__DEV__) console.error('公園メイン画像削除エラー:', storageError);
+                  }
+                }
+
+                // 公園の追加画像を削除
+                if (parkData.images && parkData.images.length > 0) {
+                  for (const imageUrl of parkData.images) {
+                    try {
+                      const imageRef = storageRef(storage, imageUrl);
+                      await deleteObject(imageRef);
+                    } catch (storageError) {
+                      if (__DEV__) console.error('公園画像削除エラー:', storageError);
+                    }
+                  }
+                }
+
+                await deleteDoc(parkDoc.ref);
+              }
+
+              // ユーザーのブロックリストを削除
+              const blockedUsersRef = collection(db, `users/${currentUser.uid}/blockedUsers`);
+              const blockedUsersSnapshot = await getDocs(blockedUsersRef);
+
+              for (const blockedUserDoc of blockedUsersSnapshot.docs) {
+                await deleteDoc(blockedUserDoc.ref);
+              }
+
+              // ユーザードキュメントを削除（プロフィール情報を含む）
+              const userDocRef = doc(db, 'users', currentUser.uid);
+              const userDocSnapshot = await getDoc(userDocRef);
+
+              if (userDocSnapshot.exists()) {
+                const userData = userDocSnapshot.data();
+
+                // プロフィール写真を削除
+                if (userData.photoURL) {
+                  try {
+                    const profilePhotoRef = storageRef(storage, userData.photoURL);
+                    await deleteObject(profilePhotoRef);
+                  } catch (storageError) {
+                    if (__DEV__) console.error('プロフィール写真削除エラー:', storageError);
+                  }
+                }
+
+                await deleteDoc(userDocRef);
+              }
+
+              // レビュー報告（自分が報告したもの）を削除
+              const reportsRef = collection(db, 'reports');
+              const reportsQuery = query(reportsRef, where('reportedBy', '==', currentUser.uid));
+              const reportsSnapshot = await getDocs(reportsQuery);
+
+              for (const reportDoc of reportsSnapshot.docs) {
+                await deleteDoc(reportDoc.ref);
               }
 
               // 2. AsyncStorageから最近見た公園を削除
@@ -387,7 +487,7 @@ export default function MyPageScreen({ navigation, route }) {
                 },
               ]);
             } catch (error) {
-              console.error('アカウント削除エラー:', error);
+              if (__DEV__) console.error('アカウント削除エラー:', error);
               setLoading(false);
 
               if (error.code === 'auth/requires-recent-login') {
@@ -401,7 +501,8 @@ export default function MyPageScreen({ navigation, route }) {
                   ]
                 );
               } else {
-                Alert.alert('エラー', 'アカウント削除に失敗しました: ' + error.message);
+                // 統一されたエラーハンドリング
+                handleError(error, 'MyPageScreen.deleteAccount', Alert.alert);
               }
             }
           },
@@ -411,30 +512,34 @@ export default function MyPageScreen({ navigation, route }) {
   };
 
   // 公園カードをタップしたときの処理
-  const handleParkCardPress = (park) => {
+  const handleParkCardPress = park => {
     navigation.navigate('ParkDetail', { parkId: park.id, park });
   };
 
   // 公園カードのレンダリング
   const renderParkCard = (park, onRemove, showRemoveButton = true) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.parkCard}
       onPress={() => handleParkCardPress(park)}
       activeOpacity={0.7}
     >
-      {park.mainImage && (
-        <Image source={{ uri: park.mainImage }} style={styles.parkImage} />
-      )}
+      {park.mainImage && <Image source={{ uri: park.mainImage }} style={styles.parkImage} />}
       <View style={styles.parkCardContent}>
-        <Text style={styles.parkName} numberOfLines={2}>{park.name || '名前なし'}</Text>
+        <Text style={styles.parkName} numberOfLines={2}>
+          {park.name || '名前なし'}
+        </Text>
         {park.address && (
-          <Text style={styles.parkAddress} numberOfLines={1}>{park.address}</Text>
+          <Text style={styles.parkAddress} numberOfLines={1}>
+            {park.address}
+          </Text>
         )}
         {showRemoveButton && onRemove && (
-          <TouchableOpacity onPress={(e) => {
-            e.stopPropagation();
-            onRemove(park.id);
-          }}>
+          <TouchableOpacity
+            onPress={e => {
+              e.stopPropagation();
+              onRemove(park.id);
+            }}
+          >
             <Text style={styles.removeButton}>リストから削除</Text>
           </TouchableOpacity>
         )}
@@ -443,7 +548,7 @@ export default function MyPageScreen({ navigation, route }) {
   );
 
   // バッジカードのレンダリング
-  const renderBadgeCard = (badge) => (
+  const renderBadgeCard = badge => (
     <View style={styles.badgeCard}>
       <View style={styles.badgeIcon}>
         <Text style={styles.badgeIconText}>{badge.icon}</Text>
@@ -482,20 +587,12 @@ export default function MyPageScreen({ navigation, route }) {
         {/* ユーザー情報セクション */}
         <View style={styles.userSection}>
           <View style={styles.userInfo}>
-            <Text style={styles.userEmail}>
-              {auth.currentUser?.email || 'ユーザー'}
-            </Text>
+            <Text style={styles.userEmail}>{auth.currentUser?.email || 'ユーザー'}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>ログアウト</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteAccountButton}
-            onPress={handleDeleteAccount}
-          >
+          <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
             <Text style={styles.deleteAccountButtonText}>アカウントを削除</Text>
           </TouchableOpacity>
           {isAdmin && (
@@ -515,7 +612,7 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>お気に入りした公園はありません</Text>
           ) : (
             <View style={styles.parksGrid}>
-              {favoriteParks.map((park) => (
+              {favoriteParks.map(park => (
                 <View key={park.id} style={styles.parkCardWrapper}>
                   {renderParkCard(park, removeFromFavorites)}
                 </View>
@@ -531,7 +628,7 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>「行ってみたい!」リストは空です</Text>
           ) : (
             <View style={styles.parksGrid}>
-              {wantToVisitParks.map((park) => (
+              {wantToVisitParks.map(park => (
                 <View key={park.id} style={styles.parkCardWrapper}>
                   {renderParkCard(park, removeFromWantToVisit)}
                 </View>
@@ -547,7 +644,7 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>行った公園はありません</Text>
           ) : (
             <View style={styles.parksGrid}>
-              {visitedParks.map((park) => (
+              {visitedParks.map(park => (
                 <View key={park.id} style={styles.parkCardWrapper}>
                   {renderParkCard(park, removeFromVisited)}
                 </View>
@@ -563,7 +660,7 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>最近見た公園はありません</Text>
           ) : (
             <View style={styles.parksGrid}>
-              {recentParks.map((park) => (
+              {recentParks.map(park => (
                 <View key={park.id} style={styles.parkCardWrapper}>
                   {renderParkCard(park, null, false)}
                 </View>
@@ -579,7 +676,7 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>獲得したバッジはありません</Text>
           ) : (
             <View style={styles.badgesGrid}>
-              {badges.map((badge) => (
+              {badges.map(badge => (
                 <View key={badge.id} style={styles.badgeCardWrapper}>
                   {renderBadgeCard(badge)}
                 </View>
@@ -595,11 +692,12 @@ export default function MyPageScreen({ navigation, route }) {
             <Text style={styles.emptyText}>まだ投稿したレビューはありません。</Text>
           ) : (
             <View style={styles.reviewsList}>
-              {myReviews.map((review) => (
+              {myReviews.map(review => (
                 <View key={review.id} style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
                     <Text style={styles.reviewRating}>
-                      {'⭐'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                      {'⭐'.repeat(review.rating)}
+                      {'☆'.repeat(5 - review.rating)}
                     </Text>
                     <TouchableOpacity
                       onPress={() => deleteReview(review.id)}
@@ -608,9 +706,7 @@ export default function MyPageScreen({ navigation, route }) {
                       <Text style={styles.deleteReviewButtonText}>🗑️ 削除</Text>
                     </TouchableOpacity>
                   </View>
-                  {review.comment && (
-                    <Text style={styles.reviewComment}>{review.comment}</Text>
-                  )}
+                  {review.comment && <Text style={styles.reviewComment}>{review.comment}</Text>}
                   {review.createdAt && (
                     <Text style={styles.reviewDate}>
                       投稿日: {new Date(review.createdAt.toDate()).toLocaleDateString('ja-JP')}

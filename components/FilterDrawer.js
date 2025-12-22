@@ -24,7 +24,14 @@ const FILTER_CATEGORIES = [
   {
     id: 'facilities',
     name: '設備',
-    options: ['トイレあり', 'オムツ交換台', '駐車場あり', '日陰が多い', 'ベビーカーOK', 'ボール遊び可'],
+    options: [
+      'トイレあり',
+      'オムツ交換台',
+      '駐車場あり',
+      '日陰が多い',
+      'ベビーカーOK',
+      'ボール遊び可',
+    ],
   },
   {
     id: 'distance',
@@ -62,14 +69,14 @@ export default function FilterDrawer({ visible, onClose, filters, onFilterChange
   const handleFilterChange = (category, option) => {
     const categoryData = FILTER_CATEGORIES.find(cat => cat.id === category);
     const isSingleSelect = categoryData?.type === 'single';
-    
+
     if (isSingleSelect) {
       // 単一選択の場合、選択中のものと同じなら解除、違うなら置き換え
       const currentFilters = filters[category] || [];
       const newFilters = currentFilters.includes(option)
         ? [] // 同じものをクリックしたら解除
         : [option]; // 新しいものを選択
-      
+
       onFilterChange({
         ...filters,
         [category]: newFilters,
@@ -80,7 +87,7 @@ export default function FilterDrawer({ visible, onClose, filters, onFilterChange
       const newFilters = currentFilters.includes(option)
         ? currentFilters.filter(item => item !== option)
         : [...currentFilters, option];
-      
+
       onFilterChange({
         ...filters,
         [category]: newFilters,
@@ -97,11 +104,7 @@ export default function FilterDrawer({ visible, onClose, filters, onFilterChange
       statusBarTranslucent={true}
     >
       <View style={styles.overlay}>
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <Animated.View
           style={[
             styles.drawer,
@@ -129,17 +132,18 @@ export default function FilterDrawer({ visible, onClose, filters, onFilterChange
                         style={styles.filterOption}
                         onPress={() => handleFilterChange(category.id, option)}
                       >
-                        <View style={[
-                          category.type === 'single' ? styles.radio : styles.checkbox,
-                          isSelected && styles.checkboxSelected
-                        ]}>
-                          {isSelected && (
-                            category.type === 'single' ? (
+                        <View
+                          style={[
+                            category.type === 'single' ? styles.radio : styles.checkbox,
+                            isSelected && styles.checkboxSelected,
+                          ]}
+                        >
+                          {isSelected &&
+                            (category.type === 'single' ? (
                               <View style={styles.radioInner} />
                             ) : (
                               <Text style={styles.checkmark}>✓</Text>
-                            )
-                          )}
+                            ))}
                         </View>
                         <Text style={styles.filterOptionText}>{option}</Text>
                       </TouchableOpacity>
@@ -309,4 +313,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

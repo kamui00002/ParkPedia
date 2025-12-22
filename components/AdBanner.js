@@ -29,7 +29,7 @@ const AdBanner = () => {
     if (Constants && Constants.executionEnvironment) {
       isExpoGo = Constants.executionEnvironment === 'storeClient';
     }
-  } catch (e) {
+  } catch {
     // Constantsが利用できない場合は、Expo Goの可能性が高い
     isExpoGo = true;
   }
@@ -43,7 +43,7 @@ const AdBanner = () => {
   let adModule;
   try {
     adModule = require('react-native-google-mobile-ads');
-  } catch (e) {
+  } catch {
     return null;
   }
 
@@ -56,9 +56,7 @@ const AdBanner = () => {
   }
 
   // 開発環境ではテスト広告IDを使用、本番環境では実際の広告IDを使用
-  const adUnitId = AD_TEST_MODE && TestIds
-    ? TestIds.BANNER
-    : AD_UNIT_IDS.banner;
+  const adUnitId = AD_TEST_MODE && TestIds ? TestIds.BANNER : AD_UNIT_IDS.banner;
 
   // 広告コンポーネントを安全にレンダリング
   try {
@@ -71,19 +69,15 @@ const AdBanner = () => {
             requestNonPersonalizedAdsOnly: false,
           }}
           onAdLoaded={() => {
-            if (__DEV__) {
-              console.log('AdMob: 広告が読み込まれました');
-            }
+            if (__DEV__) console.log('AdMob: 広告が読み込まれました');
           }}
-          onAdFailedToLoad={(error) => {
-            if (__DEV__) {
-              console.log('AdMob: 広告の読み込みに失敗しました:', error);
-            }
+          onAdFailedToLoad={error => {
+            if (__DEV__) console.log('AdMob: 広告の読み込みに失敗しました:', error);
           }}
         />
       </View>
     );
-  } catch (error) {
+  } catch {
     // レンダリング時のエラーも無視
     return null;
   }

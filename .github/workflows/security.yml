@@ -1,0 +1,239 @@
+name: Security Scan (GitLeaks)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 毎週月曜日 10:00 JST (01:00 UTC)
+    - cron: '0 1 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gitleaks:
+    name: GitLeaks Secret Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得（過去のコミットもスキャン）
+
+      - name: Run GitLeaks
+        id: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}  # Pro版を使用する場合
+        continue-on-error: true  # 検出があってもワークフローを継続
+
+      - name: Upload GitLeaks Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report-${{ github.run_id }}
+          path: |
+            gitleaks-report.json
+            gitleaks-report.sarif
+          retention-days: 30
+
+      - name: Parse GitLeaks Results
+        if: always()
+        id: parse
+        run: |
+          if [ -f "gitleaks-report.json" ]; then
+            # 検出された秘密情報の数をカウント
+            LEAKS_COUNT=$(jq '. | length' gitleaks-report.json || echo "0")
+            echo "leaks_count=$LEAKS_COUNT" >> $GITHUB_OUTPUT
+
+            # 検出内容のサマリーを生成
+            if [ "$LEAKS_COUNT" -gt 0 ]; then
+              echo "has_leaks=true" >> $GITHUB_OUTPUT
+              jq -r '.[] | "- \(.RuleID): \(.File):\(.StartLine)"' gitleaks-report.json | head -20 > leaks-summary.txt
+            else
+              echo "has_leaks=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "leaks_count=0" >> $GITHUB_OUTPUT
+            echo "has_leaks=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Issue on Leak Detection
+        if: steps.parse.outputs.has_leaks == 'true' && github.event_name != 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const leaksCount = ${{ steps.parse.outputs.leaks_count }};
+
+            let leaksSummary = '';
+            try {
+              leaksSummary = fs.readFileSync('leaks-summary.txt', 'utf8');
+            } catch (e) {
+              leaksSummary = 'Error reading summary file';
+            }
+
+            const title = `🔐 Security Alert: ${leaksCount} Potential Secret(s) Detected`;
+
+            const body = `## 🚨 GitLeaks Secret Scanning Alert
+
+            **Date**: ${new Date().toISOString()}
+            **Workflow Run**: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+            **Branch**: ${context.ref}
+            **Commit**: ${context.sha.substring(0, 7)}
+
+            ### Summary
+
+            GitLeaks detected **${leaksCount}** potential secret(s) in the repository.
+
+            ### Detected Secrets (First 20)
+
+            ${leaksSummary}
+
+            ### Immediate Actions Required
+
+            1. **Review the findings**: Download the full report from the workflow artifacts
+            2. **Verify if these are real secrets**: Check if the detected items are actual credentials
+            3. **If real secrets are found**:
+               - Immediately rotate/revoke the compromised credentials
+               - Remove them from Git history using \`git filter-repo\` or BFG Repo-Cleaner
+               - Update all systems using these credentials
+            4. **If false positives**: Add them to \`.gitleaksignore\` with comments explaining why
+
+            ### Adding False Positives to .gitleaksignore
+
+            \`\`\`bash
+            # Get the fingerprint from the gitleaks report
+            # Add to .gitleaksignore with a comment explaining why it's safe
+            echo "# Safe: This is a test fixture" >> .gitleaksignore
+            echo "<fingerprint>:<file>:<line>" >> .gitleaksignore
+            \`\`\`
+
+            ### Prevention
+
+            - Use environment variables for all secrets
+            - Enable the pre-commit hook to catch secrets before commit
+            - Review the [Security Best Practices](./docs/DEVELOPMENT_KNOWLEDGE_BASE.md)
+
+            ---
+
+            **Note**: This issue was automatically created by the Security Scan workflow.
+            Please close this issue after addressing all findings.
+            `;
+
+            // Search for existing open security issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,secrets'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Security Alert:') && issue.title.includes('Secret')
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## 🔄 New Secret Detection\n\n${body}`
+              });
+
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'secrets', 'automated', 'high-priority']
+              });
+
+              console.log(`Created new issue #${newIssue.data.number}`);
+            }
+
+      - name: Comment on PR
+        if: steps.parse.outputs.has_leaks == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const leaksCount = ${{ steps.parse.outputs.leaks_count }};
+
+            let leaksSummary = '';
+            try {
+              leaksSummary = fs.readFileSync('leaks-summary.txt', 'utf8');
+            } catch (e) {
+              leaksSummary = 'Error reading summary file';
+            }
+
+            const body = `## 🚨 GitLeaks Secret Detection
+
+            **Warning**: GitLeaks detected **${leaksCount}** potential secret(s) in this PR.
+
+            ### Detected Secrets
+
+            ${leaksSummary}
+
+            ### Actions Required Before Merge
+
+            1. Review each detected item in the workflow artifacts
+            2. If real secrets: Remove them and use environment variables instead
+            3. If false positives: Add to \`.gitleaksignore\` with explanatory comments
+            4. Re-run the security scan after fixes
+
+            **Do not merge until all secrets are addressed.**
+
+            [View Full Report](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Post Job Summary
+        if: always()
+        run: |
+          echo "### 🔐 GitLeaks Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.parse.outputs.has_leaks }}" == "true" ]; then
+            echo "❌ **Status**: Potential secrets detected" >> $GITHUB_STEP_SUMMARY
+            echo "**Count**: ${{ steps.parse.outputs.leaks_count }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Detected Items (First 20)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat leaks-summary.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Action Required**: Review and address all detected secrets" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Status**: No secrets detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The repository appears clean of exposed secrets." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail on Leaks (Strict Mode)
+        if: steps.parse.outputs.has_leaks == 'true'
+        run: |
+          echo "::error::GitLeaks detected ${{ steps.parse.outputs.leaks_count }} potential secret(s)"
+          echo "Please review the findings and address them before proceeding."
+          exit 1

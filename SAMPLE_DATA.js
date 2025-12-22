@@ -11,7 +11,8 @@ export const sampleParks = [
   {
     name: '中央公園',
     address: '東京都千代田区丸の内1-1-1',
-    description: '都心にありながら、広々とした緑の空間が楽しめる公園です。週末には多くの家族連れで賑わいます。',
+    description:
+      '都心にありながら、広々とした緑の空間が楽しめる公園です。週末には多くの家族連れで賑わいます。',
     latitude: 35.6812,
     longitude: 139.7671,
     rating: 4.5,
@@ -44,7 +45,7 @@ export const sampleParks = [
     name: 'こどもの森公園',
     address: '東京都渋谷区神宮前1-1-1',
     description: '子供向けの遊具が充実した公園。安全に配慮された設備で、安心して遊ばせられます。',
-    latitude: 35.6700,
+    latitude: 35.67,
     longitude: 139.7025,
     rating: 4.7,
     reviewCount: 3,
@@ -223,15 +224,3 @@ export const sampleReviews = [
     createdAt: new Date(),
   },
 ];
-
-
-
-
-
-
-
-
-
-
-
-

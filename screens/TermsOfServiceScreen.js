@@ -2,23 +2,14 @@
 // アプリの利用規約を表示
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TermsOfServiceScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← 戻る</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>利用規約</Text>
@@ -44,7 +35,9 @@ export default function TermsOfServiceScreen({ navigation }) {
           <Text style={styles.listItem}>• 法令または公序良俗に違反する行為</Text>
           <Text style={styles.listItem}>• 犯罪行為に関連する行為</Text>
           <Text style={styles.listItem}>• 他のユーザーや第三者の権利を侵害する行為</Text>
-          <Text style={styles.listItem}>• 不適切、攻撃的、差別的、または暴力的なコンテンツの投稿</Text>
+          <Text style={styles.listItem}>
+            • 不適切、攻撃的、差別的、または暴力的なコンテンツの投稿
+          </Text>
           <Text style={styles.listItem}>• 虚偽の情報を投稿する行為</Text>
           <Text style={styles.listItem}>• わいせつな表現や児童ポルノを含む内容の投稿</Text>
           <Text style={styles.listItem}>• スパムやその他の迷惑行為</Text>
@@ -61,7 +54,8 @@ export default function TermsOfServiceScreen({ navigation }) {
             ユーザーは投稿したコンテンツについて責任を負い、不適切なコンテンツを投稿しないことに同意するものとします。
           </Text>
           <Text style={styles.paragraph}>
-            <Text style={styles.bold}>重要：</Text> 不適切なコンテンツや悪質なユーザーは、一切容認されません。
+            <Text style={styles.bold}>重要：</Text>{' '}
+            不適切なコンテンツや悪質なユーザーは、一切容認されません。
             不適切なコンテンツを発見した場合は、報告機能を使用してご報告ください。
           </Text>
         </View>
@@ -114,7 +108,8 @@ export default function TermsOfServiceScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>第9条（お問い合わせ）</Text>
           <Text style={styles.paragraph}>
-            本規約に関するお問い合わせは、アプリ内のお問い合わせフォームまたはApp Storeのレビューにてお願いいたします。
+            本規約に関するお問い合わせは、アプリ内のお問い合わせフォームまたはApp
+            Storeのレビューにてお願いいたします。
           </Text>
         </View>
 

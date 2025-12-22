@@ -14,9 +14,19 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { uploadMultipleImages } from '../utils/imageUploader';
+import { handleError, logError } from '../utils/errorHandler';
 
 export default function AddReviewScreen({ route, navigation }) {
   const { parkId, parkName, isEditMode, reviewData } = route.params;
@@ -42,21 +52,17 @@ export default function AddReviewScreen({ route, navigation }) {
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
-      Alert.alert(
-        'ログインが必要です',
-        'レビューを投稿するにはログインが必要です。',
-        [
-          {
-            text: 'ログイン',
-            onPress: () => navigation.navigate('Login'),
-          },
-          {
-            text: 'キャンセル',
-            style: 'cancel',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      Alert.alert('ログインが必要です', 'レビューを投稿するにはログインが必要です。', [
+        {
+          text: 'ログイン',
+          onPress: () => navigation.navigate('Login'),
+        },
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
     }
   }, [navigation]);
 
@@ -88,26 +94,22 @@ export default function AddReviewScreen({ route, navigation }) {
   };
 
   // 写真を削除
-  const removePhoto = (index) => {
+  const removePhoto = index => {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
   // 公園の評価を更新する関数
-  const updateParkRating = async (parkId) => {
+  const updateParkRating = async parkId => {
     try {
-      if (__DEV__) {
-        console.log('評価更新開始:', parkId);
-      }
+      if (__DEV__) console.log('評価更新開始:', parkId);
 
       // 該当公園のすべてのレビューを取得
       const reviewsRef = collection(db, 'reviews');
       const q = query(reviewsRef, where('parkId', '==', parkId));
       const querySnapshot = await getDocs(q);
-      
-      if (__DEV__) {
-        console.log('レビュー数:', querySnapshot.size);
-      }
-      
+
+      if (__DEV__) console.log('レビュー数:', querySnapshot.size);
+
       if (querySnapshot.empty) {
         // レビューがない場合は評価を0に設定
         const parkRef = doc(db, 'parks', parkId);
@@ -115,58 +117,44 @@ export default function AddReviewScreen({ route, navigation }) {
           rating: 0,
           reviewCount: 0,
         });
-        if (__DEV__) {
-          console.log('評価を0に設定しました');
-        }
+        if (__DEV__) console.log('評価を0に設定しました');
         return;
       }
-      
+
       // 平均評価を計算
       let totalRating = 0;
       let reviewCount = 0;
-      
-      querySnapshot.forEach((doc) => {
+
+      querySnapshot.forEach(doc => {
         const reviewData = doc.data();
         if (reviewData.rating && typeof reviewData.rating === 'number') {
           totalRating += reviewData.rating;
           reviewCount++;
         }
       });
-      
+
       const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
-      
-      if (__DEV__) {
-        console.log('計算された評価:', averageRating, 'レビュー数:', reviewCount);
-      }
-      
+
+      if (__DEV__) console.log('計算された評価:', averageRating, 'レビュー数:', reviewCount);
+
       // 公園の評価を更新
       const parkRef = doc(db, 'parks', parkId);
       await updateDoc(parkRef, {
         rating: Math.round(averageRating * 10) / 10, // 小数点第1位まで
         reviewCount: reviewCount,
       });
-      
-      if (__DEV__) {
-        console.log('評価更新完了:', Math.round(averageRating * 10) / 10, reviewCount);
-      }
+
+      if (__DEV__) console.log('評価更新完了:', Math.round(averageRating * 10) / 10, reviewCount);
     } catch (error) {
-      // エラーを詳細にログ出力
-      console.error('公園の評価更新エラー:', error);
-      console.error('エラー詳細:', {
-        code: error.code,
-        message: error.message,
-        parkId: parkId,
-      });
-      
-      // エラーをユーザーに通知（開発環境のみ）
+      // 統一されたエラーハンドリング
+      // 評価更新エラーは警告のみ（レビュー投稿は成功とする）
       if (__DEV__) {
-        Alert.alert(
-          '評価更新エラー',
-          `評価の自動更新に失敗しました: ${error.message}\n\n手動で更新する必要がある場合があります。`,
-          [{ text: 'OK' }]
-        );
+        handleError(error, 'AddReviewScreen.updateParkRating', Alert.alert);
+      } else {
+        // 本番環境ではログのみ記録
+        logError(error, 'AddReviewScreen.updateParkRating');
       }
-      
+
       // エラーが発生してもレビュー投稿は成功とする
       throw error; // 呼び出し元で処理できるようにエラーを再スロー
     }
@@ -201,7 +189,7 @@ export default function AddReviewScreen({ route, navigation }) {
           const newUploadedUrls = await uploadMultipleImages(newPhotos, 'reviews');
           uploadedImageUrls = [...existingPhotos, ...newUploadedUrls];
         } catch (uploadError) {
-          console.error('画像アップロードエラー:', uploadError);
+          if (__DEV__) console.error('画像アップロードエラー:', uploadError);
           Alert.alert('警告', '画像のアップロードに失敗しましたが、レビューは保存されます。');
           uploadedImageUrls = existingPhotos;
         }
@@ -223,8 +211,8 @@ export default function AddReviewScreen({ route, navigation }) {
         try {
           await updateParkRating(parkId);
         } catch (ratingError) {
-          console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
           if (__DEV__) {
+            console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
             Alert.alert(
               '警告',
               'レビューは更新されましたが、評価の自動更新に失敗しました。\n\nしばらくしてからアプリを再起動してください。',
@@ -233,16 +221,12 @@ export default function AddReviewScreen({ route, navigation }) {
           }
         }
 
-        Alert.alert(
-          '成功',
-          'レビューを更新しました',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.navigate('Admin'),
-            },
-          ]
-        );
+        Alert.alert('成功', 'レビューを更新しました', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Admin'),
+          },
+        ]);
       } else {
         // 新規追加モード
         await addDoc(collection(db, 'reviews'), {
@@ -259,8 +243,8 @@ export default function AddReviewScreen({ route, navigation }) {
         try {
           await updateParkRating(parkId);
         } catch (ratingError) {
-          console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
           if (__DEV__) {
+            console.error('評価更新に失敗しましたが、レビューは保存されました:', ratingError);
             Alert.alert(
               '警告',
               'レビューは投稿されましたが、評価の自動更新に失敗しました。\n\nしばらくしてからアプリを再起動してください。',
@@ -269,22 +253,20 @@ export default function AddReviewScreen({ route, navigation }) {
           }
         }
 
-        Alert.alert(
-          '成功',
-          'レビューを投稿しました',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
+        Alert.alert('成功', 'レビューを投稿しました', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('レビュー投稿エラー:', error);
-      }
-      Alert.alert('エラー', `レビューの${isEditMode ? '更新' : '投稿'}に失敗しました`);
+      // 統一されたエラーハンドリング
+      handleError(
+        error,
+        `AddReviewScreen.handleSubmit.${isEditMode ? 'update' : 'create'}`,
+        Alert.alert
+      );
     } finally {
       setSubmitting(false);
     }
@@ -295,14 +277,8 @@ export default function AddReviewScreen({ route, navigation }) {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <TouchableOpacity
-          key={i}
-          onPress={() => setRating(i)}
-          style={styles.starButton}
-        >
-          <Text style={styles.star}>
-            {i <= rating ? '⭐' : '☆'}
-          </Text>
+        <TouchableOpacity key={i} onPress={() => setRating(i)} style={styles.starButton}>
+          <Text style={styles.star}>{i <= rating ? '⭐' : '☆'}</Text>
         </TouchableOpacity>
       );
     }
@@ -321,14 +297,8 @@ export default function AddReviewScreen({ route, navigation }) {
         {/* 星評価選択 */}
         <View style={styles.ratingSection}>
           <Text style={styles.sectionLabel}>評価</Text>
-          <View style={styles.starsContainer}>
-            {renderStars()}
-          </View>
-          {rating > 0 && (
-            <Text style={styles.ratingText}>
-              選択中: {rating} / 5
-            </Text>
-          )}
+          <View style={styles.starsContainer}>{renderStars()}</View>
+          {rating > 0 && <Text style={styles.ratingText}>選択中: {rating} / 5</Text>}
         </View>
 
         {/* コメント入力 */}
@@ -352,9 +322,7 @@ export default function AddReviewScreen({ route, navigation }) {
             写真を追加 ({photos.length}/{MAX_PHOTOS})
           </Text>
           <View style={styles.photoWarning}>
-            <Text style={styles.photoWarningText}>
-              ⚠️ 投稿ルールのお願い
-            </Text>
+            <Text style={styles.photoWarningText}>⚠️ 投稿ルールのお願い</Text>
             <Text style={styles.photoWarningSubtext}>
               トラブル防止のため、人物の顔が特定できる写真の投稿は避けてください。
             </Text>
@@ -366,7 +334,7 @@ export default function AddReviewScreen({ route, navigation }) {
           >
             <Text style={styles.photoButtonText}>ファイルを選択</Text>
           </TouchableOpacity>
-          
+
           {photos.length > 0 && (
             <View style={styles.photosContainer}>
               {photos.map((photo, index) => (
@@ -590,9 +558,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-
-
-
-
-
