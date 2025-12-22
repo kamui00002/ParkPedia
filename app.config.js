@@ -8,7 +8,7 @@ module.exports = {
   expo: {
     name: 'ParkPedia',
     slug: 'parkpedia',
-    version: '1.0.26',
+    version: '1.0.27',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -24,13 +24,12 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '32',
+      buildNumber: '33',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           'このアプリは近くの公園を検索するために位置情報を使用します。',
-        NSCameraUsageDescription:
-          'このアプリは公園の写真を撮影するためにカメラを使用します。',
+        NSCameraUsageDescription: 'このアプリは公園の写真を撮影するためにカメラを使用します。',
         NSPhotoLibraryUsageDescription:
           'このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。',
         ITSAppUsesNonExemptEncryption: false,
@@ -66,8 +65,7 @@ module.exports = {
         {
           photosPermission:
             'このアプリは公園の写真を選択するためにフォトライブラリにアクセスします。',
-          cameraPermission:
-            'このアプリは公園の写真を撮影するためにカメラを使用します。',
+          cameraPermission: 'このアプリは公園の写真を撮影するためにカメラを使用します。',
         },
       ],
       [
@@ -93,6 +91,9 @@ module.exports = {
       firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.FIREBASE_APP_ID,
+    },
+    install: {
+      exclude: ['jest'],
     },
   },
 };
