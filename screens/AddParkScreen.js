@@ -16,6 +16,7 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
@@ -50,7 +51,10 @@ export default function AddParkScreen({ navigation, route }) {
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+
   const MAX_PHOTOS = 8;
 
   // 編集モードの場合、既存データを読み込む
@@ -61,6 +65,8 @@ export default function AddParkScreen({ navigation, route }) {
       setDescription(existingParkData.description || '');
       setSelectedAges(existingParkData.tags?.age || []);
       setSelectedEquipment(existingParkData.tags?.equipment || []);
+      setLatitude(existingParkData.latitude || null);
+      setLongitude(existingParkData.longitude || null);
 
       // 施設データを復元
       const facilityIds = [];
@@ -173,6 +179,62 @@ export default function AddParkScreen({ navigation, route }) {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  // 現在地を取得
+  const getCurrentLocation = async () => {
+    try {
+      setGettingLocation(true);
+
+      // 位置情報の権限をリクエスト
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('権限が必要', '位置情報の取得には権限が必要です');
+        setGettingLocation(false);
+        return;
+      }
+
+      // 現在地を取得
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+
+      // 逆ジオコーディングで住所を取得
+      try {
+        const addressResults = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (addressResults && addressResults.length > 0) {
+          const result = addressResults[0];
+          // 日本の住所形式で組み立て
+          const addressParts = [];
+          if (result.country) addressParts.push(result.country);
+          if (result.region) addressParts.push(result.region);
+          if (result.city) addressParts.push(result.city);
+          if (result.district) addressParts.push(result.district);
+          if (result.street) addressParts.push(result.street);
+          if (result.streetNumber) addressParts.push(result.streetNumber);
+
+          const fullAddress = addressParts.join('');
+          setAddress(fullAddress);
+
+          Alert.alert('成功', '現在地を取得しました');
+        }
+      } catch (geocodeError) {
+        console.log('逆ジオコーディングエラー:', geocodeError);
+        Alert.alert('成功', '位置情報を取得しました（住所の自動入力は失敗）');
+      }
+    } catch (error) {
+      console.error('位置情報取得エラー:', error);
+      Alert.alert('エラー', '位置情報の取得に失敗しました');
+    } finally {
+      setGettingLocation(false);
+    }
+  };
+
   // 公園データをFirestoreに保存または更新
   const handleSubmit = async () => {
     // バリデーション
@@ -181,8 +243,16 @@ export default function AddParkScreen({ navigation, route }) {
       return;
     }
 
-    if (!address.trim()) {
-      Alert.alert('エラー', '住所を入力してください');
+    // 住所と位置情報が両方ない場合は警告
+    if (!address.trim() && (!latitude || !longitude)) {
+      Alert.alert(
+        '確認',
+        '住所または位置情報が設定されていません。このまま登録しますか？',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: '登録する', onPress: () => submitParkData() }
+        ]
+      );
       return;
     }
 
@@ -190,6 +260,12 @@ export default function AddParkScreen({ navigation, route }) {
       Alert.alert('エラー', '説明を入力してください');
       return;
     }
+
+    await submitParkData();
+  };
+
+  // 実際の送信処理
+  const submitParkData = async () => {
 
     // ログインチェック
     const currentUser = auth.currentUser;
@@ -233,7 +309,6 @@ export default function AddParkScreen({ navigation, route }) {
 
       const parkData = {
         name: name.trim(),
-        address: address.trim(),
         description: description.trim(),
         tags: {
           age: selectedAges,
@@ -244,6 +319,17 @@ export default function AddParkScreen({ navigation, route }) {
         images: uploadedImageUrls,
         updatedAt: serverTimestamp(),
       };
+
+      // 住所が入力されている場合のみ追加
+      if (address.trim()) {
+        parkData.address = address.trim();
+      }
+
+      // 位置情報が設定されている場合のみ追加
+      if (latitude !== null && longitude !== null) {
+        parkData.latitude = latitude;
+        parkData.longitude = longitude;
+      }
 
       if (isEditMode && existingParkData?.id) {
         // 編集モード: 既存の公園を更新
@@ -318,14 +404,41 @@ export default function AddParkScreen({ navigation, route }) {
 
         {/* 住所入力 */}
         <View style={styles.inputSection}>
-          <Text style={styles.label}>住所 <Text style={styles.required}>*</Text></Text>
+          <Text style={styles.label}>
+            住所 <Text style={styles.optional}>(任意)</Text>
+          </Text>
           <TextInput
             style={styles.input}
-            placeholder="例: 東京都渋谷区代々木神園町2-1"
+            placeholder="例: 東京都渋谷区代々木神園町2-1（不明な場合は空欄可）"
             value={address}
             onChangeText={setAddress}
             placeholderTextColor="#999"
           />
+
+          {/* 現在地取得ボタン */}
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={getCurrentLocation}
+            disabled={gettingLocation}
+          >
+            {gettingLocation ? (
+              <ActivityIndicator size="small" color="#10B981" />
+            ) : (
+              <>
+                <Text style={styles.locationButtonIcon}>📍</Text>
+                <Text style={styles.locationButtonText}>現在地から取得</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* 位置情報表示 */}
+          {(latitude !== null && longitude !== null) && (
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationInfoText}>
+                ✓ 位置情報: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* 説明入力 */}
@@ -492,6 +605,44 @@ const styles = StyleSheet.create({
   },
   required: {
     color: '#EF4444',
+  },
+  optional: {
+    color: '#9CA3AF',
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0FDF4',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    gap: 8,
+  },
+  locationButtonIcon: {
+    fontSize: 16,
+  },
+  locationButtonText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  locationInfo: {
+    backgroundColor: '#D1FAE5',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  locationInfoText: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '500',
   },
   input: {
     backgroundColor: '#FFFFFF',

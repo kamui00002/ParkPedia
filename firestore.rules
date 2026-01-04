@@ -69,15 +69,17 @@ service cloud.firestore {
         && hasValidUserId()
         && hasValidCreatedAt()
         && !request.resource.data.keys().hasAny(['updatedAt'])
-        // Required fields check
-        && request.resource.data.keys().hasAll(['name', 'address', 'userId', 'createdAt'])
+        // Required fields check (address is now optional)
+        && request.resource.data.keys().hasAll(['name', 'userId', 'createdAt'])
         // Data type and length validation
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 100
-        && request.resource.data.address is string
-        && request.resource.data.address.size() > 0
-        && request.resource.data.address.size() <= 300
+        // Address validation if present (optional)
+        && (!request.resource.data.keys().hasAny(['address'])
+            || (request.resource.data.address is string
+                && request.resource.data.address.size() > 0
+                && request.resource.data.address.size() <= 300))
         // Latitude validation if present
         && (!request.resource.data.keys().hasAny(['latitude'])
             || (request.resource.data.latitude is number
@@ -119,9 +121,11 @@ service cloud.firestore {
             && request.resource.data.name is string
             && request.resource.data.name.size() > 0
             && request.resource.data.name.size() <= 100
-            && request.resource.data.address is string
-            && request.resource.data.address.size() > 0
-            && request.resource.data.address.size() <= 300
+            // Address validation if present (optional)
+            && (!request.resource.data.keys().hasAny(['address'])
+                || (request.resource.data.address is string
+                    && request.resource.data.address.size() > 0
+                    && request.resource.data.address.size() <= 300))
             && (!request.resource.data.keys().hasAny(['latitude'])
             || (request.resource.data.latitude is number
                 && request.resource.data.latitude >= -90
