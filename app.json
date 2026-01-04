@@ -65,9 +65,7 @@
           "iosAppId": "ca-app-pub-5237930968754753~4809377071",
           "androidAppId": "ca-app-pub-5237930968754753~4809377071"
         }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/crashlytics"
+      ]
     ],
     "extra": {
       "eas": {
