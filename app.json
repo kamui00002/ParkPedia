@@ -21,7 +21,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.parkpedia.app",
       "buildNumber": "33",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "このアプリは近くの公園を検索するために位置情報を使用します。",
         "NSCameraUsageDescription": "このアプリは公園の写真を撮影するためにカメラを使用します。",
