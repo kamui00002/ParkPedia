@@ -8,7 +8,7 @@ module.exports = {
   expo: {
     name: 'ParkPedia',
     slug: 'parkpedia',
-    version: '1.0.30',
+    version: '1.0.31',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -24,7 +24,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '37',
+      buildNumber: '38',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
@@ -78,6 +78,8 @@ module.exports = {
       '@react-native-firebase/app',
       '@react-native-firebase/crashlytics',
       '@react-native-firebase/app-check',
+      // Custom plugin to add use_modular_headers! for Firebase Swift compatibility
+      './plugins/withModularHeaders',
     ],
     extra: {
       eas: {

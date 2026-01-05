@@ -1,7 +1,7 @@
 // 公園追加画面
 // 公園情報を入力してFirestoreに保存
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
 import { handleError } from '../utils/errorHandler';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // 対象年齢の選択肢
 const AGE_OPTIONS = ['0-2歳', '3-5歳', '6歳以上'];
@@ -51,6 +57,18 @@ export default function AddParkScreen({ navigation, route }) {
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // 地図選択用の状態
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 35.6812,
+    longitude: 139.7671,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const mapRef = useRef(null);
 
   const MAX_PHOTOS = 8;
 
@@ -135,6 +153,83 @@ export default function AddParkScreen({ navigation, route }) {
         return [...prev, facilityId];
       }
     });
+  };
+
+  // 地図モーダルを開く
+  const openMapPicker = async () => {
+    setLoadingLocation(true);
+    try {
+      // 位置情報の権限をリクエスト
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('権限が必要', '位置情報へのアクセス権限が必要です');
+        setLoadingLocation(false);
+        return;
+      }
+
+      // 現在地を取得
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const newRegion = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setMapRegion(newRegion);
+      setSelectedLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    } catch {
+      // エラー時はデフォルト位置（東京）を使用
+    }
+    setLoadingLocation(false);
+    setShowMapModal(true);
+  };
+
+  // 地図上でタップした位置を選択
+  const handleMapPress = event => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setSelectedLocation({ latitude, longitude });
+  };
+
+  // 選択した位置から住所を取得して設定
+  const confirmLocation = async () => {
+    if (!selectedLocation) {
+      Alert.alert('エラー', '地図上で位置を選択してください');
+      return;
+    }
+
+    setLoadingLocation(true);
+    try {
+      // 逆ジオコーディングで住所を取得
+      const [addressResult] = await Location.reverseGeocodeAsync({
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+      });
+
+      if (addressResult) {
+        // 日本の住所形式に整形
+        const addressParts = [];
+        if (addressResult.region) addressParts.push(addressResult.region);
+        if (addressResult.city) addressParts.push(addressResult.city);
+        if (addressResult.district) addressParts.push(addressResult.district);
+        if (addressResult.street) addressParts.push(addressResult.street);
+        if (addressResult.streetNumber) addressParts.push(addressResult.streetNumber);
+
+        const formattedAddress =
+          addressParts.length > 0 ? addressParts.join('') : addressResult.name || '';
+
+        setAddress(formattedAddress);
+      }
+    } catch {
+      Alert.alert('エラー', '住所の取得に失敗しました');
+    }
+    setLoadingLocation(false);
+    setShowMapModal(false);
   };
 
   // 写真を選択
@@ -232,22 +327,22 @@ export default function AddParkScreen({ navigation, route }) {
 
       mainImageUrl = uploadedImageUrls[0] || null;
 
-      const parkData = {
-        name: name.trim(),
-        address: address.trim(),
-        description: description.trim(),
-        tags: {
-          age: selectedAges,
-          equipment: selectedEquipment,
-        },
-        facilities: facilities,
-        mainImage: mainImageUrl,
-        images: uploadedImageUrls,
-        updatedAt: serverTimestamp(),
-      };
-
       if (isEditMode && existingParkData?.id) {
         // 編集モード: 既存の公園を更新
+        const parkData = {
+          name: name.trim(),
+          address: address.trim(),
+          description: description.trim(),
+          tags: {
+            age: selectedAges,
+            equipment: selectedEquipment,
+          },
+          facilities: facilities,
+          mainImage: mainImageUrl,
+          images: uploadedImageUrls,
+          updatedAt: serverTimestamp(),
+        };
+
         const parkRef = doc(db, 'parks', existingParkData.id);
         await updateDoc(parkRef, parkData);
 
@@ -260,11 +355,23 @@ export default function AddParkScreen({ navigation, route }) {
           },
         ]);
       } else {
-        // 新規追加モード
-        parkData.rating = 0;
-        parkData.reviewCount = 0;
-        parkData.userId = currentUser.uid;
-        parkData.createdAt = serverTimestamp();
+        // 新規追加モード（updatedAtは含めない - Firestoreルールで禁止）
+        const parkData = {
+          name: name.trim(),
+          address: address.trim(),
+          description: description.trim(),
+          tags: {
+            age: selectedAges,
+            equipment: selectedEquipment,
+          },
+          facilities: facilities,
+          mainImage: mainImageUrl,
+          images: uploadedImageUrls,
+          rating: 0,
+          reviewCount: 0,
+          userId: currentUser.uid,
+          createdAt: serverTimestamp(),
+        };
 
         await addDoc(collection(db, 'parks'), parkData);
 
@@ -327,6 +434,17 @@ export default function AddParkScreen({ navigation, route }) {
             onChangeText={setAddress}
             placeholderTextColor="#999"
           />
+          <TouchableOpacity
+            style={styles.mapPickerButton}
+            onPress={openMapPicker}
+            disabled={loadingLocation}
+          >
+            {loadingLocation ? (
+              <ActivityIndicator size="small" color="#10B981" />
+            ) : (
+              <Text style={styles.mapPickerButtonText}>📍 マップから選ぶ</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* 説明入力 */}
@@ -462,6 +580,53 @@ export default function AddParkScreen({ navigation, route }) {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* 地図選択モーダル */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowMapModal(false)}
+      >
+        <View style={styles.mapModalContainer}>
+          <View style={styles.mapModalHeader}>
+            <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.mapModalCancel}>
+              <Text style={styles.mapModalCancelText}>キャンセル</Text>
+            </TouchableOpacity>
+            <Text style={styles.mapModalTitle}>位置を選択</Text>
+            <TouchableOpacity
+              onPress={confirmLocation}
+              style={styles.mapModalConfirm}
+              disabled={loadingLocation}
+            >
+              {loadingLocation ? (
+                <ActivityIndicator size="small" color="#10B981" />
+              ) : (
+                <Text style={styles.mapModalConfirmText}>決定</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.mapHintText}>地図をタップして位置を選択してください</Text>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            region={mapRegion}
+            onRegionChangeComplete={setMapRegion}
+            onPress={handleMapPress}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {selectedLocation && (
+              <Marker
+                coordinate={selectedLocation}
+                title="選択した位置"
+                draggable
+                onDragEnd={e => setSelectedLocation(e.nativeEvent.coordinate)}
+              />
+            )}
+          </MapView>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -640,5 +805,65 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     lineHeight: 18,
+  },
+  // 地図ピッカー関連のスタイル
+  mapPickerButton: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  mapPickerButtonText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mapModalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  mapModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  mapModalCancel: {
+    padding: 4,
+  },
+  mapModalCancelText: {
+    color: '#6B7280',
+    fontSize: 16,
+  },
+  mapModalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  mapModalConfirm: {
+    padding: 4,
+  },
+  mapModalConfirmText: {
+    color: '#10B981',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  mapHintText: {
+    textAlign: 'center',
+    padding: 10,
+    fontSize: 13,
+    color: '#6B7280',
+    backgroundColor: '#F9FAFB',
+  },
+  map: {
+    flex: 1,
+    width: SCREEN_WIDTH,
   },
 });
