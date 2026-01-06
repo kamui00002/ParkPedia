@@ -77,44 +77,9 @@ export default function App() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // Crashlytics初期化（React Component内で実行する：ブリッジ初期化前の呼び出しを避ける）
-        if (Platform.OS !== 'web') {
-            try {
-                const crashlytics = require('@react-native-firebase/crashlytics').default;
-                // 開発中は収集を止めたい場合は true/false を切り替え
-                crashlytics().setCrashlyticsCollectionEnabled(!__DEV__);
-                crashlytics().log('アプリケーション起動');
-                if (__DEV__) {
-                    console.log('Crashlytics初期化成功');
-                }
-            } catch (error) {
-                if (__DEV__) {
-                    console.warn('Crashlyticsモジュール読み込み失敗:', error.message);
-                }
-            }
-        }
-
         // 認証状態の変更を監視
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-
-            // Firebase AuthのユーザーIDをCrashlyticsに設定
-            if (Platform.OS !== 'web') {
-                try {
-                    const crashlytics = require('@react-native-firebase/crashlytics').default;
-                    if (currentUser) {
-                        crashlytics().setUserId(currentUser.uid);
-                        // 個人情報は送らないのが安全。必要ならメールは削除/匿名化してください。
-                        crashlytics().setAttribute('auth_provider', currentUser.isAnonymous ? 'anonymous' : 'password');
-                    } else {
-                        crashlytics().setUserId('anonymous');
-                    }
-                } catch (error) {
-                    if (__DEV__) {
-                        console.warn('Crashlyticsユーザー設定失敗:', error.message);
-                    }
-                }
-            }
         });
 
         // クリーンアップ
