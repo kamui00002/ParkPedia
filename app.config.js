@@ -8,7 +8,7 @@ module.exports = {
   expo: {
     name: 'ParkPedia',
     slug: 'parkpedia',
-    version: '1.0.31',
+    version: '1.0.32',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -24,7 +24,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '38',
+      buildNumber: '39',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
@@ -36,6 +36,9 @@ module.exports = {
         GADIsAdManagerApp: true,
       },
       newArchEnabled: true,
+      config: {
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY_IOS || '',
+      },
     },
     android: {
       package: 'com.parkpedia.app',
@@ -47,6 +50,11 @@ module.exports = {
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
       ],
+      config: {
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_API_KEY_ANDROID || '',
+        },
+      },
     },
     web: {
       favicon: './assets/icon.png',

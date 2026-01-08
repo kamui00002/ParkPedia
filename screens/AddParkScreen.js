@@ -19,8 +19,18 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+
+// react-native-mapsを安全にインポート（Expo Goでは動作しない）
+let MapView = null;
+let Marker = null;
+try {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+} catch {
+  // Expo Goではreact-native-mapsは利用不可
+}
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
@@ -607,24 +617,31 @@ export default function AddParkScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
           <Text style={styles.mapHintText}>地図をタップして位置を選択してください</Text>
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            region={mapRegion}
-            onRegionChangeComplete={setMapRegion}
-            onPress={handleMapPress}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {selectedLocation && (
-              <Marker
-                coordinate={selectedLocation}
-                title="選択した位置"
-                draggable
-                onDragEnd={e => setSelectedLocation(e.nativeEvent.coordinate)}
-              />
-            )}
-          </MapView>
+          {MapView ? (
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              region={mapRegion}
+              onRegionChangeComplete={setMapRegion}
+              onPress={handleMapPress}
+              showsUserLocation
+              showsMyLocationButton
+            >
+              {selectedLocation && Marker && (
+                <Marker
+                  coordinate={selectedLocation}
+                  title="選択した位置"
+                  draggable
+                  onDragEnd={e => setSelectedLocation(e.nativeEvent.coordinate)}
+                />
+              )}
+            </MapView>
+          ) : (
+            <View style={styles.mapUnavailable}>
+              <Text style={styles.mapUnavailableText}>地図機能はこの環境では利用できません</Text>
+              <Text style={styles.mapUnavailableSubtext}>住所を直接入力してください</Text>
+            </View>
+          )}
         </View>
       </Modal>
     </KeyboardAvoidingView>
@@ -865,5 +882,21 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
     width: SCREEN_WIDTH,
+  },
+  mapUnavailable: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  mapUnavailableText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  mapUnavailableSubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
 });
