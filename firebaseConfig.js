@@ -29,13 +29,16 @@ if (Platform.OS !== 'web') {
 // 環境変数から読み込み（app.config.js の extra フィールド経由）
 // ローカル開発: .env ファイルから読み込み
 // 本番ビルド: EAS Secrets から読み込み
+// 注: フォールバック値（||の右側）は使わない。.env / EAS Secrets 必須。
+//     値が無い場合は下の missingFields チェックで起動を停止する。
+const extra = Constants.expoConfig?.extra || {};
 const firebaseConfig = {
-  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
-  authDomain: Constants.expoConfig?.extra?.firebaseAuthDomain,
-  projectId: Constants.expoConfig?.extra?.firebaseProjectId,
-  storageBucket: Constants.expoConfig?.extra?.firebaseStorageBucket,
-  messagingSenderId: Constants.expoConfig?.extra?.firebaseMessagingSenderId,
-  appId: Constants.expoConfig?.extra?.firebaseAppId,
+  apiKey: extra.firebaseApiKey,
+  authDomain: extra.firebaseAuthDomain,
+  projectId: extra.firebaseProjectId,
+  storageBucket: extra.firebaseStorageBucket,
+  messagingSenderId: extra.firebaseMessagingSenderId,
+  appId: extra.firebaseAppId,
 };
 
 // 設定値の検証（必須フィールドチェック）
@@ -46,10 +49,9 @@ if (missingFields.length > 0) {
   const errorMsg =
     `Missing Firebase configuration: ${missingFields.join(', ')}. ` +
     'Please check your .env file or EAS Secrets configuration.';
-  if (__DEV__) {
-    console.error('❌', errorMsg);
-    console.error('Current config:', firebaseConfig);
-  }
+  // 本番環境でもエラーをログに記録（Crashlyticsに送信）
+  console.error('❌ Firebase設定エラー:', errorMsg);
+  console.error('Current config:', firebaseConfig);
   throw new Error(errorMsg);
 }
 
@@ -72,9 +74,8 @@ try {
       console.log('🔥 Firebase既存インスタンスを使用');
     }
   } else {
-    if (__DEV__) {
-      console.error('Firebase初期化エラー:', error);
-    }
+    // 本番環境でもエラーをログに記録
+    console.error('Firebase初期化エラー:', error);
     throw error;
   }
 }
@@ -107,9 +108,8 @@ try {
     }
   } else {
     // その他のエラーは致命的
-    if (__DEV__) {
-      console.error('CRITICAL: Firebase Auth初期化エラー:', error);
-    }
+    // 本番環境でもエラーをログに記録
+    console.error('CRITICAL: Firebase Auth初期化エラー:', error);
     throw error;
   }
 }
