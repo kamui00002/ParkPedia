@@ -35,24 +35,16 @@ import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
 import { handleError } from '../utils/errorHandler';
+import {
+  AGE_OPTIONS,
+  EQUIPMENT_OPTIONS,
+  FACILITIES,
+  GROUND_OPTIONS,
+  SCENERY_OPTIONS,
+  SPORTS_OPTIONS,
+} from '../constants/parkOptions';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// 対象年齢の選択肢
-const AGE_OPTIONS = ['0-2歳', '3-5歳', '6歳以上'];
-
-// 遊具の選択肢
-const EQUIPMENT_OPTIONS = ['すべり台', 'ブランコ', '砂場', '鉄棒', 'ジャングルジム', '水遊び'];
-
-// 施設の選択肢
-const FACILITIES = [
-  { id: 'toilet', label: 'トイレあり' },
-  { id: 'diaper', label: 'オムツ交換台' },
-  { id: 'parking', label: '駐車場あり' },
-  { id: 'shade', label: '日陰が多い' },
-  { id: 'stroller', label: 'ベビーカーOK' },
-  { id: 'ball', label: 'ボール遊び可' },
-];
 
 export default function AddParkScreen({ navigation, route }) {
   // 編集モードのチェック
@@ -65,6 +57,9 @@ export default function AddParkScreen({ navigation, route }) {
   const [selectedAges, setSelectedAges] = useState([]);
   const [selectedEquipment, setSelectedEquipment] = useState([]);
   const [selectedFacilities, setSelectedFacilities] = useState([]);
+  const [selectedGround, setSelectedGround] = useState([]);
+  const [selectedScenery, setSelectedScenery] = useState([]);
+  const [selectedSports, setSelectedSports] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -102,6 +97,11 @@ export default function AddParkScreen({ navigation, route }) {
         });
       }
       setSelectedFacilities(facilityIds);
+
+      // 新カテゴリのデータを復元
+      setSelectedGround(existingParkData.tags?.ground || []);
+      setSelectedScenery(existingParkData.tags?.scenery || []);
+      setSelectedSports(existingParkData.tags?.sports || []);
 
       // 画像データを復元
       if (existingParkData.images && Array.isArray(existingParkData.images)) {
@@ -150,6 +150,17 @@ export default function AddParkScreen({ navigation, route }) {
         return prev.filter(item => item !== equipment);
       } else {
         return [...prev, equipment];
+      }
+    });
+  };
+
+  // 汎用トグル関数
+  const toggleSelection = (setter, value) => {
+    setter(prev => {
+      if (prev.includes(value)) {
+        return prev.filter(item => item !== value);
+      } else {
+        return [...prev, value];
       }
     });
   };
@@ -346,6 +357,9 @@ export default function AddParkScreen({ navigation, route }) {
           tags: {
             age: selectedAges,
             equipment: selectedEquipment,
+            ground: selectedGround,
+            scenery: selectedScenery,
+            sports: selectedSports,
           },
           facilities: facilities,
           mainImage: mainImageUrl,
@@ -373,6 +387,9 @@ export default function AddParkScreen({ navigation, route }) {
           tags: {
             age: selectedAges,
             equipment: selectedEquipment,
+            ground: selectedGround,
+            scenery: selectedScenery,
+            sports: selectedSports,
           },
           facilities: facilities,
           mainImage: mainImageUrl,
@@ -577,6 +594,72 @@ export default function AddParkScreen({ navigation, route }) {
           </View>
         </View>
 
+        {/* 地面の種類 */}
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>地面の種類</Text>
+          <View style={styles.optionsContainer}>
+            {GROUND_OPTIONS.map(ground => {
+              const isSelected = selectedGround.includes(ground);
+              return (
+                <TouchableOpacity
+                  key={ground}
+                  style={styles.checkboxOption}
+                  onPress={() => toggleSelection(setSelectedGround, ground)}
+                >
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxOptionText}>{ground}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 景色・自然 */}
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>景色・自然</Text>
+          <View style={styles.optionsContainer}>
+            {SCENERY_OPTIONS.map(scenery => {
+              const isSelected = selectedScenery.includes(scenery);
+              return (
+                <TouchableOpacity
+                  key={scenery}
+                  style={styles.checkboxOption}
+                  onPress={() => toggleSelection(setSelectedScenery, scenery)}
+                >
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxOptionText}>{scenery}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* スポーツ施設 */}
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>スポーツ施設</Text>
+          <View style={styles.optionsContainer}>
+            {SPORTS_OPTIONS.map(sport => {
+              const isSelected = selectedSports.includes(sport);
+              return (
+                <TouchableOpacity
+                  key={sport}
+                  style={styles.checkboxOption}
+                  onPress={() => toggleSelection(setSelectedSports, sport)}
+                >
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxOptionText}>{sport}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* 送信ボタン */}
         <TouchableOpacity
           style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
@@ -651,59 +734,73 @@ export default function AddParkScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F5FBF8',
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 24,
+    padding: 20,
   },
   inputSection: {
     marginBottom: 24,
   },
   label: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#065F46',
+    fontWeight: '700',
+    color: '#064E3B',
     marginBottom: 10,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   required: {
     color: '#EF4444',
   },
   input: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 14,
     fontSize: 15,
     color: '#1F2937',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 0,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textArea: {
     minHeight: 120,
     paddingTop: 14,
   },
   optionsContainer: {
-    marginTop: 10,
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   checkboxOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    paddingVertical: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   checkbox: {
     width: 20,
     height: 20,
     borderWidth: 1.5,
     borderColor: '#D1D5DB',
-    borderRadius: 4,
-    marginRight: 12,
+    borderRadius: 6,
+    marginRight: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
   },
   checkboxSelected: {
     backgroundColor: '#10B981',
@@ -711,36 +808,36 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   checkboxOptionText: {
     fontSize: 14,
     color: '#374151',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   submitButton: {
     backgroundColor: '#10B981',
-    borderRadius: 10,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     alignItems: 'center',
-    marginTop: 24,
-    shadowColor: '#10B981',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 28,
+    marginBottom: 20,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonDisabled: {
     backgroundColor: '#D1D5DB',
+    shadowOpacity: 0,
   },
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   photoHint: {
     fontSize: 13,
@@ -749,16 +846,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   photoButton: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: 14,
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   photoButtonText: {
-    color: '#374151',
+    color: '#059669',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -771,32 +871,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginTop: 16,
+    gap: 10,
   },
   photoItem: {
     width: 100,
     height: 100,
-    marginRight: 12,
-    marginBottom: 12,
     position: 'relative',
   },
   photoPreview: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 14,
   },
   mainImageBadge: {
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: '#059669',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   mainImageText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   removePhotoButton: {
     position: 'absolute',
@@ -808,12 +907,9 @@ const styles = StyleSheet.create({
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 3,
   },
@@ -823,18 +919,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 18,
   },
-  // 地図ピッカー関連のスタイル
   mapPickerButton: {
-    backgroundColor: '#F0FDF4',
-    borderRadius: 10,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 14,
     padding: 12,
     alignItems: 'center',
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#10B981',
+    borderWidth: 0,
   },
   mapPickerButtonText: {
-    color: '#10B981',
+    color: '#059669',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -846,11 +940,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 0,
     backgroundColor: '#FFFFFF',
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   mapModalCancel: {
     padding: 4,
@@ -858,26 +956,28 @@ const styles = StyleSheet.create({
   mapModalCancelText: {
     color: '#6B7280',
     fontSize: 16,
+    fontWeight: '500',
   },
   mapModalTitle: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#064E3B',
+    letterSpacing: -0.3,
   },
   mapModalConfirm: {
     padding: 4,
   },
   mapModalConfirmText: {
-    color: '#10B981',
+    color: '#059669',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   mapHintText: {
     textAlign: 'center',
-    padding: 10,
+    padding: 12,
     fontSize: 13,
     color: '#6B7280',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F5FBF8',
   },
   map: {
     flex: 1,
@@ -887,11 +987,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F5FBF8',
   },
   mapUnavailableText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#6B7280',
     marginBottom: 8,
   },
