@@ -50,8 +50,16 @@ if (missingFields.length > 0) {
     `Missing Firebase configuration: ${missingFields.join(', ')}. ` +
     'Please check your .env file or EAS Secrets configuration.';
   // 本番環境でもエラーをログに記録（Crashlyticsに送信）
+  // 注: API キー等の値そのものは出さず、各フィールドが存在するかの真偽値のみ出力
   console.error('❌ Firebase設定エラー:', errorMsg);
-  console.error('Current config:', firebaseConfig);
+  console.error('Current config (masked):', {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasAppId: !!firebaseConfig.appId,
+    hasStorageBucket: !!firebaseConfig.storageBucket,
+    hasMessagingSenderId: !!firebaseConfig.messagingSenderId,
+  });
   throw new Error(errorMsg);
 }
 
