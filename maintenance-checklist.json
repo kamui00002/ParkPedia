@@ -293,9 +293,7 @@
             "アプリで動作確認"
           ],
           "tools": ["Firebase Console", "ターミナル"],
-          "commands": [
-            "node scripts/deleteTestData.js"
-          ],
+          "commands": ["node scripts/deleteTestData.js"],
           "completed": false
         },
         {
@@ -318,15 +316,8 @@
     },
     "notes": {
       "backupStrategy": "毎日自動バックアップ、98日間保持",
-      "monitoringTools": [
-        "Firebase Console",
-        "AdMob Console",
-        "App Store Connect"
-      ],
-      "supportChannels": [
-        "App Store レビュー",
-        "メール"
-      ],
+      "monitoringTools": ["Firebase Console", "AdMob Console", "App Store Connect"],
+      "supportChannels": ["App Store レビュー", "メール"],
       "emergencyContacts": {
         "firebase": "https://firebase.google.com/support",
         "apple": "https://developer.apple.com/contact/"

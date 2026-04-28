@@ -1,9 +1,6 @@
 module.exports = {
   root: true,
-  extends: [
-    '@react-native',
-    'prettier',
-  ],
+  extends: ['@react-native', 'prettier'],
   plugins: ['prettier'],
   rules: {
     // Prettier integration
@@ -32,11 +29,14 @@ module.exports = {
     'no-duplicate-imports': 'error',
 
     // TypeScript-specific rules
-    '@typescript-eslint/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_',
-      ignoreRestSiblings: true,
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
+      },
+    ],
 
     // Prohibit 'any' type usage - enforce type safety
     '@typescript-eslint/no-explicit-any': 'error',
