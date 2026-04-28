@@ -41,7 +41,8 @@ class ErrorBoundary extends React.Component {
             <Text style={styles.errorMessage}>
               申し訳ございません。アプリでエラーが発生しました。
             </Text>
-            {this.state.error && (
+            {/* 本番では内部エラー詳細を表示しない（情報漏洩防止）。__DEV__ は開発時のみ true */}
+            {__DEV__ && this.state.error && (
               <View style={styles.errorDetails}>
                 <Text style={styles.errorDetailsTitle}>エラー詳細:</Text>
                 <Text style={styles.errorDetailsText}>

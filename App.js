@@ -221,7 +221,10 @@ export default function App() {
             <Text style={styles.errorMessage}>
               アプリの初期化に失敗しました。アプリを再起動してください。
             </Text>
-            <Text style={styles.errorDetails}>{initError.message || initError.toString()}</Text>
+            {/* 本番では内部エラー詳細を表示しない（情報漏洩防止） */}
+            {__DEV__ && (
+              <Text style={styles.errorDetails}>{initError.message || initError.toString()}</Text>
+            )}
           </View>
         </SafeAreaProvider>
       </ErrorBoundary>
