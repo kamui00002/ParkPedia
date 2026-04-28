@@ -1,6 +1,6 @@
 {
   "name": "parkpedia",
-  "version": "1.0.32",
+  "version": "1.1.2",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -55,11 +55,13 @@
     "expo-image-picker": "~17.0.10",
     "expo-location": "~19.0.8",
     "expo-status-bar": "~3.0.9",
+    "expo-tracking-transparency": "~6.0.8",
     "expo-updates": "~29.0.15",
     "firebase": "^12.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-fbsdk-next": "^13.4.3",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-google-mobile-ads": "^16.0.0",
     "react-native-maps": "1.20.1",
