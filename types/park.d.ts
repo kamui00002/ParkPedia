@@ -25,6 +25,9 @@ export interface Park {
   tags?: {
     age?: string[];
     equipment?: string[];
+    ground?: string[];
+    scenery?: string[];
+    sports?: string[];
   };
   facilities?: string[];
 }
@@ -40,6 +43,7 @@ export interface Review {
   rating: number;
   comment?: string;
   title?: string;
+  helpfulCount?: number;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -53,6 +57,7 @@ export interface User {
   displayName?: string;
   photoURL?: string;
   isAnonymous: boolean;
+  children?: string[];
   createdAt: Timestamp;
 }
 
@@ -123,7 +128,27 @@ export type EquipmentOption =
   | '砂場'
   | '鉄棒'
   | 'ジャングルジム'
-  | '水遊び';
+  | '水遊び'
+  | 'シーソー'
+  | 'うんてい'
+  | 'ターザンロープ'
+  | 'スプリング遊具'
+  | 'ロープネット'
+  | '複合遊具'
+  | 'ボルダリング'
+  | '回転遊具'
+  | 'トンネル'
+  | 'ハンモック';
+
+/**
+ * レビュー「参考になった」投票の型定義
+ */
+export interface ReviewHelpful {
+  id: string;
+  reviewId: string;
+  userId: string;
+  createdAt: Timestamp;
+}
 
 /**
  * 施設情報の型定義
