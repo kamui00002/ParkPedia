@@ -179,26 +179,35 @@ service cloud.firestore {
             || (request.resource.data.title is string
                 && request.resource.data.title.size() <= 100));
 
-      // Update: Owner only, userId/parkId/createdAt immutable, updatedAt required
-      allow update: if isDocumentOwner()
-        && userIdNotChanged()
-        && createdAtNotChanged()
-        && hasValidUpdatedAt()
-        // parkId is also immutable
-        && request.resource.data.parkId == resource.data.parkId
-        // Same data validation as create
-        && request.resource.data.rating is number
-        && request.resource.data.rating >= 1
-        && request.resource.data.rating <= 5
-        && (!request.resource.data.keys().hasAny(['comment'])
-            || (request.resource.data.comment is string
-                && request.resource.data.comment.size() <= 1000))
-        && (!request.resource.data.keys().hasAny(['title'])
-            || (request.resource.data.title is string
-                && request.resource.data.title.size() <= 100));
+      // Update: Owner can update their review, OR any authenticated user can update helpfulCount only
+      allow update: if isAuthenticated()
+        && (
+          // Case 1: Any authenticated user updating only helpfulCount
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulCount'])
+            && request.resource.data.helpfulCount is number
+            && request.resource.data.helpfulCount >= 0)
+          ||
+          // Case 2: Owner updating review content
+          (isDocumentOwner()
+            && userIdNotChanged()
+            && createdAtNotChanged()
+            && hasValidUpdatedAt()
+            // parkId is also immutable
+            && request.resource.data.parkId == resource.data.parkId
+            // Same data validation as create
+            && request.resource.data.rating is number
+            && request.resource.data.rating >= 1
+            && request.resource.data.rating <= 5
+            && (!request.resource.data.keys().hasAny(['comment'])
+                || (request.resource.data.comment is string
+                    && request.resource.data.comment.size() <= 1000))
+            && (!request.resource.data.keys().hasAny(['title'])
+                || (request.resource.data.title is string
+                    && request.resource.data.title.size() <= 100)))
+        );
 
-      // Delete: Owner only
-      allow delete: if isDocumentOwner();
+      // Delete: Owner or Admin can delete
+      allow delete: if isDocumentOwner() || isAdmin();
     }
 
     // ===========================
@@ -256,8 +265,9 @@ service cloud.firestore {
       // List: Authenticated users can list their own reports, admins can list all
       // SECURITY: Non-admin users must filter by reportedBy
       // Query must include: where('reportedBy', '==', currentUser.uid) for non-admins
+      // Allow queries with or without limit, but if limit is set, it must be <= 100
       allow list: if isAuthenticated()
-        && request.query.limit <= 100
+        && (request.query.limit == null || request.query.limit <= 100)
         && (isAdmin() || request.auth.uid in request.query.affectedDocuments());
 
       // Create: Authenticated users only with required fields and validation
@@ -333,6 +343,29 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Review Helpful Collection
+    // ===========================
+    match /reviewHelpful/{helpfulId} {
+      // Read: Anyone can read
+      allow read: if true;
+
+      // Create: Authenticated users only with required fields
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['reviewId', 'userId', 'createdAt'])
+        && request.resource.data.reviewId is string
+        && request.resource.data.userId is string
+        && exists(/databases/$(database)/documents/reviews/$(request.resource.data.reviewId));
+
+      // Update: Not allowed
+      allow update: if false;
+
+      // Delete: Owner only (can remove own vote)
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ===========================
     // Users Collection
     // ===========================
     match /users/{userId} {
@@ -368,7 +401,11 @@ service cloud.firestore {
             || request.resource.data.photoURL is string)
         && (!request.resource.data.keys().hasAny(['bio'])
             || (request.resource.data.bio is string
-                && request.resource.data.bio.size() <= 500));
+                && request.resource.data.bio.size() <= 500))
+        // Children ages validation (list of strings, max 10 items)
+        && (!request.resource.data.keys().hasAny(['children'])
+            || (request.resource.data.children is list
+                && request.resource.data.children.size() <= 10));
 
       // Delete: Own document only
       allow delete: if isOwner(userId);
