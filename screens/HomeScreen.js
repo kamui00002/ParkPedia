@@ -8,11 +8,11 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   Alert,
   Image,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -24,11 +24,14 @@ import {
   deleteDoc,
   serverTimestamp,
   orderBy,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { fetchPaginatedData, PAGINATION_CONFIG } from '../utils/pagination';
 import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import FilterDrawer from '../components/FilterDrawer';
+import ParkMapView from '../components/ParkMapView';
 import AdBanner from '../components/AdBanner';
 import { AD_ENABLED } from '../adConfig';
 import * as Location from 'expo-location';
@@ -47,13 +50,22 @@ export default function HomeScreen({ navigation }) {
     age: [],
     equipment: [],
     facilities: [],
+    ground: [],
+    scenery: [],
+    sports: [],
     distance: [],
     rating: [],
   });
+  // 子どもプロフィール自動フィルター
+  const [autoAgeFilterApplied, setAutoAgeFilterApplied] = useState(false);
+
   // ページネーション用の状態
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // ビュー切替状態
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
 
   // 距離を計算する関数（ハーバーサイン公式）
   const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
@@ -185,7 +197,7 @@ export default function HomeScreen({ navigation }) {
             .map(f => f.trim().replace(/^\[|\]$|"/g, ''))
             .filter(f => f !== '');
         }
-      } catch (e) {
+      } catch {
         return data
           .split(',')
           .map(f => f.trim().replace(/^\[|\]$|"/g, ''))
@@ -213,6 +225,15 @@ export default function HomeScreen({ navigation }) {
         }
         if (data.tags.age) {
           normalizedTags.age = normalizeArrayData(data.tags.age);
+        }
+        if (data.tags.ground) {
+          normalizedTags.ground = normalizeArrayData(data.tags.ground);
+        }
+        if (data.tags.scenery) {
+          normalizedTags.scenery = normalizeArrayData(data.tags.scenery);
+        }
+        if (data.tags.sports) {
+          normalizedTags.sports = normalizeArrayData(data.tags.sports);
         }
       }
 
@@ -279,6 +300,31 @@ export default function HomeScreen({ navigation }) {
     fetchParks(true); // 初回はリセットして取得
   }, []); // 空の依存配列で初回のみ実行
 
+  // 子どもプロフィールの自動フィルター適用（初回のみ）
+  useEffect(() => {
+    const applyChildrenAgeFilter = async () => {
+      if (autoAgeFilterApplied) return;
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      try {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const children = userDocSnap.data().children || [];
+          if (children.length > 0) {
+            setFilters(prev => ({ ...prev, age: children }));
+          }
+        }
+      } catch (error) {
+        if (__DEV__) console.error('子どもプロフィール読み込みエラー:', error);
+      }
+      setAutoAgeFilterApplied(true);
+    };
+
+    applyChildrenAgeFilter();
+  }, [autoAgeFilterApplied]);
+
   // 画面がフォーカスされたときにデータを再取得（レビュー投稿後などに評価を反映）
   useFocusEffect(
     useCallback(() => {
@@ -312,6 +358,9 @@ export default function HomeScreen({ navigation }) {
       filters.age.length > 0 ||
       filters.equipment.length > 0 ||
       filters.facilities.length > 0 ||
+      filters.ground.length > 0 ||
+      filters.scenery.length > 0 ||
+      filters.sports.length > 0 ||
       filters.distance.length > 0 ||
       filters.rating.length > 0;
 
@@ -336,6 +385,27 @@ export default function HomeScreen({ navigation }) {
           const parkFacilities = park.facilities || [];
           const hasMatchingFacility = filters.facilities.some(fac => parkFacilities.includes(fac));
           if (!hasMatchingFacility) return false;
+        }
+
+        // 地面のフィルター
+        if (filters.ground.length > 0) {
+          const parkGround = park.tags?.ground || [];
+          const hasMatchingGround = filters.ground.some(g => parkGround.includes(g));
+          if (!hasMatchingGround) return false;
+        }
+
+        // 景色・自然のフィルター
+        if (filters.scenery.length > 0) {
+          const parkScenery = park.tags?.scenery || [];
+          const hasMatchingScenery = filters.scenery.some(s => parkScenery.includes(s));
+          if (!hasMatchingScenery) return false;
+        }
+
+        // スポーツ施設のフィルター
+        if (filters.sports.length > 0) {
+          const parkSports = park.tags?.sports || [];
+          const hasMatchingSports = filters.sports.some(s => parkSports.includes(s));
+          if (!hasMatchingSports) return false;
         }
 
         // 距離のフィルター
@@ -439,7 +509,7 @@ export default function HomeScreen({ navigation }) {
             .map(f => f.trim().replace(/^\[|\]$|"/g, ''))
             .filter(f => f !== '');
         }
-      } catch (e) {
+      } catch {
         return data
           .split(',')
           .map(f => f.trim().replace(/^\[|\]$|"/g, ''))
@@ -511,7 +581,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   // 公園カードコンポーネント
-  const ParkCard = React.memo(({ item, onToggleFavorite, onPress }) => {
+  const ParkCard = React.memo(({ item, index, onToggleFavorite, onPress }) => {
     const [isFavorite, setIsFavorite] = useState(false);
     const averageRating = item.rating || 0;
     const reviewCount = item.reviewCount || 0;
@@ -557,7 +627,14 @@ export default function HomeScreen({ navigation }) {
     };
 
     return (
-      <TouchableOpacity style={styles.parkCard} onPress={() => onPress(item)}>
+      <TouchableOpacity
+        style={styles.parkCard}
+        onPress={() => onPress(item)}
+        testID={`park-card-${index}`}
+        accessible={true}
+        accessibilityLabel={`park-card-${index}`}
+        accessibilityRole="button"
+      >
         {item.mainImage && (
           <View style={styles.parkImageContainer}>
             <Image source={{ uri: item.mainImage }} style={styles.parkImage} />
@@ -590,9 +667,10 @@ export default function HomeScreen({ navigation }) {
   });
 
   // 公園カードのレンダリング
-  const renderParkCard = ({ item }) => (
+  const renderParkCard = ({ item, index }) => (
     <ParkCard
       item={item}
+      index={index}
       onToggleFavorite={toggleFavorite}
       onPress={park => navigation.navigate('ParkDetail', { parkId: park.id, park })}
     />
@@ -623,189 +701,285 @@ export default function HomeScreen({ navigation }) {
         onFilterChange={setFilters}
       />
 
-      {/* 公園リスト */}
-      <FlatList
-        data={filteredParks}
-        renderItem={renderParkCard}
-        keyExtractor={item => item.id || item.name || 'unknown'}
-        contentContainerStyle={styles.listContainer}
-        numColumns={1}
-        onEndReached={() => {
-          // ページネーション: 最後までスクロールしたら次のページを読み込む
-          if (hasMore && !loading && !loadingMore) {
-            fetchParks(false);
+      {/* ビュー切替タブ */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('list')}
+          >
+            <Text
+              style={[styles.viewToggleText, viewMode === 'list' && styles.viewToggleTextActive]}
+            >
+              リスト
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'map' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('map')}
+          >
+            <Text
+              style={[styles.viewToggleText, viewMode === 'map' && styles.viewToggleTextActive]}
+            >
+              マップ
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {viewMode === 'map' && Platform.OS !== 'web' ? (
+        <ParkMapView
+          parks={filteredParks}
+          userLocation={userLocation}
+          onParkPress={park => navigation.navigate('ParkDetail', { parkId: park.id, park })}
+        />
+      ) : (
+        /* 公園リスト */
+        <FlatList
+          testID="park-list"
+          accessible={true}
+          accessibilityLabel="park-list"
+          accessibilityRole="list"
+          data={filteredParks}
+          renderItem={renderParkCard}
+          keyExtractor={item => item.id || item.name || 'unknown'}
+          contentContainerStyle={styles.listContainer}
+          numColumns={1}
+          onEndReached={() => {
+            // ページネーション: 最後までスクロールしたら次のページを読み込む
+            if (hasMore && !loading && !loadingMore) {
+              fetchParks(false);
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <>
+              {loadingMore && (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="small" color="#10B981" />
+                  <Text style={styles.loadingMoreText}>読み込み中...</Text>
+                </View>
+              )}
+              {AD_ENABLED && <AdBanner />}
+            </>
           }
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.loadingMoreContainer}>
-              <ActivityIndicator size="small" color="#10B981" />
-              <Text style={styles.loadingMoreText}>読み込み中...</Text>
-            </View>
-          ) : null
-        }
-        ListHeaderComponent={
-          <>
-            {/* おすすめ公園 */}
-            {recommendedParks.length > 0 && (
-              <View style={styles.recommendedSection}>
-                <Text style={styles.recommendedTitle}>おすすめ</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.recommendedScroll}
-                >
-                  {recommendedParks.map(park => {
-                    const averageRating = park.rating || 0;
-                    const reviewCount = park.reviewCount || 0;
-                    return (
-                      <TouchableOpacity
-                        key={park.id}
-                        style={styles.recommendedCard}
-                        onPress={() => navigation.navigate('ParkDetail', { parkId: park.id, park })}
-                      >
-                        {park.mainImage && (
-                          <Image source={{ uri: park.mainImage }} style={styles.recommendedImage} />
-                        )}
-                        <View style={styles.recommendedContent}>
-                          <Text style={styles.recommendedName} numberOfLines={1}>
-                            {String(park.name || '名前なし')}
-                          </Text>
-                          <View style={styles.recommendedRating}>
-                            {renderStars(averageRating)}
-                            <Text style={styles.recommendedRatingText}>
-                              {averageRating.toFixed(1)} ({reviewCount}件)
-                            </Text>
-                          </View>
-                          {park.address && (
-                            <Text style={styles.recommendedAddress} numberOfLines={1}>
-                              {String(park.address)}
-                            </Text>
+          ListHeaderComponent={
+            <>
+              {/* おすすめ公園 */}
+              {recommendedParks.length > 0 && (
+                <View style={styles.recommendedSection}>
+                  <Text style={styles.recommendedTitle}>おすすめ</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.recommendedScroll}
+                  >
+                    {recommendedParks.map(park => {
+                      const averageRating = park.rating || 0;
+                      const reviewCount = park.reviewCount || 0;
+                      return (
+                        <TouchableOpacity
+                          key={park.id}
+                          style={styles.recommendedCard}
+                          onPress={() =>
+                            navigation.navigate('ParkDetail', { parkId: park.id, park })
+                          }
+                        >
+                          {park.mainImage && (
+                            <Image
+                              source={{ uri: park.mainImage }}
+                              style={styles.recommendedImage}
+                            />
                           )}
-                          {park.calculatedDistance !== null &&
-                            park.calculatedDistance !== undefined && (
-                              <Text style={styles.recommendedDistance}>
-                                📍{' '}
-                                {park.calculatedDistance < 1
-                                  ? `${Math.round(park.calculatedDistance * 1000)}m`
-                                  : `${park.calculatedDistance.toFixed(1)}km`}
+                          <View style={styles.recommendedContent}>
+                            <Text style={styles.recommendedName} numberOfLines={1}>
+                              {String(park.name || '名前なし')}
+                            </Text>
+                            <View style={styles.recommendedRating}>
+                              {renderStars(averageRating)}
+                              <Text style={styles.recommendedRatingText}>
+                                {averageRating.toFixed(1)} ({reviewCount}件)
+                              </Text>
+                            </View>
+                            {park.address && (
+                              <Text style={styles.recommendedAddress} numberOfLines={1}>
+                                {String(park.address)}
                               </Text>
                             )}
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
+                            {park.calculatedDistance !== null &&
+                              park.calculatedDistance !== undefined && (
+                                <Text style={styles.recommendedDistance}>
+                                  📍{' '}
+                                  {park.calculatedDistance < 1
+                                    ? `${Math.round(park.calculatedDistance * 1000)}m`
+                                    : `${park.calculatedDistance.toFixed(1)}km`}
+                                </Text>
+                              )}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
 
-            {/* 適用中のフィルター */}
-            {(filters.age.length > 0 ||
-              filters.equipment.length > 0 ||
-              filters.facilities.length > 0 ||
-              filters.distance.length > 0 ||
-              filters.rating.length > 0) && (
-              <View style={styles.activeFiltersSection}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.activeFiltersScroll}
-                >
-                  {filters.age.map(filter => (
-                    <View key={`age-${filter}`} style={styles.filterChip}>
-                      <Text style={styles.filterChipText}>{filter}</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFilters({
-                            ...filters,
-                            age: filters.age.filter(f => f !== filter),
-                          });
-                        }}
-                        style={styles.filterChipClose}
-                      >
-                        <Text style={styles.filterChipCloseText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  {filters.equipment.map(filter => (
-                    <View key={`equipment-${filter}`} style={styles.filterChip}>
-                      <Text style={styles.filterChipText}>{filter}</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFilters({
-                            ...filters,
-                            equipment: filters.equipment.filter(f => f !== filter),
-                          });
-                        }}
-                        style={styles.filterChipClose}
-                      >
-                        <Text style={styles.filterChipCloseText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  {filters.facilities.map(filter => (
-                    <View key={`facilities-${filter}`} style={styles.filterChip}>
-                      <Text style={styles.filterChipText}>{filter}</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFilters({
-                            ...filters,
-                            facilities: filters.facilities.filter(f => f !== filter),
-                          });
-                        }}
-                        style={styles.filterChipClose}
-                      >
-                        <Text style={styles.filterChipCloseText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  {filters.distance.map(filter => (
-                    <View key={`distance-${filter}`} style={styles.filterChip}>
-                      <Text style={styles.filterChipText}>{filter}</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFilters({
-                            ...filters,
-                            distance: [],
-                          });
-                        }}
-                        style={styles.filterChipClose}
-                      >
-                        <Text style={styles.filterChipCloseText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  {filters.rating.map(filter => (
-                    <View key={`rating-${filter}`} style={styles.filterChip}>
-                      <Text style={styles.filterChipText}>{filter}</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFilters({
-                            ...filters,
-                            rating: [],
-                          });
-                        }}
-                        style={styles.filterChipClose}
-                      >
-                        <Text style={styles.filterChipCloseText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {searchQuery ? '検索結果が見つかりませんでした' : '公園がまだ登録されていません'}
-            </Text>
-          </View>
-        }
-        ListFooterComponent={AD_ENABLED ? <AdBanner /> : null}
-      />
+              {/* 適用中のフィルター */}
+              {(filters.age.length > 0 ||
+                filters.equipment.length > 0 ||
+                filters.facilities.length > 0 ||
+                filters.ground.length > 0 ||
+                filters.scenery.length > 0 ||
+                filters.sports.length > 0 ||
+                filters.distance.length > 0 ||
+                filters.rating.length > 0) && (
+                <View style={styles.activeFiltersSection}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.activeFiltersScroll}
+                  >
+                    {filters.age.map(filter => (
+                      <View key={`age-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              age: filters.age.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.equipment.map(filter => (
+                      <View key={`equipment-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              equipment: filters.equipment.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.facilities.map(filter => (
+                      <View key={`facilities-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              facilities: filters.facilities.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.ground.map(filter => (
+                      <View key={`ground-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              ground: filters.ground.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.scenery.map(filter => (
+                      <View key={`scenery-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              scenery: filters.scenery.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.sports.map(filter => (
+                      <View key={`sports-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              sports: filters.sports.filter(f => f !== filter),
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.distance.map(filter => (
+                      <View key={`distance-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              distance: [],
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    {filters.rating.map(filter => (
+                      <View key={`rating-${filter}`} style={styles.filterChip}>
+                        <Text style={styles.filterChipText}>{filter}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFilters({
+                              ...filters,
+                              rating: [],
+                            });
+                          }}
+                          style={styles.filterChipClose}
+                        >
+                          <Text style={styles.filterChipCloseText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {searchQuery ? '検索結果が見つかりませんでした' : '公園がまだ登録されていません'}
+              </Text>
+            </View>
+          }
+        />
+      )}
 
       {/* 公園追加ボタン */}
       <TouchableOpacity
@@ -840,32 +1014,32 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F5FBF8',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F5FBF8',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 14,
     color: '#6B7280',
     fontSize: 14,
+    fontWeight: '500',
   },
   recommendedSection: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingVertical: 20,
+    borderBottomWidth: 0,
   },
   recommendedTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#064E3B',
-    marginBottom: 12,
+    marginBottom: 14,
     paddingHorizontal: 20,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   recommendedScroll: {
     paddingHorizontal: 20,
@@ -873,35 +1047,31 @@ const styles = StyleSheet.create({
   recommendedCard: {
     width: 200,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 16,
+    marginRight: 14,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderWidth: 0,
   },
   recommendedImage: {
     width: '100%',
     height: 130,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#E8F5EE',
   },
   recommendedContent: {
-    padding: 12,
+    padding: 14,
   },
   recommendedName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#064E3B',
     marginBottom: 6,
-    letterSpacing: -0.2,
-    lineHeight: 22,
+    letterSpacing: -0.3,
+    lineHeight: 20,
   },
   recommendedRating: {
     flexDirection: 'row',
@@ -909,26 +1079,26 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   recommendedRatingText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     marginLeft: 6,
+    fontWeight: '500',
   },
   recommendedAddress: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
     marginTop: 2,
   },
   recommendedDistance: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#059669',
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 6,
   },
   activeFiltersSection: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 0,
   },
   activeFiltersScroll: {
     paddingHorizontal: 20,
@@ -936,19 +1106,19 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderWidth: 1.5,
+    borderColor: '#6EE7B7',
   },
   filterChipText: {
     fontSize: 12,
     color: '#047857',
-    fontWeight: '600',
-    marginRight: 6,
+    fontWeight: '700',
+    marginRight: 8,
   },
   filterChipClose: {
     width: 18,
@@ -960,28 +1130,25 @@ const styles = StyleSheet.create({
   },
   filterChipCloseText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     lineHeight: 12,
   },
   listContainer: {
     padding: 20,
+    paddingTop: 12,
   },
   parkCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 18,
+    marginBottom: 20,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    elevation: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderWidth: 0,
   },
   parkImageContainer: {
     position: 'relative',
@@ -990,132 +1157,159 @@ const styles = StyleSheet.create({
   parkImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#E8F5EE',
   },
   favoriteButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    top: 14,
+    right: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   favoriteButtonIcon: {
     fontSize: 18,
   },
   parkCardContent: {
-    padding: 18,
+    padding: 20,
   },
   parkName: {
-    fontSize: 19,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#064E3B',
-    marginBottom: 10,
-    letterSpacing: -0.2,
+    marginBottom: 8,
+    letterSpacing: -0.4,
     lineHeight: 26,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   starContainer: {
     flexDirection: 'row',
     marginRight: 8,
   },
   star: {
-    fontSize: 15,
+    fontSize: 14,
   },
   starEmpty: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#D1D5DB',
   },
   ratingText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   parkDistance: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#059669',
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 10,
+    marginTop: 8,
     gap: 6,
   },
   tag: {
-    backgroundColor: '#D1FAE5',
-    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginRight: 6,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderWidth: 0,
   },
   tagText: {
-    fontSize: 12,
-    color: '#047857',
-    fontWeight: '600',
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '700',
+    letterSpacing: -0.1,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
   },
   emptyText: {
     fontSize: 15,
     color: '#9CA3AF',
     textAlign: 'center',
+    fontWeight: '500',
   },
   addButton: {
     position: 'absolute',
-    bottom: 74, // 広告スペース(50px) + マージン(24px)
+    bottom: 74,
     right: 24,
     backgroundColor: '#10B981',
-    borderRadius: 28,
-    width: 56,
-    height: 56,
+    borderRadius: 18,
+    width: 58,
+    height: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
     elevation: 8,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '300',
+    marginTop: -2,
   },
   loadingMoreContainer: {
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingMoreText: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
+    fontWeight: '500',
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#F5FBF8',
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 12,
+    padding: 3,
+  },
+  viewToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 9,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  viewToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  viewToggleTextActive: {
+    color: '#059669',
+    fontWeight: '700',
   },
 });

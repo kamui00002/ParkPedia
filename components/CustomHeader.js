@@ -16,11 +16,25 @@ export default function CustomHeader({
         <View style={styles.topRow}>
           <View style={styles.logoContainer}>
             {onMenuPress && (
-              <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
+              <TouchableOpacity
+                onPress={onMenuPress}
+                style={styles.menuButton}
+                testID="filter-button"
+                accessible={true}
+                accessibilityLabel="filter-button"
+                accessibilityRole="button"
+              >
                 <Text style={styles.menuIcon}>☰</Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.logo}>ParkPedia</Text>
+            <Text
+              style={styles.logo}
+              testID="app-title"
+              accessible={true}
+              accessibilityLabel="app-title"
+            >
+              ParkPedia
+            </Text>
           </View>
           <View style={styles.navButtons}>
             <TouchableOpacity
@@ -88,6 +102,10 @@ export default function CustomHeader({
                   navigation.navigate('MyPage');
                 }
               }}
+              testID="mypage-button"
+              accessible={true}
+              accessibilityLabel="mypage-button"
+              accessibilityRole="button"
             >
               <Text
                 style={[
@@ -110,6 +128,9 @@ export default function CustomHeader({
             placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={onSearchChange}
+            testID="search-input"
+            accessible={true}
+            accessibilityLabel="search-input"
           />
         </View>
       </View>
@@ -120,19 +141,15 @@ export default function CustomHeader({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFFFFF',
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingTop: 54,
+    paddingBottom: 14,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    borderBottomWidth: 0,
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
   headerContent: {
     width: '100%',
@@ -148,59 +165,70 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuButton: {
-    marginRight: 12,
-    padding: 6,
+    marginRight: 10,
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#F0FDF4',
   },
   menuIcon: {
-    fontSize: 22,
-    color: '#4B5563',
+    fontSize: 20,
+    color: '#059669',
   },
   logo: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#059669',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   navButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 3,
   },
   navButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 9,
   },
   navButtonActive: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#064E3B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   navButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: '#6B7280',
   },
   navButtonTextActive: {
     color: '#059669',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#F0FDF4',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#D1FAE5',
   },
   searchIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: 10,
-    color: '#9CA3AF',
+    color: '#10B981',
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
     color: '#1F2937',
+    fontWeight: '400',
   },
 });

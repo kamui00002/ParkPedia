@@ -13,9 +13,8 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    if (__DEV__) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
+    // 本番環境でもエラーをログに記録
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
 
     // Crashlyticsが利用可能な場合のみ送信（Web以外）
     if (Platform.OS !== 'web') {
@@ -24,9 +23,7 @@ class ErrorBoundary extends React.Component {
         crashlytics().recordError(error);
         crashlytics().log(`Error Info: ${JSON.stringify(errorInfo)}`);
       } catch (e) {
-        if (__DEV__) {
-          console.error('Failed to log error to Crashlytics:', e);
-        }
+        console.error('Failed to log error to Crashlytics:', e);
       }
     }
   }
@@ -44,10 +41,13 @@ class ErrorBoundary extends React.Component {
             <Text style={styles.errorMessage}>
               申し訳ございません。アプリでエラーが発生しました。
             </Text>
-            {__DEV__ && this.state.error && (
+            {this.state.error && (
               <View style={styles.errorDetails}>
-                <Text style={styles.errorDetailsTitle}>エラー詳細（開発者向け）:</Text>
-                <Text style={styles.errorDetailsText}>{this.state.error.toString()}</Text>
+                <Text style={styles.errorDetailsTitle}>エラー詳細:</Text>
+                <Text style={styles.errorDetailsText}>
+                  {this.state.error.toString()}
+                  {this.state.error.message && `\n${this.state.error.message}`}
+                </Text>
               </View>
             )}
             <TouchableOpacity style={styles.resetButton} onPress={this.handleReset}>
