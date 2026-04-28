@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "deny": ["Write(./docs/**)", "Write(README.md)", "Write(./README.md)", "Write(CHANGELOG.md)"]
+  }
+}
