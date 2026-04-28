@@ -69,6 +69,16 @@ credentials/
 *_backup.*
 .cleanup_backup_*/
 
+# Test / coverage artifacts
+coverage/
+playwright-report/
+test-results/
+screenshots/
+
+# AdMob / Apple secrets
+*.keystore
+AuthKey_*.p8
+
 
 
 
