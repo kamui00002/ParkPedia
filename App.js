@@ -167,6 +167,24 @@ export default function App() {
           console.log('📱 Expo Goで実行中 - App Checkはスキップします');
         }
 
+        // Firebase Analytics 初期化 + アプリ起動イベント送信
+        // Note: Expo Go では動作しません。Development Build または Production Build が必要です。
+        // 目的: AdMob ↔ Firebase 連携で DAU / リテンション / 広告効果が見えるようにする
+        if (Platform.OS !== 'web' && !isExpoGo) {
+          try {
+            const analyticsModule = require('@react-native-firebase/analytics');
+            if (analyticsModule && analyticsModule.default) {
+              const analytics = analyticsModule.default;
+              await analytics().logAppOpen();
+              if (__DEV__) console.log('Analytics 初期化成功 (logAppOpen)');
+            }
+          } catch (error) {
+            console.warn('Analyticsモジュール読み込み/初期化失敗:', error.message);
+          }
+        } else if (__DEV__ && isExpoGo) {
+          console.log('📱 Expo Goで実行中 - Analyticsはスキップします');
+        }
+
         // 認証状態の変更を監視
         unsubscribe = onAuthStateChanged(auth, currentUser => {
           setUser(currentUser);
