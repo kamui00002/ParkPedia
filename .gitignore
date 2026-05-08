@@ -92,3 +92,6 @@ AuthKey_*.p8
 eas-submit-retry.log
 auto-promote.log
 ads/.env
+
+# Codex AI agent 設定 (個人環境)
+.codex/

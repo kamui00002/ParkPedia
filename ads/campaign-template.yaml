@@ -1,0 +1,27 @@
+# ParkPedia Meta Ads キャンペーン設定テンプレート
+# dry-run: meta-ads create --config ads/campaign-template.yaml --dry-run
+# 本番:    meta-ads create --config ads/campaign-template.yaml
+
+campaign:
+  name: "ParkPedia - 公園を探そう [2026-05]"
+  objective: OUTCOME_APP_PROMOTION
+  status: PAUSED
+
+ad_set:
+  name: "子育て世代 25-40 JP iOS"
+  daily_budget: 100000
+  optimization_goal: APP_INSTALLS
+  targeting:
+    countries: ["JP"]
+    age_min: 25
+    age_max: 40
+    device_platforms: ["mobile"]
+    publisher_platforms: ["facebook", "instagram"]
+
+ads:
+  - name: "ParkPedia - メインビジュアル v1"
+    image: "../ad-assets/meta/feed-1080x1080-v1.png"
+    headline: "近くの公園、見つかった？"
+    primary_text: "口コミで選べる公園情報アプリ。家族でお気に入りの公園を発見しよう。無料で使えます。"
+    link: "https://apps.apple.com/jp/app/parkpedia"
+    call_to_action: "INSTALL_MOBILE_APP"

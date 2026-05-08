@@ -1,0 +1,27 @@
+{
+  "brand": {
+    "name": "ParkPedia",
+    "tagline": "公園を、もっと楽しく。",
+    "description": "ユーザーが公園の情報を共有・レビューできるモバイルアプリ。近くの公園を探して、お気に入りを見つけよう。",
+    "app_store_category": "ライフスタイル / 旅行",
+    "platforms": ["iOS", "Android"]
+  },
+  "audience": {
+    "primary": "子育て世代（25-40歳）、公園に子どもと行く親",
+    "secondary": "アウトドア好き、散歩・ジョギング愛好者",
+    "pain_points": ["近くの良い公園が見つからない", "公園の設備・混雑状況が事前にわからない"],
+    "desires": ["家族で楽しめる公園を見つけたい", "口コミで安心して選びたい"]
+  },
+  "brand_voice": {
+    "tone": "親しみやすい・明るい・安心感",
+    "keywords": ["発見", "口コミ", "家族", "自然", "地域", "お気に入り"],
+    "avoid": ["堅い・企業的・専門的すぎる"]
+  },
+  "colors": {
+    "primary": "#4CAF50",
+    "secondary": "#81C784",
+    "accent": "#FF8F00",
+    "background": "#FFFFFF"
+  },
+  "cta_options": ["無料でダウンロード", "公園を探す", "今すぐ使ってみる"]
+}
