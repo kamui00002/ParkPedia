@@ -89,3 +89,6 @@ AuthKey_*.p8
 
 
 
+eas-submit-retry.log
+auto-promote.log
+ads/.env
