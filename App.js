@@ -99,6 +99,8 @@ export default function App() {
             console.log('[AdMob] 初期化成功');
           } catch (adError) {
             console.warn('[AdMob] 初期化失敗:', adError.message);
+            // PP-H2: 広告収益の silent zero を検出可能に
+            logError(adError, 'AdMob init');
           }
 
           // ATT 完了後に Meta (Facebook) SDK を初期化
@@ -216,6 +218,8 @@ export default function App() {
             }
           } catch (error) {
             console.warn('Analyticsモジュール読み込み/初期化失敗:', error.message);
+            // PP-H4: DAU / リテンション計測の silent stop を検出可能に
+            logError(error, 'Analytics init');
           }
         } else if (__DEV__ && isExpoGo) {
           console.log('📱 Expo Goで実行中 - Analyticsはスキップします');
