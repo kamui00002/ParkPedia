@@ -47,6 +47,7 @@ async function requestATTOnceReady() {
 }
 
 // コンポーネント
+import { logError } from './utils/errorHandler';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // 画面コンポーネント
@@ -98,6 +99,39 @@ export default function App() {
             console.log('[AdMob] 初期化成功');
           } catch (adError) {
             console.warn('[AdMob] 初期化失敗:', adError.message);
+          }
+
+          // ATT 完了後に Meta (Facebook) SDK を初期化
+          // - FACEBOOK_APP_ID / FACEBOOK_CLIENT_TOKEN が EAS Secret に登録されているときのみ
+          //   app.config.js でプラグインがロードされ、ネイティブモジュールが利用可能になる
+          // - ATT 結果 = authorized のときだけ IDFA 収集 / 広告トラッキングを有効化
+          //   (denied/restricted のとき true にすると Apple Guideline 5.1.2 違反)
+          try {
+            const fbsdk = require('react-native-fbsdk-next');
+            if (fbsdk && fbsdk.Settings) {
+              const { Settings, AppEventsLogger } = fbsdk;
+              const trackingEnabled = attStatus === 'authorized';
+
+              // 仕様: setAdvertiserTrackingEnabled は iOS 専用 (SDK が内部で no-op するが安全)
+              if (Platform.OS === 'ios') {
+                await Settings.setAdvertiserTrackingEnabled(trackingEnabled);
+              }
+              await Settings.setAdvertiserIDCollectionEnabled(trackingEnabled);
+              // App Events 自体は ATT 許諾に関わらず送る (集計のみ、IDFA は紐付けされない)
+              await Settings.setAutoLogAppEventsEnabled(true);
+
+              // 明示初期化 (app.config.js で isAutoInitEnabled: false にしてあるため)
+              await Settings.initializeSDK();
+
+              // 起動イベント送信
+              AppEventsLogger.logEvent('fb_mobile_activate_app');
+              console.log('[Meta SDK] 初期化成功 (trackingEnabled =', trackingEnabled, ')');
+            } else {
+              if (__DEV__)
+                console.log('[Meta SDK] モジュール未ロード (EAS Secret 未設定 or Expo Go)');
+            }
+          } catch (metaError) {
+            console.warn('[Meta SDK] 初期化失敗:', metaError.message);
           }
         }
 
@@ -162,6 +196,8 @@ export default function App() {
             }
           } catch (error) {
             console.warn('App Checkモジュール読み込み/初期化失敗:', error.message);
+            // PP-H1: 本番セキュリティ低下リスクの可視化
+            logError(error, 'App Check init');
           }
         } else if (__DEV__ && isExpoGo) {
           console.log('📱 Expo Goで実行中 - App Checkはスキップします');
