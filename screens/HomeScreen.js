@@ -36,6 +36,7 @@ import AdBanner from '../components/AdBanner';
 import { AD_ENABLED } from '../adConfig';
 import * as Location from 'expo-location';
 import { handleError } from '../utils/errorHandler';
+import { metaEvents } from '../utils/metaEvents';
 
 export default function HomeScreen({ navigation }) {
   // 状態管理
@@ -457,6 +458,16 @@ export default function HomeScreen({ navigation }) {
 
     setFilteredParks(filtered);
   }, [searchQuery, parks, filters, userLocation, calculateDistance]);
+
+  // Meta App Events: 検索クエリ (キー入力ごとではなく 800ms デバウンス後に発火)
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return; // 1文字以下は送らない
+    const timer = setTimeout(() => {
+      metaEvents.logSearched(q);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // 星評価のレンダリング
   const renderStars = rating => {

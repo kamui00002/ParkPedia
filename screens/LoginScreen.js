@@ -22,6 +22,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { handleError } from '../utils/errorHandler';
+import { metaEvents } from '../utils/metaEvents';
 
 export default function LoginScreen({ navigation }) {
   // 状態管理
@@ -139,6 +140,9 @@ export default function LoginScreen({ navigation }) {
         timeoutPromise,
       ]);
 
+      // Meta App Events: 新規登録完了
+      metaEvents.logCompletedRegistration('email');
+
       Alert.alert('成功', 'アカウントを作成しました', [
         {
           text: 'OK',
@@ -183,6 +187,9 @@ export default function LoginScreen({ navigation }) {
       });
 
       await Promise.race([signInAnonymously(auth), timeoutPromise]);
+
+      // Meta App Events: 匿名登録 (CompletedRegistration として扱う)
+      metaEvents.logCompletedRegistration('anonymous');
 
       // ログイン成功後、ホーム画面に戻る
       navigation.reset({

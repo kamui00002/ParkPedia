@@ -97,9 +97,13 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_CLIENT_TOKEN) {
       appID: process.env.FACEBOOK_APP_ID,
       clientToken: process.env.FACEBOOK_CLIENT_TOKEN,
       displayName: 'ParkPedia',
+      // 初期値は OFF。実行時に App.js で ATT 結果に応じて動的に切替える
+      // (ATT denied のとき advertiserIDCollectionEnabled=true で出荷すると Apple Guideline 5.1.2 違反リスク)
       advertiserIDCollectionEnabled: false,
+      // auto log は ATT 完了後の任意のタイミングで logEvent('fb_mobile_activate_app') を呼ぶため OFF
       autoLogAppEventsEnabled: false,
-      isAutoInitEnabled: true,
+      // SDK 初期化は App.js で明示的に Settings.initializeSDK() を呼ぶため OFF
+      isAutoInitEnabled: false,
     },
   ]);
 }
@@ -115,7 +119,7 @@ module.exports = {
   expo: {
     name: 'ParkPedia',
     slug: 'parkpedia',
-    version: '1.1.2',
+    version: '1.1.3',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -135,7 +139,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '42',
+      buildNumber: '43',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
@@ -157,7 +161,7 @@ module.exports = {
     },
     android: {
       package: 'com.parkpedia.app',
-      versionCode: 25,
+      versionCode: 26,
       permissions: [
         'android.permission.ACCESS_FINE_LOCATION',
         'android.permission.ACCESS_COARSE_LOCATION',

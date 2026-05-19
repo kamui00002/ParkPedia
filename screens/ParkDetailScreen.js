@@ -33,6 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, auth } from '../firebaseConfig';
 import { handleError, logError } from '../utils/errorHandler';
 import AdBanner from '../components/AdBanner';
+import { metaEvents } from '../utils/metaEvents';
 
 export default function ParkDetailScreen({ route, navigation }) {
   const { parkId, park: initialPark } = route.params;
@@ -341,7 +342,10 @@ export default function ParkDetailScreen({ route, navigation }) {
       const parkSnap = await getDoc(parkRef);
 
       if (parkSnap.exists()) {
-        setPark({ id: parkSnap.id, ...parkSnap.data() });
+        const parkData = { id: parkSnap.id, ...parkSnap.data() };
+        setPark(parkData);
+        // Meta App Events: 公園詳細閲覧
+        metaEvents.logViewedContent(parkData.id, parkData.name, 'park');
       }
     } catch (error) {
       // 統一されたエラーハンドリング

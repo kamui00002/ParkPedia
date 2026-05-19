@@ -27,6 +27,7 @@ import {
 import { db, auth } from '../firebaseConfig';
 import { uploadMultipleImages } from '../utils/imageUploader';
 import { handleError, logError } from '../utils/errorHandler';
+import { metaEvents } from '../utils/metaEvents';
 
 export default function AddReviewScreen({ route, navigation }) {
   const { parkId, parkName, isEditMode, reviewData } = route.params;
@@ -238,6 +239,9 @@ export default function AddReviewScreen({ route, navigation }) {
           photos: uploadedImageUrls,
           createdAt: serverTimestamp(),
         });
+
+        // Meta App Events: レビュー投稿完了
+        metaEvents.logRated(parkId, rating);
 
         // 公園の評価を更新
         try {
