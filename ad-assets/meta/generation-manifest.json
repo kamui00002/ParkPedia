@@ -1,0 +1,80 @@
+{
+  "$schema": "ad-assets/meta/generation-manifest-v1",
+  "campaign": "ParkPedia-AppInstall-Test01-2026Q2",
+  "generated_at": "2026-05-11T14:55:00+09:00",
+  "generator": "nano-banana (Gemini 2.5 Flash Image) via MCP",
+  "output_directory": "/Users/yoshidometoru/Documents/GitHub/ParkPedia/ad-assets/meta/",
+  "assets": [
+    {
+      "id": "A-1",
+      "filename": "family-feed-1080x1080-v1.png",
+      "axis": "A: 家族で公園探し",
+      "format": "feed_square",
+      "target_size": "1080x1080",
+      "actual_size": "1080x1080",
+      "aspect_ratio": "1:1",
+      "headline": "「今週末どこ行く?」家族会議、もう要りません",
+      "description": "全国の公園情報、みんなで育てる図鑑アプリ / 子連れOK・駐車場有無まで分かる",
+      "cta": "Install Now (今すぐインストール)",
+      "scene_description": "母親が屈み、後ろ姿の幼い子供が芝生で歩く瞬間。日本の住宅街の公園、自然光、ブランコと滑り台が背景。Park Green badge 右下。",
+      "text_overlay_position": "左上",
+      "estimated_text_area_pct": 14,
+      "compliance_notes": "子供は後ろ姿のみ、顔は判別不可。Park Green アクセントは badge のみ。Meta テキスト 20% 以下クリア。",
+      "banana_prompt_summary": "Japanese suburban park, mother kneeling + child from behind, swing set background, golden afternoon light, headline text overlay top-left, small Park Green PP badge bottom-right",
+      "file_size_kb": 399
+    },
+    {
+      "id": "B-1L",
+      "filename": "discovery-feed-1080x1350-v1.png",
+      "axis": "B: 近所の穴場発見",
+      "format": "feed_portrait",
+      "target_size": "1080x1350",
+      "actual_size": "1080x1350",
+      "aspect_ratio": "4:5",
+      "headline": "Googleマップにない、ご近所の隠れ公園",
+      "description": "地元の公園、地元の声でつながる / 投稿も閲覧も無料、みんなの公園図鑑",
+      "cta": "Use App (アプリを使う)",
+      "scene_description": "日本の住宅街の小道に面した小さな公園、古い木製ベンチ、桜の花びらが地面に。誰もいない朝、自然光が木漏れ日。Park Green leaf badge 右下。",
+      "text_overlay_position": "上部 (画像上 1/3)",
+      "estimated_text_area_pct": 18,
+      "compliance_notes": "人物なし (発見の喜び演出)。彩度控えめ。Park Green は badge のみ。Meta テキスト 20% 以下クリア。",
+      "banana_prompt_summary": "Empty Japanese neighborhood pocket-park, wooden bench under tree, soft morning dappled light, cherry petals on ground, headline text overlay top, small Park Green leaf badge bottom-right",
+      "file_size_kb": 537
+    },
+    {
+      "id": "C-1S",
+      "filename": "review-story-1080x1920-v2.png",
+      "axis": "C: レビューで賢い選択",
+      "format": "story_portrait",
+      "target_size": "1080x1920",
+      "actual_size": "1080x1920",
+      "aspect_ratio": "9:16",
+      "headline": "「行ってみてガッカリ」を、なくしたい",
+      "description": "行く前にわかる、リアルな公園レビュー / 子連れ・ペット・散歩、目的別で探せる",
+      "cta": "Download (ダウンロード)",
+      "scene_description": "大人の手と子供の小さな手が屋外で重なる構図、芝生背景ぼかし、自然光。テキスト中央配置、Park Green leaf badge 下部。",
+      "text_overlay_position": "中央 (上下中央)",
+      "estimated_text_area_pct": 15,
+      "compliance_notes": "顔・全身なし、手のみ。Story format セーフゾーン (上 14% / 下 20%) 配慮済み。UI 模倣要素なし (v1 にあった Instagram風UIは削除)。Meta テキスト 20% 以下クリア。",
+      "banana_prompt_summary": "Parent's adult hand and child's hand held together outdoor, soft daylight, blurred grass background, hands only no faces, headline text vertical center, small Park Green leaf badge near bottom",
+      "deprecated_versions": [
+        {
+          "filename": "review-story-1080x1920-v1-with-ui-deprecated.png",
+          "reason": "AI が Instagram Stories UI (parkpedia ヘッダー、X 閉じるボタン、CTA ボタン) を画像内に描画したため、Meta 広告審査での偽装表示リスク。再生成 v2 で UI 要素を完全排除済み。"
+        }
+      ],
+      "file_size_kb": 234
+    }
+  ],
+  "generation_count": {
+    "successful_generations": 4,
+    "deprecated_versions": 1,
+    "regenerations_used": 1,
+    "regeneration_budget_remaining": "0-1 回 (予算意識: 必要時のみ)"
+  },
+  "next_phase": {
+    "phase": "P5: Ads Manager キャンペーン作成",
+    "owner": "User",
+    "instructions": "User がアプリ v1.1.3 を App Store に申請・公開後、Ads Manager でこの 3 アセット + コピーデック (campaign-brief.md セクション 9) を使ってキャンペーン作成。"
+  }
+}
