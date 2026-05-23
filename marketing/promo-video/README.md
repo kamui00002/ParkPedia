@@ -4,14 +4,16 @@
 
 ```
 marketing/promo-video/
-├── 01_recordings/  # Expo シミュレータ / Web ブラウザ録画
-├── 02_edited/      # 編集済み中間ファイル
-├── 03_final/       # 各アスペクト比の最終物
-│   ├── 9_16/       # Meta Reels / TikTok / YouTube Shorts
-│   ├── 1_1/        # Meta フィード正方形
-│   ├── 16_9/       # YouTube / Web LP
-│   └── 4_5/        # Meta フィード推奨
-└── bgm/            # Suno 生成 BGM
+├── 01_recordings/   # Expo シミュレータ / Web ブラウザ録画
+├── 02_edited/       # 編集済み中間ファイル
+├── 03_final/        # 各アスペクト比の最終物
+│   ├── 9_16/        # Meta Reels / TikTok / YouTube Shorts
+│   ├── 1_1/         # Meta フィード正方形
+│   ├── 16_9/        # YouTube / Web LP
+│   └── 4_5/         # Meta フィード推奨
+├── 04_for_seedance/ # Seedance/Higgsfield 入力用にリサイズ済み素材 (720x1564, 14s)
+├── prompts/         # Seedance プロンプト (バージョン管理して再利用)
+└── bgm/             # Suno 生成 BGM
 ```
 
 > 既存 `ads/` には brand-profile / campaign-brief があるので、**動画コンセプトの参考**に。
@@ -127,6 +129,51 @@ ffmpeg -y -i "$WITH_BGM" -vf "scale=1080:1350:force_original_aspect_ratio=decrea
 - **React Native / Expo** なので Android シミュレータ録画も可能 (`adb shell screenrecord`)
 - **Web 版**もあるなら Playwright で操作画面録画も選択肢
 - 子供の写真使う場合は権利・プライバシーに注意
+
+---
+
+## 🤖 Seedance 2.0 (Higgsfield) で AI 動画化 ☁️
+
+画面録画ベースの CM を「もっと動画っぽく」したい場合、Higgsfield Seedance 2.0 の Multi-reference Text-to-Video モードで実写+UIハイブリッドを生成可能。
+
+### 制限値 (実機エラーから取得した確定値)
+
+| 項目 | 値 |
+|---|---|
+| 画像/動画 最大ピクセル数 | 2,086,876 px |
+| 画像/動画 最小ピクセル数 | 409,600 px |
+| 参照動画 合計尺上限 | 15.0 秒 |
+| 参照画像 最大 | 9 枚 |
+| 参照動画 最大 | 3 本 (合計 15 秒) |
+| プロンプト文字数上限 | 5,000 字 |
+
+iOS シミュ録画 (1206x2622) は上限超過するため、Seedance に渡す前にリサイズ必須:
+
+```bash
+ffmpeg -i 01_recordings/raw_parkpedia_v6.mp4 -t 14 \
+  -vf "scale=720:1564" -c:v libx264 -preset medium -crf 23 -an \
+  04_for_seedance/raw_v6_720x1564_14s.mp4
+```
+
+### プロンプト
+
+`prompts/seedance_v1_4722chars.txt` に保存済み (4,722 字、5,000 字制限内)。
+構成: Multi-ref Text-to-Video / 9:16 / 15s / 3 シーン (アプリ UI 5s → 親子の手 7s → ロゴ 3s)。
+
+### 参照素材セット (実証済み構成)
+
+| Slot | ファイル | 役割 |
+|---|---|---|
+| Image 1 | `ad-assets/meta/review-story-1080x1920-v1-with-ui-deprecated.png` | ライフスタイル(UI 付き) |
+| Image 2 | `ad-assets/meta/review-story-1080x1920-v2.png` | ライフスタイル(クリーン版、Scene 2 メイン) |
+| Image 3 | `ad-assets/meta/app-icon-1024x1024.png` | ブランドロゴ (Scene 3) |
+| Video 1 | `04_for_seedance/raw_v6_720x1564_14s.mp4` | アプリ UI デモ (Scene 1) |
+
+### 学びログ
+
+詳細なノウハウは Obsidian Vault の学びログ参照:
+- `📝 学びログ/2026-05-22 Seedance 2.0 制限値 + Multi-ref プロンプトノウハウ - ParkPedia プロモ.md`
+- `📝 学びログ/2026-05-22 Seedance 2.0 プロンプト設計の反省 - Escape Nine プロモ.md`
 
 ---
 
