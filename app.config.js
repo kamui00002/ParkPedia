@@ -139,7 +139,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '43',
+      buildNumber: '44',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
