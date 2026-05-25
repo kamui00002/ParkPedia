@@ -119,7 +119,7 @@ module.exports = {
   expo: {
     name: 'ParkPedia',
     slug: 'parkpedia',
-    version: '1.1.3',
+    version: '1.1.4',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -139,7 +139,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.parkpedia.app',
-      buildNumber: '44',
+      buildNumber: '45',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
