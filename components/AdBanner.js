@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { AD_ENABLED, AD_UNIT_IDS, AD_TEST_MODE } from '../adConfig';
+import { logError } from '../utils/errorHandler';
 
 /**
  * AdMobバナー広告コンポーネント
@@ -43,7 +44,13 @@ const AdBanner = () => {
   let adModule;
   try {
     adModule = require('react-native-google-mobile-ads');
-  } catch {
+  } catch (err) {
+    // PP-H2: 広告モジュールロード失敗を production で可視化
+    if (!__DEV__) {
+      try {
+        logError(err, 'AdBanner require');
+      } catch {}
+    }
     return null;
   }
 
@@ -77,8 +84,13 @@ const AdBanner = () => {
         />
       </View>
     );
-  } catch {
-    // レンダリング時のエラーも無視
+  } catch (err) {
+    // PP-H2: レンダリング失敗を production で可視化
+    if (!__DEV__) {
+      try {
+        logError(err, 'AdBanner render');
+      } catch {}
+    }
     return null;
   }
 };

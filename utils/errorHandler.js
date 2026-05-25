@@ -121,18 +121,48 @@ const getAuthErrorMessage = error => {
  * @param {Error} error - エラーオブジェクト
  * @param {string} context - エラーが発生したコンテキスト
  */
+// PP-H3: Crashlytics ロード結果をモジュールスコープでキャッシュ。
+// ロード失敗を空 catch で握り潰すと、logError を呼んでも本番ですべての
+// エラー報告が消える「連鎖 silent fail」を防ぐ。
+let _crashlyticsModule = null;
+let _crashlyticsLoadAttempted = false;
+let _crashlyticsLoadError = null;
+
+const _ensureCrashlytics = () => {
+  if (_crashlyticsLoadAttempted) return _crashlyticsModule;
+  _crashlyticsLoadAttempted = true;
+  if (__DEV__ || typeof require === 'undefined') return null;
+  try {
+    _crashlyticsModule = require('@react-native-firebase/crashlytics').default;
+    return _crashlyticsModule;
+  } catch (loadErr) {
+    _crashlyticsLoadError = loadErr;
+    // production でも消えない経路でロード失敗を可視化 (__DEV__ ガード外)
+    // ESLint が走る場合は eslint-disable-next-line no-console を行頭に入れる
+    console.error('[errorHandler] Crashlytics module load failed:', loadErr?.message ?? loadErr);
+    return null;
+  }
+};
+
 export const logError = (error, context = '') => {
   if (__DEV__) console.error(`[${context}] エラー:`, error);
 
   // 本番環境ではCrashlyticsに送信
-  if (!__DEV__ && typeof require !== 'undefined') {
-    try {
-      const crashlytics = require('@react-native-firebase/crashlytics').default;
-      crashlytics().recordError(error);
-      crashlytics().log(`Context: ${context}`);
-    } catch {
-      // Crashlyticsが利用できない場合は無視
+  if (!__DEV__) {
+    const crashlytics = _ensureCrashlytics();
+    if (crashlytics) {
+      try {
+        crashlytics().recordError(error);
+        crashlytics().log(`Context: ${context}`);
+      } catch (sendErr) {
+        // recordError 自体の失敗も silent にしない
+        console.error(
+          '[errorHandler] Crashlytics recordError failed:',
+          sendErr?.message ?? sendErr
+        );
+      }
     }
+    // _crashlyticsLoadError は _ensureCrashlytics 内で既にログ済
   }
 };
 

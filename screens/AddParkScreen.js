@@ -35,6 +35,7 @@ import { db, auth } from '../firebaseConfig';
 import CustomHeader from '../components/CustomHeader';
 import { uploadMultipleImages } from '../utils/imageUploader';
 import { handleError } from '../utils/errorHandler';
+import { metaEvents } from '../utils/metaEvents';
 import {
   AGE_OPTIONS,
   EQUIPMENT_OPTIONS,
@@ -400,7 +401,10 @@ export default function AddParkScreen({ navigation, route }) {
           createdAt: serverTimestamp(),
         };
 
-        await addDoc(collection(db, 'parks'), parkData);
+        const newParkRef = await addDoc(collection(db, 'parks'), parkData);
+
+        // Meta App Events: 公園追加完了 (コンバージョン目的にできる高価値アクション)
+        metaEvents.logSubmittedApplication(newParkRef.id, 'park');
 
         Alert.alert('成功', '公園を追加しました！', [
           {

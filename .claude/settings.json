@@ -1,5 +1,22 @@
 {
   "permissions": {
-    "deny": ["Write(./docs/**)", "Write(README.md)", "Write(./README.md)", "Write(CHANGELOG.md)"]
+    "deny": [
+      "Write(./docs/**)",
+      "Write(README.md)",
+      "Write(./README.md)",
+      "Write(CHANGELOG.md)",
+      "Read(./node_modules/**)",
+      "Read(./ios/Pods/**)",
+      "Read(./ios/build/**)",
+      "Read(./ios/DerivedData/**)",
+      "Read(./android/build/**)",
+      "Read(./android/app/build/**)",
+      "Read(./android/.gradle/**)",
+      "Read(./.expo/**)",
+      "Read(./generated_imgs/**)",
+      "Read(**/*.xcuserstate)",
+      "Read(**/xcuserdata/**)",
+      "Read(**/.DS_Store)"
+    ]
   }
 }
