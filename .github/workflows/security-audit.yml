@@ -69,27 +69,48 @@ jobs:
 
           ### Recommended Actions
 
-          1. **Immediate** (Critical/High):
-             \`\`\`bash
-             npm audit fix --force
-             \`\`\`
+          > ⚠️ **Do NOT run `npm audit fix --force`.** It bumps `expo` across major
+          > SDK versions (e.g. 54 → 57), which breaks the native build. Use targeted
+          > `overrides` in `package.json` instead.
 
-          2. **Review Changes**:
-             \`\`\`bash
-             git diff package.json package-lock.json
-             \`\`\`
+          1. **Triage: is it even shipped to users?**
+             Most findings here are build-tooling only (Expo CLI / Metro / Detox / ESLint)
+             and never enter the app bundle. Confirm before treating it as user-facing:
+             ```bash
+             npx expo export --platform ios --output-dir /tmp/pp-export
+             strings /tmp/pp-export/_expo/static/js/ios/*.hbc | grep -icE '<vulnerable-pkg>'
+             ```
 
-          3. **Test Application**:
-             - Run local tests
-             - Test on iOS simulator
-             - Verify critical features
+          2. **Fix via targeted overrides** (pin inside the *same major*, use `^` not `>=`):
+             ```jsonc
+             // package.json
+             "overrides": {
+               "some-pkg": "^1.2.3"   // ^ keeps it in major 1; >= would jump to latest major
+             }
+             ```
+             ```bash
+             npm install
+             npm ls some-pkg   # npm silently ignores unsatisfiable overrides — verify it took
+             ```
 
-          4. **Commit & Deploy**:
-             \`\`\`bash
+          3. **Skip anything needing a major jump.** If several majors of a package
+             legitimately coexist in the tree (`ws`, `js-yaml`, `brace-expansion`),
+             a blanket override breaks the toolchain. Leave it and note why.
+
+          4. **Verify** (all three must pass):
+             ```bash
+             npm run typecheck
+             npm test                                   # compare against baseline
+             npx expo export --platform ios --output-dir /tmp/pp-after   # must succeed
+             ```
+
+          5. **Commit**:
+             ```bash
+             git checkout -b chore/npm-audit-$(date +%Y-%m-%d)
              git add package.json package-lock.json
              git commit -m "fix: Update dependencies to resolve security vulnerabilities"
              git push
-             \`\`\`
+             ```
 
           ### Detailed Findings
 
@@ -136,19 +157,44 @@ jobs:
             | 🟡 Moderate | ${moderate} |
             | 🟢 Low | ${low} |
 
-            ### Immediate Action Required
+            ### ⚠️ Do NOT run \`npm audit fix --force\`
+
+            It bumps \`expo\` across major SDK versions (e.g. 54 → 57), which breaks the
+            native build. Use targeted \`overrides\` in \`package.json\` instead.
+
+            ### Step 1 — Triage: is it actually shipped to users?
+
+            Most findings here live in build tooling (Expo CLI / Metro / Detox / ESLint)
+            and never enter the app bundle. Confirm before treating this as user-facing:
 
             \`\`\`bash
-            # Fix vulnerabilities
-            npm audit fix --force
+            npx expo export --platform ios --output-dir /tmp/pp-export
+            strings /tmp/pp-export/_expo/static/js/ios/*.hbc | grep -icE '<vulnerable-pkg>'
+            # 0 hits => build tooling only, no user exposure, no patch release needed
+            \`\`\`
 
-            # Review changes
-            git diff package.json package-lock.json
+            ### Step 2 — Fix via targeted overrides
 
-            # Test locally
-            npm start
+            Pin inside the **same major** — use \`^\`, never \`>=\` (which jumps to the latest major):
 
-            # If tests pass, commit and push
+            \`\`\`bash
+            # package.json -> "overrides": { "some-pkg": "^1.2.3" }
+            npm install
+            npm ls some-pkg   # npm silently ignores unsatisfiable overrides — verify it took
+            \`\`\`
+
+            Skip anything that needs a major jump. When several majors of a package
+            legitimately coexist in the tree (\`ws\`, \`js-yaml\`, \`brace-expansion\`,
+            \`@grpc/grpc-js\`), a blanket override breaks the toolchain — leave it and note why.
+
+            ### Step 3 — Verify (all three must pass)
+
+            \`\`\`bash
+            npm run typecheck
+            npm test          # compare against the pre-change baseline, not against zero
+            npx expo export --platform ios --output-dir /tmp/pp-after   # must succeed
+
+            git checkout -b chore/npm-audit-$(date +%Y-%m-%d)
             git add package.json package-lock.json
             git commit -m "fix: Resolve ${critical + high} critical/high security vulnerabilities"
             git push
@@ -157,9 +203,8 @@ jobs:
             ### Additional Steps
 
             1. Review the [detailed audit results](${context.payload.repository.html_url}/actions/runs/${context.runId})
-            2. Test the application thoroughly after applying fixes
-            3. Monitor for any breaking changes
-            4. Update this issue when resolved
+            2. Re-run the bundle grep from Step 1 after fixing, to confirm nothing new was pulled in
+            3. Update this issue when resolved
 
             ---
 
