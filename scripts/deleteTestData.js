@@ -187,7 +187,7 @@ async function findTestReports() {
         });
       }
     });
-  } catch (error) {
+  } catch {
     // reportsコレクションが存在しない場合はスキップ
   }
 
@@ -218,7 +218,7 @@ async function findTestBlockedUsers() {
         });
       }
     });
-  } catch (error) {
+  } catch {
     // blockedUsersコレクションが存在しない場合はスキップ
   }
 
