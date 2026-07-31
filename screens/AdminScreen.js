@@ -25,7 +25,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import { db, auth } from '../firebaseConfig';
+import { db } from '../firebaseConfig';
 import { checkIsAdmin } from '../utils/adminUtils';
 import CustomHeader from '../components/CustomHeader';
 
@@ -420,10 +420,7 @@ export default function AdminScreen({ navigation }) {
     return (
       <View style={styles.reportCard}>
         <View style={styles.reportHeader}>
-          <Text
-            style={styles.reportStatus}
-            style={{ color: statusColors[item.status] || '#6B7280' }}
-          >
+          <Text style={[styles.reportStatus, { color: statusColors[item.status] || '#6B7280' }]}>
             {statusLabels[item.status] || item.status}
           </Text>
           <Text style={styles.reportDate}>
@@ -437,7 +434,7 @@ export default function AdminScreen({ navigation }) {
             <Text style={styles.reviewPreviewLabel}>レビュー内容:</Text>
             <Text style={styles.reviewPreviewText}>{item.reviewComment}</Text>
             {item.reviewRating && (
-              <Text style={styles.reviewRating}>
+              <Text style={styles.reviewPreviewRating}>
                 {'⭐'.repeat(item.reviewRating)}
                 {'☆'.repeat(5 - item.reviewRating)}
               </Text>
@@ -807,7 +804,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 8,
   },
-  reviewRating: {
+  reviewPreviewRating: {
     fontSize: 16,
   },
   reportActions: {
