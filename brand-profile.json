@@ -1,0 +1,128 @@
+{
+  "$schema": "creative-strategist/brand-profile-v1",
+  "brand": {
+    "name": "ParkPedia",
+    "tagline_ja": "全国の公園、みんなでつくる図鑑",
+    "tagline_en": "The Park Encyclopedia, Built by Everyone",
+    "description_ja": "全国の公園情報をユーザーが投稿・レビューして育てる、公園情報共有アプリ。子連れ・ペット・散歩・ジョギング・ピクニックなど目的別に近所の公園を探せる。",
+    "category": "lifestyle / family / outdoor",
+    "platform": ["iOS"],
+    "store_url": "https://apps.apple.com/app/id6755152821",
+    "support_email": "kamui00002@yahoo.co.jp",
+    "privacy_policy_url": "https://kamui00002.github.io/ParkPedia/privacy-policy.html"
+  },
+  "visual_identity": {
+    "primary_color": "#4CAF50",
+    "primary_color_name": "Park Green",
+    "secondary_color": "#166534",
+    "background_color": "#F0FDF4",
+    "accent_color": "#10B981",
+    "logo_path": "/Users/yoshidometoru/Documents/GitHub/ParkPedia/assets/icon.png",
+    "font_family": "system default (San Francisco / Roboto)",
+    "imagery_style": [
+      "明るい自然光、緑豊かな公園シーン",
+      "子供・家族・親子・ペットが楽しんでいる笑顔の瞬間",
+      "日本の公園(桜・芝生・遊具・ベンチ)を想起させる構図",
+      "過度に作り込まずナチュラルでドキュメンタリー風",
+      "テキスト面積は画像全体の20%以下(Meta 推奨)"
+    ],
+    "imagery_avoid": [
+      "スタジオ照明での合成感",
+      "クリップアート風イラスト",
+      "外国の公園・海外建築物",
+      "極端なフィルター・派手な装飾",
+      "テキストだらけのバナー風デザイン(CTR低下)"
+    ]
+  },
+  "voice_and_tone": {
+    "personality": ["親しみやすい", "ローカル感", "助け合い", "発見の喜び"],
+    "vocabulary": "敬体だが堅すぎない (です・ます調)、絵文字は控えめ(1見出しに最大1個)",
+    "avoid": ["命令形の連打", "煽り表現(必見!絶対!)", "ステマ的な誇大表現"],
+    "example_good": "今日のお散歩、どの公園にする?ご近所の隠れた名所、見つかるかも。",
+    "example_bad": "🌟絶対行くべき!最強の公園アプリ💯今すぐDL!!!"
+  },
+  "target_audience": {
+    "primary_persona": {
+      "name": "子連れママ・パパ (30-45歳)",
+      "location": "日本全国(都市部+郊外)",
+      "demographics": "30-45歳、未就学児〜小学生の子を持つ親、世帯年収400-800万円",
+      "interests": ["子育て", "公園", "アウトドア", "週末おでかけ", "近所のスポット探し"],
+      "pain_points": [
+        "毎週末「どこ連れて行こう」で迷う",
+        "近所の公園を全部知らない、行ったことない場所が多い",
+        "遊具の充実度・トイレ有無・駐車場が事前に分からない",
+        "口コミがGoogleマップだと少ない・偏っている"
+      ],
+      "trigger_moments": ["金曜夜の予定立て", "土日朝の出発前", "雨上がりの晴れ間"]
+    },
+    "secondary_persona": {
+      "name": "犬の散歩・ウォーキング層 (40-65歳)",
+      "demographics": "40-65歳、犬を飼っているまたは健康のため散歩する人",
+      "interests": ["ペット", "健康", "ウォーキング", "近所散策"],
+      "pain_points": ["同じ散歩コースに飽きた", "犬OKの公園が分かりにくい"]
+    },
+    "exclude": ["13歳未満(App Storeレーティング)", "海外居住者(現状日本の公園データのみ)"]
+  },
+  "value_propositions": [
+    {
+      "id": "vp_discover",
+      "headline": "ご近所の知らない公園が見つかる",
+      "support": "ユーザー投稿型なので、Googleマップに載らない小さな名所も網羅"
+    },
+    {
+      "id": "vp_reviews",
+      "headline": "リアルな口コミで失敗しない",
+      "support": "遊具・トイレ・駐車場・混雑具合まで、実際に行った人の声で分かる"
+    },
+    {
+      "id": "vp_family",
+      "headline": "子連れ・ペットOKが一目で分かる",
+      "support": "目的別フィルタで「今日の用途」に合う公園だけ表示"
+    },
+    {
+      "id": "vp_contribute",
+      "headline": "自分の発見をシェアできる",
+      "support": "あなたの投稿が、ご近所の家族の週末を助ける"
+    }
+  ],
+  "competitors": {
+    "indirect": [
+      "Googleマップの公園検索",
+      "いこーよ(子連れスポット情報サイト)",
+      "PARKFUL(類似公園アプリ)"
+    ],
+    "differentiation": "Googleマップより詳細な公園特化情報、いこーよより身近な近所の公園、PARKFULより日本ローカル情報が濃い"
+  },
+  "campaign_constraints": {
+    "platforms": ["meta_facebook", "meta_instagram"],
+    "objective": "app_installs",
+    "monthly_budget_jpy": 10000,
+    "daily_budget_jpy": 333,
+    "target_country": "JP",
+    "target_language": "ja",
+    "start_date": "2026-05-15",
+    "test_duration_days": 30,
+    "kpi": {
+      "primary": "install_count",
+      "secondary": ["cpi_jpy", "day7_retention", "skan_postback_count"],
+      "target_cpi_jpy": 500,
+      "kill_cpi_jpy": 1200,
+      "target_installs_min": 20
+    }
+  },
+  "compliance": {
+    "att_required": true,
+    "att_dialog_text_ja": "お客様の興味に合った広告を表示し、サービスを無料で提供し続けるため、トラッキングの許可をお願いします。",
+    "skadnetwork_enabled": true,
+    "meta_sdk_status": "installed_pending_secrets",
+    "app_store_privacy_third_party_ads": "to_be_updated_to_yes_with_v1.1.3"
+  },
+  "current_traction": {
+    "ios_release": "v1.1.2 (build 42)",
+    "store_link": "https://apps.apple.com/app/id6755152821",
+    "weekly_admob_revenue_jpy": 6,
+    "weekly_impressions": 26,
+    "admob_ecpm_jpy": 231,
+    "note": "Obsidian 分析より。月¥10K Meta UA で +12-33 install/月の追加が目標"
+  }
+}

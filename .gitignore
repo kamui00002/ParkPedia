@@ -95,3 +95,7 @@ ads/.env
 
 # Codex AI agent 設定 (個人環境)
 .codex/
+
+# Marketing ワーキングディレクトリのローカル設定/中間生成物
+marketing/.playwright-mcp/
+marketing/.claude/

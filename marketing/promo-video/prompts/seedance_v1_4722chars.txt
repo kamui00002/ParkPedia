@@ -1,0 +1,57 @@
+=== ParkPedia — 15s Brand Promo (Multi-ref, 9:16) ===
+
+REFERENCES:
+- Image 1 = hand-holding shot WITH composited phone mock-up + Japanese caption "「行ってみてガッカリ」を、なくしたい".
+- Image 2 = SAME hand-holding shot, CLEAN (no phone mock-up), same caption.
+- Image 3 = ParkPedia iOS app icon: 3D smiling cloud on yellow bench, green leaf, magnifying glass, "ParkPedia" wordmark on green rounded-square.
+- Video 1 = real iOS screen recording of ParkPedia "おすすめ" list, cards "観音池公園" + "永山運動公園", white bg, green header.
+
+ABSOLUTE RULES (every frame):
+1. MUST start with the app UI (match Video 1). NEVER skip Scene 1.
+2. MUST end on the icon (match Image 3). NEVER skip Scene 3.
+3. Middle MUST be parent-and-child hands (match Image 2). NEVER replace subject.
+4. Japanese caption "「行ってみてガッカリ」を、なくしたい" MUST stay EXACTLY as in Image 2 through all of Scene 2: same lower-center position, white fill, soft drop shadow, font, tracking. Do NOT translate, restyle, relocate, animate, duplicate, or remove.
+5. NEVER show any human face, eyes, hair, neck, torso, legs, or full body. Only hands and forearms allowed.
+6. NEVER add new text, subtitles, hashtags, watermarks, badges, URLs, CTAs not in the references.
+7. Output: 9:16 vertical, exactly 15.0s, calm warm documentary mood.
+
+------ SCENE 1: APP UI (0.0–5.0s) — match Video 1 ------
+Opening = ParkPedia "おすすめ" list: white bg, green "ParkPedia" header, two cards "観音池公園" + "永山運動公園" with yellow 5-star ratings, larger featured card below, iPhone status bar "9:41" + green battery top-right. Bezel centered on clean off-white padded canvas (NOT full-bleed).
+Action: natural finger-scroll moves list downward at calm readable pace 0.5–4.0s. Smooth, lifelike. 4.5–5.0s soft cross-fade to Scene 2.
+Camera: locked-off. Caption: NONE.
+
+------ SCENE 2: HANDS (5.0–12.0s) — match Image 2 ------
+Preserve EXACT framing: child hand wraps adult hand on right side; blurred green grass + out-of-focus foliage bg.
+Action:
+- 5.0–9.0s: both hands gently walk screen-right; bg slowly drifts left as natural following pan. Light breeze moves out-of-focus leaves/grass. Dappled sunlight flickers softly across back of adult hand and child fingers.
+- 9.0–11.0s: camera pulls back 3–5% revealing slightly more forearm. NEVER face/torso/full body.
+- 11.0–12.0s: motion eases out, framing settles, soft cross-fade to Scene 3.
+Style: documentary realism, 35mm film, shallow DoF f/2.0, natural backlit sun, fresh-green late-spring Japanese park, warm golden hour, Sony FX3 + 85mm prime, subtle handheld micro-jitter, Getty/Shutterstock lifestyle aesthetic, intimate reassuring.
+Caption: visible 5.0–12.0s in EXACT original position (lower-center), white fill, soft drop shadow. Does NOT animate/slide/fade/resize.
+
+------ SCENE 3: BRAND CLOSE (12.0–15.0s) — match Image 3 ------
+ParkPedia icon centered on soft pale-green bg (#E8F5E9–#C8E6C9). Design exactly as Image 3.
+Action: 12.0–13.5s subtle scale-up ~4–6%, then steady. 13.5–15.0s perfectly still final frame.
+Camera: fully locked-off. Caption: NONE (only the wordmark inside the icon).
+
+------ STYLE (global) ------
+- Palette: Park Green #4CAF50, fresh leaf green, warm beige skin, off-white caption
+- Lighting: natural sunlight only; no studio/neon/fluorescent
+- Texture: subtle 35mm film grain in Scene 2 only; Scenes 1 & 3 clean and crisp
+- Audio: ambient park bed (birds, breeze, faint footsteps). NO music, NO voiceover, NO SFX beyond ambient. BGM added in post.
+
+------ FORBIDDEN — DO NOT RENDER ------
+- Any human face, eyes, mouth, hair, neck, torso, legs, full body anywhere
+- Replacing parent-and-child hands with strangers/models/animals/other subjects
+- Skipping Scene 1 or Scene 3; jumping straight to Scene 2; compressing all scenes into first 8s
+- Any new text in any language (subtitles, hashtags, "Download now", App Store badges, URLs, CTAs)
+- Relocating, restyling, animating, scaling, duplicating, removing, translating, garbling, or mojibake on the Japanese caption
+- Season change in Scene 2 (NO cherry blossoms, autumn, snow, blooming flowers, rain)
+- New objects in Scene 2 (NO benches, swings, slides, balls, dogs, cats, strollers, signs, birds, butterflies, falling leaves)
+- iPhone notch/Dynamic Island/status bar inside Scene 2 or 3
+- Compositing phone screen/app UI/buttons/sliders/overlays on top of Scene 2
+- Morphing/extra/missing/melting fingers, distorted limbs
+- Heavy filters, saturation pump, contrast crush, teal-orange LUT, lens flares, vignettes, chromatic aberration, film burn
+- Transitions stronger than soft cross-fade (NO whip pans, glitch cuts, light leaks, zoom transitions)
+- Distorting, recoloring, restyling the ParkPedia icon in Scene 3
+- Voiceover, narration, dialogue, SFX, or BGM in rendered audio track
